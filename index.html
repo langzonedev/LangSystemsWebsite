@@ -36,9 +36,6 @@
 
     <main id="top">
       <section class="hero" aria-labelledby="hero-title">
-        <div class="hero-media" aria-hidden="true">
-          <img src="assets/lang-systems-logo-outline.png" alt="" />
-        </div>
         <div class="hero-content">
           <div class="hero-brand">
             <img src="assets/lang-systems-logo-outline.png" alt="" />
@@ -68,6 +65,43 @@
             </div>
           </dl>
         </div>
+        <aside class="engineering-board" aria-label="Application engineering build path">
+          <div class="board-mark" aria-hidden="true">
+            <img src="assets/lang-systems-mark-outline.png" alt="" />
+          </div>
+          <div class="board-header">
+            <span>Build path</span>
+            <strong>Idea to production</strong>
+          </div>
+          <div class="blueprint-flow">
+            <div class="blueprint-node">
+              <span>01</span>
+              <strong>Idea</strong>
+              <small>Problem, workflow, users</small>
+            </div>
+            <div class="blueprint-node">
+              <span>02</span>
+              <strong>Design</strong>
+              <small>Experience, data, scope</small>
+            </div>
+            <div class="blueprint-node">
+              <span>03</span>
+              <strong>Engineer</strong>
+              <small>Software, integration, testing</small>
+            </div>
+            <div class="blueprint-node">
+              <span>04</span>
+              <strong>Release</strong>
+              <small>Deployment, support, iteration</small>
+            </div>
+          </div>
+          <div class="board-footer">
+            <span>UX</span>
+            <span>Data</span>
+            <span>Integration</span>
+            <span>Production</span>
+          </div>
+        </aside>
       </section>
 
       <section class="intro section" aria-labelledby="intro-title">
@@ -173,7 +207,11 @@
           <h2 id="portfolio-title">A home for current products and future applications.</h2>
         </div>
         <div class="portfolio-grid">
-          <article class="product-card featured-product">
+          <a
+            class="product-card featured-product product-link-card"
+            href="https://stampos.com.au/"
+            aria-label="Visit the StamPOS website"
+          >
             <div>
               <span class="status">In development</span>
               <h3>StamPOS</h3>
@@ -182,8 +220,8 @@
                 local data, and future service integrations.
               </p>
             </div>
-            <a href="https://stampos.com.au/" aria-label="Visit the StamPOS website">Visit StamPOS</a>
-          </article>
+            <span class="product-cta">Visit StamPOS</span>
+          </a>
           <article class="product-card placeholder-product">
             <div>
               <span class="status">Future application</span>
