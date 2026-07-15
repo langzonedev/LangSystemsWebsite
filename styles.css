@@ -145,7 +145,7 @@ img {
 .hero {
   position: relative;
   min-height: 96vh;
-  padding: 160px clamp(20px, 5vw, 64px) 88px;
+  padding: 146px clamp(20px, 5vw, 64px) 86px;
   overflow: hidden;
   isolation: isolate;
   background:
@@ -168,11 +168,11 @@ img {
 
 .hero-media {
   position: absolute;
-  right: max(-90px, -4vw);
-  bottom: -120px;
+  right: max(-70px, -3vw);
+  bottom: -98px;
   z-index: -1;
-  width: min(54vw, 680px);
-  opacity: 0.16;
+  width: min(50vw, 650px);
+  opacity: 0.2;
 }
 
 .hero-media img {
@@ -181,7 +181,18 @@ img {
 }
 
 .hero-content {
-  width: min(760px, 100%);
+  width: min(840px, 100%);
+}
+
+.hero-brand {
+  width: clamp(150px, 18vw, 230px);
+  margin-bottom: 28px;
+}
+
+.hero-brand img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .eyebrow {
@@ -201,11 +212,11 @@ p {
 }
 
 h1 {
-  max-width: 8ch;
-  margin-bottom: 22px;
+  max-width: 11ch;
+  margin-bottom: 24px;
   color: var(--ink);
-  font-size: clamp(4rem, 12vw, 8.8rem);
-  line-height: 0.9;
+  font-size: clamp(3.3rem, 8vw, 7.2rem);
+  line-height: 0.92;
   letter-spacing: 0;
 }
 
@@ -225,7 +236,7 @@ h3 {
 }
 
 .hero-lede {
-  max-width: 660px;
+  max-width: 700px;
   color: var(--ink-2);
   font-size: clamp(1.12rem, 2.2vw, 1.42rem);
 }
@@ -613,13 +624,13 @@ h3 {
 
   .hero {
     min-height: auto;
-    padding-top: 136px;
+    padding-top: 126px;
   }
 
   .hero-media {
-    width: 620px;
+    width: 560px;
     max-width: 95vw;
-    opacity: 0.11;
+    opacity: 0.12;
   }
 
   .hero-proof,
@@ -674,7 +685,8 @@ h3 {
   }
 
   h1 {
-    font-size: clamp(3.35rem, 19vw, 5.4rem);
+    max-width: 10ch;
+    font-size: clamp(3.05rem, 15vw, 4.7rem);
   }
 
   .hero-actions,
