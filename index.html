@@ -324,6 +324,9 @@
           novalidate
         >
           <input type="text" name="_honey" class="form-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <p class="draft-storage-note">Your progress is saved on this device as you work. You can clear saved answers at any time.</p>
+          <p class="draft-status" data-draft-status role="status" aria-live="polite" hidden></p>
+          <p class="draft-file-note" data-draft-file-note role="status" hidden></p>
 
           <section class="form-step" data-step data-step-name="About you">
             <div class="step-heading">
@@ -413,7 +416,7 @@
             <label><span>What must be working before the project can be considered complete?</span><textarea name="acceptance_criteria" rows="5" maxlength="10000" required placeholder="Describe the results you need to see or tasks people must be able to complete."></textarea></label>
             <label><span>Important rules, constraints, or concerns <em>Optional</em></span><textarea name="constraints" rows="3" maxlength="10000" placeholder="Privacy, approvals, locations, accessibility, industry rules, devices, or business policies."></textarea></label>
             <label><span>Anything else we should know? <em>Optional</em></span><textarea name="additional_notes" rows="3" maxlength="10000"></textarea></label>
-            <label><span>Supporting file references <em>Optional</em></span><input type="file" name="attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.txt" multiple /><small>We include the file names and sizes with your outline, not the file contents. If needed, we will arrange a secure way to receive them. Please do not select passwords or highly sensitive information.</small></label>
+            <label><span>Supporting file references <em>Optional</em></span><input type="file" name="attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.txt" multiple /><small>Files are not saved with your draft and must be reselected after a refresh or browser restart. We include file names and sizes with your outline, not file contents. Please do not select passwords or highly sensitive information.</small></label>
           </section>
 
           <section class="form-step review-step" data-step data-step-name="Review" hidden>
@@ -429,6 +432,7 @@
           <div class="error-summary" data-error-summary tabindex="-1" role="alert" aria-live="assertive" aria-atomic="true" hidden></div>
           <div class="form-message" id="intake-form-message" data-form-message role="status" aria-live="polite" aria-atomic="true"></div>
           <footer class="form-actions">
+            <button class="button text-button" type="button" data-clear-draft>Clear answers</button>
             <button class="button secondary" type="button" data-form-back hidden>Back</button>
             <button class="button primary" type="button" data-form-next>Continue</button>
             <button class="button primary" type="submit" data-form-submit hidden>Send project outline</button>

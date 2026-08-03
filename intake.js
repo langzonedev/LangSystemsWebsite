@@ -18,7 +18,10 @@
   const backButton = form.querySelector("[data-form-back]");
   const nextButton = form.querySelector("[data-form-next]");
   const submitButton = form.querySelector("[data-form-submit]");
+  const clearDraftButton = form.querySelector("[data-clear-draft]");
   const message = form.querySelector("[data-form-message]");
+  const draftStatus = form.querySelector("[data-draft-status]");
+  const draftFileNote = form.querySelector("[data-draft-file-note]");
   const errorSummary = form.querySelector("[data-error-summary]");
   const progressBar = dialog.querySelector("[data-progress-bar]");
   const progressTrack = dialog.querySelector("[data-progress-track]");
@@ -48,10 +51,25 @@
   let pendingDocuments = null;
   let lastAttemptAt = 0;
   let confirmedReference = "";
+  let draftSaveTimer = null;
+  let rememberedFileCount = 0;
   const historyStateKey = "langSystemsIntakeOpen";
   const intakeHash = "#project-discovery";
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  function saveDraftNow() {
+    if (draftSaveTimer !== null) {
+      window.clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+    }
+    if (!submissionComplete && formDirty) intakeDraft.save(window, form, currentStep, undefined, rememberedFileCount);
+  }
+
+  function scheduleDraftSave() {
+    if (draftSaveTimer !== null) window.clearTimeout(draftSaveTimer);
+    draftSaveTimer = window.setTimeout(saveDraftNow, 350);
+  }
 
   const fieldLabels = {
     contact_name: "Your name",
@@ -502,7 +520,8 @@
   }
 
   function requestClose({ syncHistory = true, confirmDirty = true } = {}) {
-    if (confirmDirty && !submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available in this tab, including after a refresh, until you submit or close the tab.")) return;
+    if (confirmDirty && !submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers are saved on this device and will be available when you return.")) return;
+    saveDraftNow();
     submissionController?.abort();
     dialog.close();
     if (syncHistory && isIntakeHistoryEntry()) window.history.back();
@@ -514,7 +533,7 @@
     if (error?.code === "rate_limited") return "There have been several recent attempts. Your answers are still here. Please wait a minute, then try again.";
     if (error?.code === "duplicate_submission") return "This project outline may already have been received. We have not sent it again. Please contact us by email if you would like us to confirm.";
     if (error?.code === "payload") return "We could not prepare the outline for sending. Your answers are still here. Please review the highlighted information and try again.";
-    if (error?.code === "configuration") return "The submission service is not available on this website. Your answers are still saved in this tab. Please contact us by email while we restore the service.";
+    if (error?.code === "configuration") return "The submission service is not available on this website. Your answers are still saved on this device. Please contact us by email while we restore the service.";
     if (error?.code === "email_delivery" && error?.reference) {
       const customerSent = error.delivery?.customer === "sent";
       const internalSent = error.delivery?.internal === "sent";
@@ -545,6 +564,14 @@
     currentStep = restoredDraft.currentStep;
     formDirty = true;
     if (currentStep === finalStepIndex) buildReview();
+    draftStatus.textContent = "Your saved answers have been restored.";
+    draftStatus.hidden = false;
+    if (restoredDraft.selectedFileCount > 0) {
+      rememberedFileCount = restoredDraft.selectedFileCount;
+      const fileWord = restoredDraft.selectedFileCount === 1 ? "file was" : "files were";
+      draftFileNote.textContent = `${restoredDraft.selectedFileCount} previously selected ${fileWord} not retained by the browser. Please reselect ${restoredDraft.selectedFileCount === 1 ? "it" : "them"} before sending.`;
+      draftFileNote.hidden = false;
+    }
   }
 
   openButtons.forEach((button) => {
@@ -564,7 +591,7 @@
     }
 
     if (!dialog.open) return;
-    if (!submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available in this tab, including after a refresh, until you submit or close the tab.")) {
+    if (!submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers are saved on this device and will be available when you return.")) {
       window.history.forward();
       return;
     }
@@ -576,13 +603,13 @@
     if (currentStep >= finalStepIndex) return;
     currentStep = Math.min(currentStep + 1, finalStepIndex);
     if (currentStep === finalStepIndex) buildReview();
-    intakeDraft.save(window, form, currentStep);
+    saveDraftNow();
     updateStep();
   });
 
   backButton.addEventListener("click", () => {
     currentStep = Math.max(0, currentStep - 1);
-    intakeDraft.save(window, form, currentStep);
+    saveDraftNow();
     updateStep();
   });
 
@@ -590,7 +617,7 @@
     const editButton = event.target.closest("[data-edit-step]");
     if (!editButton) return;
     currentStep = Number(editButton.dataset.editStep);
-    intakeDraft.save(window, form, currentStep);
+    saveDraftNow();
     updateStep();
   });
 
@@ -648,14 +675,45 @@
     clearFieldError(event.target);
     errorSummary.hidden = true;
     setMessage();
-    intakeDraft.save(window, form, currentStep);
+    scheduleDraftSave();
   });
 
-  form.addEventListener("change", () => intakeDraft.save(window, form, currentStep));
+  form.addEventListener("change", (event) => {
+    formDirty = true;
+    if (event.target.name === "attachments") {
+      rememberedFileCount = 0;
+      draftFileNote.hidden = true;
+    }
+    scheduleDraftSave();
+  });
+
+  clearDraftButton.addEventListener("click", () => {
+    if (!window.confirm("Clear all saved answers and start again? This cannot be undone.")) return;
+    if (draftSaveTimer !== null) window.clearTimeout(draftSaveTimer);
+    draftSaveTimer = null;
+    intakeDraft.clear(window);
+    form.reset();
+    [...form.elements].forEach((field) => {
+      if (field instanceof HTMLElement && field.name) clearFieldError(field);
+    });
+    currentStep = 0;
+    formDirty = false;
+    rememberedFileCount = 0;
+    pendingDocuments = null;
+    errorSummary.replaceChildren();
+    errorSummary.hidden = true;
+    draftStatus.textContent = "Your saved answers have been cleared.";
+    draftStatus.hidden = false;
+    draftFileNote.hidden = true;
+    updateStep();
+  });
+
+  window.addEventListener("pagehide", saveDraftNow);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (submissionComplete || submissionInProgress || !validateAllSteps()) return;
+    saveDraftNow();
     const now = Date.now();
     if (now - lastAttemptAt < 2000) {
       showSubmissionFailure("Please wait a moment before trying again. Your answers are still here.");
@@ -682,6 +740,8 @@
       }
 
       submissionComplete = true;
+      if (draftSaveTimer !== null) window.clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
       intakeDraft.clear(window);
       confirmedReference = result.reference;
       confirmationEmail.textContent = valueOf("email");

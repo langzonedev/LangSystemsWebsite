@@ -82,10 +82,12 @@ for commands, HTTPS/access controls, retention, customer deletion requests, and 
 After deployment, submit one non-sensitive test project and inspect both mailboxes (including junk
 folders), branding, links, and the recorded statuses. To recover a partial failure, use the wizard's
 Retry action while its answers remain open; the same reference is reused and completed recipients
-are not sent again. In-progress answers (but not selected files) are kept in tab-scoped session
-storage so a refresh can recover the draft; the draft is removed after confirmed submission or
-when the tab closes. If browser recovery is unavailable, use the reference and status record for
-manual follow-up—do not copy customer content into logs or issue trackers.
+are not sent again. In-progress answers are stored in the customer's browser local storage on that
+device so a refresh or browser restart can recover the draft. Selected file contents are never
+stored and must be reselected after a refresh. Customers can clear saved answers in the wizard;
+otherwise the draft is removed only after a confirmed submission. If browser recovery is unavailable,
+use the reference and status record for manual follow-up—do not copy customer content into logs or
+issue trackers.
 
 ## Checks
 
