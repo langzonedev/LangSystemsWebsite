@@ -8,7 +8,11 @@
 
   if (!dialog || !form || !submissionService || !intakeModel || !customerSummaryGenerator || !intakeDraft || typeof dialog.showModal !== "function") return;
 
-  const steps = [...form.querySelectorAll("[data-step]")];
+  // DOM order is the single source of truth for progress and navigation, including Review.
+  const wizardSteps = Object.freeze([...form.querySelectorAll("[data-step]")]);
+  const totalSteps = wizardSteps.length;
+  const finalStepIndex = totalSteps - 1;
+  if (!totalSteps || !wizardSteps[finalStepIndex].classList.contains("review-step")) return;
   const openButtons = [...document.querySelectorAll("[data-open-intake]")];
   const closeButtons = [...dialog.querySelectorAll("[data-close-intake]")];
   const backButton = form.querySelector("[data-form-back]");
@@ -203,27 +207,34 @@
       helper.id ||= `intake-field-help-${index + 1}`;
       updateDescription(field, helper.id, true);
     });
-    steps.forEach((step) => step.querySelector("h3")?.setAttribute("tabindex", "-1"));
+    wizardSteps.forEach((step) => step.querySelector("h3")?.setAttribute("tabindex", "-1"));
   }
 
   function updateStep() {
-    currentStep = Math.min(Math.max(0, currentStep), steps.length - 1);
-    steps.forEach((step, index) => { step.hidden = index !== currentStep; });
-    stepLabel.textContent = `Step ${currentStep + 1} of ${steps.length}`;
-    stepName.textContent = steps[currentStep].dataset.stepName;
-    progressBar.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
-    progressTrack.setAttribute("aria-valuenow", String(currentStep + 1));
-    progressTrack.setAttribute("aria-valuetext", `Step ${currentStep + 1} of ${steps.length}: ${steps[currentStep].dataset.stepName}`);
-    stepAnnouncement.textContent = `Step ${currentStep + 1} of ${steps.length}: ${steps[currentStep].dataset.stepName}`;
+    currentStep = Math.min(Math.max(0, currentStep), finalStepIndex);
+    const visibleStepNumber = currentStep + 1;
+    const visibleStep = wizardSteps[currentStep];
+    const progressText = `Step ${visibleStepNumber} of ${totalSteps}`;
+    const accessibleProgressText = `${progressText}: ${visibleStep.dataset.stepName}`;
+    const isFinalStep = currentStep === finalStepIndex;
+
+    wizardSteps.forEach((step, index) => { step.hidden = index !== currentStep; });
+    stepLabel.textContent = progressText;
+    stepName.textContent = visibleStep.dataset.stepName;
+    progressBar.style.width = `${(visibleStepNumber / totalSteps) * 100}%`;
+    progressTrack.setAttribute("aria-valuemax", String(totalSteps));
+    progressTrack.setAttribute("aria-valuenow", String(visibleStepNumber));
+    progressTrack.setAttribute("aria-valuetext", accessibleProgressText);
+    stepAnnouncement.textContent = accessibleProgressText;
     backButton.hidden = currentStep === 0;
-    nextButton.hidden = currentStep === steps.length - 1;
-    submitButton.hidden = currentStep !== steps.length - 1;
+    nextButton.hidden = isFinalStep;
+    submitButton.hidden = !isFinalStep;
     setMessage();
     dialog.scrollTo({ top: 0, behavior: reducedMotion.matches ? "auto" : "smooth" });
-    steps[currentStep].querySelector("h3")?.focus({ preventScroll: true });
+    visibleStep.querySelector("h3")?.focus({ preventScroll: true });
   }
 
-  function validateStep(step = steps[currentStep], focusErrors = true) {
+  function validateStep(step = wizardSteps[currentStep], focusErrors = true) {
     const fields = [...step.querySelectorAll("input, textarea, select")];
     validateAttachments(fields.find((field) => field.name === "attachments"));
     fields.forEach(clearFieldError);
@@ -245,11 +256,11 @@
   }
 
   function validateAllSteps() {
-    for (let index = 0; index < steps.length; index += 1) {
-      if (validateStep(steps[index], false)) continue;
+    for (let index = 0; index < totalSteps; index += 1) {
+      if (validateStep(wizardSteps[index], false)) continue;
       currentStep = index;
       updateStep();
-      validateStep(steps[index]);
+      validateStep(wizardSteps[index]);
       return false;
     }
     return true;
@@ -529,11 +540,11 @@
   }
 
   wireFieldDescriptions();
-  const restoredDraft = intakeDraft.restore(window, form, steps.length - 1);
+  const restoredDraft = intakeDraft.restore(window, form, finalStepIndex);
   if (restoredDraft) {
     currentStep = restoredDraft.currentStep;
     formDirty = true;
-    if (currentStep === steps.length - 1) buildReview();
+    if (currentStep === finalStepIndex) buildReview();
   }
 
   openButtons.forEach((button) => {
@@ -562,9 +573,9 @@
 
   nextButton.addEventListener("click", () => {
     if (!validateStep()) return;
-    if (currentStep >= steps.length - 1) return;
-    currentStep = Math.min(currentStep + 1, steps.length - 1);
-    if (currentStep === steps.length - 1) buildReview();
+    if (currentStep >= finalStepIndex) return;
+    currentStep = Math.min(currentStep + 1, finalStepIndex);
+    if (currentStep === finalStepIndex) buildReview();
     intakeDraft.save(window, form, currentStep);
     updateStep();
   });
