@@ -11,6 +11,7 @@ integration, workflow automation, and future product development.
 - [Client Project Intake Workflow Project Anchor](docs/project-anchor.md)
 - [Client Project Intake Architecture and Design](docs/project-intake-architecture.md)
 - [Customer Project Discovery Journey](docs/customer-project-discovery-journey.md)
+- [Plain-English Client Discovery Question Set](docs/client-discovery-question-set.md)
 
 ## GitHub Pages
 

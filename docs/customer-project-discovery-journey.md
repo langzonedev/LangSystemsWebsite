@@ -61,6 +61,8 @@ flowchart LR
 
 ## 3. Step and question specification
 
+The [Plain-English Client Discovery Question Set](client-discovery-question-set.md) is the complete approved question catalogue. The concise step tables below describe the original version 1.0 journey; where the catalogue adds a question or choice, a later implementation change must add it without weakening the interaction, accessibility, privacy, or validation rules in this document.
+
 Required questions block Continue when empty or invalid. Optional questions can reduce follow-up but never block progress.
 
 ### Step 1 - About you

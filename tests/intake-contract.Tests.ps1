@@ -4,6 +4,8 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $index = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "index.html")
 $controller = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake.js")
 $service = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-service.js")
+$questionSetPath = Join-Path $projectRoot "docs/client-discovery-question-set.md"
+$questionSet = Get-Content -Raw -Encoding UTF8 $questionSetPath
 
 function Assert-True {
   param(
@@ -25,6 +27,28 @@ Assert-True ($index -match 'data-review-summary' -and $controller -match 'data-e
 Assert-True ($controller -match 'LangSystemsIntakeSubmission' -and $controller -notmatch 'await\s+fetch\s*\(') "Submission transport must stay behind the service boundary."
 Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"') "The submission service must reject insecure endpoints."
 Assert-True ($controller -notmatch 'localStorage|sessionStorage|console\.') "Customer answers must not be stored in browser storage or written to the console."
+Assert-True (Test-Path -LiteralPath $questionSetPath) "The client discovery question set is missing."
+
+$questionSetSections = @(
+  "Contact and business details", "Current situation", "Desired outcome and practical needs",
+  "First release and common capabilities", "Commercial preference", "Budget and timing",
+  "Success, supporting information, and anything unusual", "Review and permission to respond"
+)
+
+foreach ($section in $questionSetSections) {
+  Assert-True ($questionSet -match [regex]::Escape($section)) "Question set section '$section' is missing."
+}
+
+$requiredQuestionSetPhrases = @(
+  "Preferred contact method", "What works well today", "work when internet access is unavailable",
+  "Artificial intelligence", "completely bespoke system", "Please help us understand what is realistic",
+  "How would you know this project had been successful six months after launch",
+  "screenshots, example spreadsheets, existing forms, reports, process documents, diagrams, and example outputs"
+)
+
+foreach ($phrase in $requiredQuestionSetPhrases) {
+  Assert-True ($questionSet -match [regex]::Escape($phrase)) "Question set requirement '$phrase' is missing."
+}
 
 $allFields = @(
   "contact_name", "email", "phone", "business_name", "business_description", "problem",

@@ -44,6 +44,8 @@ Closing a partly completed form warns that unsent answers will not be saved. The
 
 ## 4. Wizard and information model
 
+The complete approved customer-facing content, including proposed additions to the current version 1.0 field contract, is defined in the [Plain-English Client Discovery Question Set](client-discovery-question-set.md). Additions must be implemented through a deliberate schema-version change; until then, the table below describes the running version 1.0 model rather than permission to omit the approved questions permanently.
+
 The first-release wizard has eight steps. “Required” means submission cannot proceed without a valid answer. Optional blanks remain visibly identified as not provided in generated outputs; they are not silently invented.
 
 | Step | Purpose | Required information | Optional information |

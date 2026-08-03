@@ -10,7 +10,7 @@ This Project Anchor records the non-negotiable product and delivery context for 
 
 The workflow belongs inside the existing Lang Systems website. It helps a prospective customer describe an operational problem and gives Lang Systems enough structured information to assess the enquiry and plan a practical first release.
 
-The detailed sources of truth are [Project Intake Architecture and Design](project-intake-architecture.md) and the implementation-ready [Customer Project Discovery Journey](customer-project-discovery-journey.md).
+The detailed sources of truth are [Project Intake Architecture and Design](project-intake-architecture.md), the implementation-ready [Customer Project Discovery Journey](customer-project-discovery-journey.md), and the complete customer-facing [Plain-English Client Discovery Question Set](client-discovery-question-set.md).
 
 ## Audience and experience
 
