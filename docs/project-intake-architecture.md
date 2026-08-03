@@ -44,7 +44,7 @@ Closing a partly completed form warns that unsent answers will not be saved. The
 
 ## 4. Wizard and information model
 
-The complete approved customer-facing content, including proposed additions to the current version 1.0 field contract, is defined in the [Plain-English Client Discovery Question Set](client-discovery-question-set.md). Additions must be implemented through a deliberate schema-version change; until then, the table below describes the running version 1.0 model rather than permission to omit the approved questions permanently.
+The complete approved customer-facing content, including proposed additions to the current form-template contract, is defined in the [Plain-English Client Discovery Question Set](client-discovery-question-set.md). The running form keeps its stable version 1.0 field names while its generated structured record uses schema 2.0.0. Future question changes must deliberately update the independent template version and, when the record shape changes incompatibly, the schema version.
 
 The first-release wizard has eight steps. “Required” means submission cannot proceed without a valid answer. Optional blanks remain visibly identified as not provided in generated outputs; they are not silently invented.
 
@@ -84,8 +84,8 @@ Immediately before sending, the browser:
 1. generates a non-authoritative reference in the form `LS-` plus a UTC timestamp;
 2. preserves the original named form answers;
 3. adds generated document text;
-4. adds `structured_project_data_json` with `schemaVersion: "1.0"`;
-5. adds `submission_schema_version: "1.0"`; and
+4. adds `structured_project_data_json` using the [Structured Project Intake Data Model](project-intake-data-model.md);
+5. adds `submission_schema_version: "2.0.0"` and the independent template version; and
 6. adds the UTC submission time.
 
 The generated reference is for email correlation, not a guaranteed unique or sequential record identifier. Lang Systems must verify receipt rather than relying only on the browser success screen.
@@ -113,6 +113,7 @@ The destination mailbox receives one submission containing the original fields p
 | `clarification_questions_internal` | Questions generated from missing optional detail or uncertain commercial/budget choices |
 | `structured_project_data_json` | Versioned machine-readable copy for possible later import or automation |
 | `submission_schema_version` | Contract version for downstream interpretation |
+| `submission_template_version` | Question and generated-output template version |
 | `submitted_at_utc` | Browser-generated submission timestamp |
 
 These are sections in the delivered email payload, not downloadable files, signed specifications, customer approvals, or permanent system records. The customer summary is sent to Lang Systems as part of the internal submission; the customer receives the acknowledgement, not a copy of every answer. Generated material is a discovery aid and must be reviewed by a person before estimation or contractual scope.
@@ -274,4 +275,4 @@ Provider configuration fields (`_subject`, `_template`, `_captcha`, `_autorespon
 
 The review screen shows every customer-provided answer, grouped in step order. Optional blanks are identified as not provided. Internal generated documents, assumptions, and clarification questions are not presented as customer answers. Detailed interaction, responsive, accessibility, browser, and recovery behaviour is defined in [Customer Project Discovery Journey](customer-project-discovery-journey.md).
 
-The structured JSON groups the same answers under `contact`, `discovery`, `scope`, and `commercial`, followed by top-level `constraints` and `additionalNotes`. Its project reference must match the separately submitted reference. Automatic clarification questions are raised when existing systems, information needs, explicit exclusions, constraints, timing context, or later additions are blank; when the customer requests a delivery-model recommendation; or when the budget is uncertain. These questions identify discovery gaps only and never rewrite the customer’s answer or block submission.
+The structured JSON follows the [versioned data model](project-intake-data-model.md). Original answers are grouped under `customerAnswers`; generated references, clarification questions, delivery state, review state, and internal notes remain under `processing`. Its submission identifier must match the separately submitted project reference. Automatic clarification questions identify discovery gaps only and never rewrite the customer’s answer or block submission.

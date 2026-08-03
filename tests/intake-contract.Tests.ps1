@@ -4,6 +4,8 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $index = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "index.html")
 $controller = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake.js")
 $service = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-service.js")
+$model = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-model.js")
+$serverValidation = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-validation.js")
 $questionSetPath = Join-Path $projectRoot "docs/client-discovery-question-set.md"
 $questionSet = Get-Content -Raw -Encoding UTF8 $questionSetPath
 
@@ -26,6 +28,10 @@ Assert-True ($index -match 'role="progressbar"' -and $index -match 'aria-valuete
 Assert-True ($index -match 'data-review-summary' -and $controller -match 'data-edit-step') "The review step must offer direct correction controls."
 Assert-True ($controller -match 'LangSystemsIntakeSubmission' -and $controller -notmatch 'await\s+fetch\s*\(') "Submission transport must stay behind the service boundary."
 Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"') "The submission service must reject insecure endpoints."
+Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model must load before submission transport."
+Assert-True ($controller -match 'intakeModel\.serialiseSubmission' -and $service -match 'LangSystemsIntakeModel\.parseSubmission') "Frontend generation and transport must enforce the shared model contract."
+Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"2\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
+Assert-True ($serverValidation -match 'IntakeModel\.validateSubmission' -and $serverValidation -notmatch 'console\.') "The server validation boundary must use the shared contract without logging submissions."
 Assert-True ($controller -notmatch 'localStorage|sessionStorage|console\.') "Customer answers must not be stored in browser storage or written to the console."
 Assert-True (Test-Path -LiteralPath $questionSetPath) "The client discovery question set is missing."
 
@@ -79,5 +85,9 @@ $localReferences = [regex]::Matches($index, '(?:href|src)="([^"#:?]+)"') |
 foreach ($reference in $localReferences) {
   Assert-True (Test-Path -LiteralPath (Join-Path $projectRoot $reference)) "Referenced local asset '$reference' does not exist."
 }
+
+$modelTestOutput = (& cscript //NoLogo //E:JScript (Join-Path $PSScriptRoot "intake-model.Tests.js") 2>&1) -join "`n"
+Assert-True ($LASTEXITCODE -eq 0 -and $modelTestOutput -match "Intake model validation and serialisation checks passed\." -and $modelTestOutput -notmatch "runtime error") "Intake model tests failed: $modelTestOutput"
+Write-Output $modelTestOutput
 
 Write-Output "Intake contract checks passed."

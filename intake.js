@@ -2,8 +2,9 @@
   const dialog = document.querySelector("[data-intake-dialog]");
   const form = document.querySelector("[data-intake-form]");
   const submissionService = window.LangSystemsIntakeSubmission;
+  const intakeModel = window.LangSystemsIntakeModel;
 
-  if (!dialog || !form || !submissionService || typeof dialog.showModal !== "function") return;
+  if (!dialog || !form || !submissionService || !intakeModel || typeof dialog.showModal !== "function") return;
 
   const steps = [...form.querySelectorAll("[data-step]")];
   const openButtons = [...document.querySelectorAll("[data-open-intake]")];
@@ -167,7 +168,7 @@
   }
 
   function buildDocuments() {
-    const projectReference = `LS-${new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14)}`;
+    const projectReference = intakeModel.newSubmissionId();
     const openQuestions = [];
 
     if (!valueOf("existing_systems")) openQuestions.push("Are there existing systems or services the solution must connect with?");
@@ -257,56 +258,52 @@
       customerSummary,
       technicalRequirements,
       internalBrief,
-      clarificationQuestions: openQuestions.length ? openQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n") : "No automatic gaps identified; confirm all assumptions during discovery."
+      clarificationQuestions: openQuestions.length ? openQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n") : "No automatic gaps identified; confirm all assumptions during discovery.",
+      clarificationQuestionItems: openQuestions
     };
   }
 
   function appendGenerated(formData, documents) {
-    const structuredProject = {
-      schemaVersion: "1.0",
-      projectReference: documents.projectReference,
-      contact: {
-        name: valueOf("contact_name"),
-        email: valueOf("email"),
-        phone: valueOf("phone"),
-        organisation: valueOf("business_name")
-      },
-      discovery: {
-        businessDescription: valueOf("business_description"),
-        problem: valueOf("problem"),
-        currentProcess: valueOf("current_process"),
-        impact: valueOf("problem_impact"),
-        desiredOutcome: valueOf("desired_outcome"),
-        users: valueOf("users"),
-        existingSystems: valueOf("existing_systems"),
-        dataNeeds: valueOf("data_needs")
-      },
-      scope: {
-        includedFirstRelease: valueOf("first_release"),
-        optional: valueOf("optional_requirements"),
-        future: valueOf("future_ideas"),
-        excluded: valueOf("excluded_functionality"),
-        acceptanceCriteria: valueOf("acceptance_criteria")
-      },
-      commercial: {
-        budget: valueOf("budget"),
-        timing: valueOf("timing"),
-        timingContext: valueOf("timing_context"),
-        deliveryModel: valueOf("delivery_model"),
-        dayToDayOwner: valueOf("day_to_day_owner"),
-        ongoingSupport: valueOf("ongoing_support")
-      },
-      constraints: valueOf("constraints"),
-      additionalNotes: valueOf("additional_notes")
+    const customerFieldNames = [
+      "contact_name", "email", "phone", "business_name", "business_description", "problem",
+      "current_process", "problem_impact", "desired_outcome", "users", "existing_systems",
+      "data_needs", "first_release", "optional_requirements", "future_ideas",
+      "excluded_functionality", "budget", "timing", "timing_context", "delivery_model",
+      "day_to_day_owner", "ongoing_support", "acceptance_criteria", "constraints", "additional_notes"
+    ];
+    const originalAnswers = {};
+    customerFieldNames.forEach((name) => { originalAnswers[name] = valueOf(name); });
+    const now = new Date().toISOString();
+    originalAnswers.submissionMetadata = {
+      submissionId: documents.projectReference,
+      submittedAt: now,
+      updatedAt: now,
+      status: "submitted",
+      source: { page: window.location.pathname, campaign: null }
     };
+    originalAnswers.attachments = [];
+    originalAnswers.processing = {
+      interpretationStatus: "complete",
+      generatedDocumentReferences: {
+        customerSummary: "email:customer_friendly_project_summary",
+        technicalSpecification: "email:technical_requirements_specification_internal",
+        internalBrief: "email:lang_systems_project_brief_internal"
+      },
+      clarificationQuestions: documents.clarificationQuestionItems,
+      emailDeliveryStatus: "pending",
+      manualReviewStatus: "not_started",
+      internalNotes: []
+    };
+    const structuredProject = intakeModel.createSubmission(originalAnswers);
     formData.append("project_reference", documents.projectReference);
-    formData.append("structured_project_data_json", JSON.stringify(structuredProject, null, 2));
+    formData.append("structured_project_data_json", intakeModel.serialiseSubmission(structuredProject));
     formData.append("customer_friendly_project_summary", documents.customerSummary);
     formData.append("technical_requirements_specification_internal", documents.technicalRequirements);
     formData.append("lang_systems_project_brief_internal", documents.internalBrief);
     formData.append("clarification_questions_internal", documents.clarificationQuestions);
-    formData.append("submission_schema_version", "1.0");
-    formData.append("submitted_at_utc", new Date().toISOString());
+    formData.append("submission_schema_version", intakeModel.SCHEMA_VERSION);
+    formData.append("submission_template_version", intakeModel.TEMPLATE_VERSION);
+    formData.append("submitted_at_utc", structuredProject.submissionMetadata.submittedAt);
   }
 
   function requestClose() {

@@ -12,6 +12,12 @@
     let url;
 
     try {
+      window.LangSystemsIntakeModel.parseSubmission(formData.get("structured_project_data_json"));
+    } catch (error) {
+      throw new IntakeSubmissionError("Please review the project outline before sending it.", error);
+    }
+
+    try {
       url = new URL(endpoint, window.location.href);
     } catch (error) {
       throw new IntakeSubmissionError("The submission service is not configured correctly.", error);
