@@ -303,9 +303,9 @@
       <div class="intake-shell">
         <header class="intake-header">
           <div>
-            <p class="eyebrow">Project discovery</p>
-            <h2 id="intake-title">Tell us what you want to achieve.</h2>
-            <p>You do not need to know what technology you need. We will handle the technical translation.</p>
+            <p class="eyebrow" data-intake-header-eyebrow>Project discovery</p>
+            <h2 id="intake-title" data-intake-header-title>Tell us what you want to achieve.</h2>
+            <p data-intake-header-description>You do not need to know what technology you need. We will handle the technical translation.</p>
           </div>
           <button class="dialog-close" type="button" data-close-intake aria-label="Close project discovery">&times;</button>
         </header>
@@ -435,16 +435,52 @@
           </footer>
         </form>
 
-        <section class="intake-success" data-intake-success hidden tabindex="-1">
-          <span class="success-mark" aria-hidden="true">&#10003;</span>
-          <p class="eyebrow">Project outline received</p>
-          <h2>Thank you. We will take it from here.</h2>
-          <p>We have sent a confirmation to <strong data-confirmation-email></strong>. Lang Systems will review your outline and contact you to confirm the next step.</p>
-          <div class="summary-actions" data-summary-actions hidden>
-            <button class="button secondary" type="button" data-print-summary>Print summary</button>
-            <button class="button secondary" type="button" data-download-summary>Download summary</button>
+        <section class="intake-success" data-intake-success hidden tabindex="-1" aria-labelledby="confirmation-title">
+          <div class="confirmation-heading">
+            <span class="success-mark" aria-hidden="true">&#10003;</span>
+            <div>
+              <p class="eyebrow">Project outline received</p>
+              <h2 id="confirmation-title">Thank you. Your information has been received.</h2>
+              <p>We have received the project outline for <strong data-confirmation-business></strong> and sent a confirmation to <strong data-confirmation-email></strong>.</p>
+            </div>
           </div>
-          <button class="button primary" type="button" data-close-intake>Close</button>
+
+          <div class="confirmation-reference" aria-label="Submission reference">
+            <span>Submission reference</span>
+            <strong data-confirmation-reference></strong>
+            <small>Please keep this reference and quote it if you contact us.</small>
+          </div>
+
+          <div class="confirmation-next-steps">
+            <h3>What happens next</h3>
+            <ol>
+              <li><strong>We will review your information.</strong> A member of the Lang Systems team will assess the outline.</li>
+              <li><strong>We may ask follow-up questions.</strong> This helps us confirm that we understand the need before any work is agreed.</li>
+              <li><strong>We will agree any next step with you.</strong> Scope, pricing and timing must be reviewed and agreed separately.</li>
+            </ol>
+          </div>
+
+          <p class="confirmation-notice"><strong>This submission is an enquiry, not a binding agreement.</strong> It does not mean the project has been accepted, scope or pricing has been approved, development has started, or a completion date has been guaranteed.</p>
+
+          <details class="confirmation-summary" data-confirmation-summary>
+            <summary>View your project summary</summary>
+            <pre data-confirmation-summary-text></pre>
+          </details>
+
+          <div class="summary-actions" data-summary-actions hidden aria-label="Confirmation and summary actions">
+            <button class="button secondary" type="button" data-print-confirmation>Print confirmation</button>
+            <button class="button secondary" type="button" data-download-summary>Download project summary</button>
+          </div>
+
+          <div class="confirmation-help">
+            <h3>Need to correct something?</h3>
+            <p>Email <a href="mailto:langsystemsdesign@outlook.com" data-correction-link>langsystemsdesign@outlook.com</a> and quote your submission reference. Please do not email passwords, payment details or other highly sensitive information.</p>
+          </div>
+
+          <div class="confirmation-actions">
+            <a class="button secondary" href="mailto:langsystemsdesign@outlook.com" data-contact-reference>Contact Lang Systems</a>
+            <button class="button primary" type="button" data-close-intake>Back to the main website</button>
+          </div>
         </section>
       </div>
     </dialog>

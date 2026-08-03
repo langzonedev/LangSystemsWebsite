@@ -22,9 +22,17 @@
   const stepAnnouncement = dialog.querySelector("[data-step-announcement]");
   const reviewSummary = form.querySelector("[data-review-summary]");
   const successPanel = dialog.querySelector("[data-intake-success]");
+  const intakeHeaderEyebrow = dialog.querySelector("[data-intake-header-eyebrow]");
+  const intakeHeaderTitle = dialog.querySelector("[data-intake-header-title]");
+  const intakeHeaderDescription = dialog.querySelector("[data-intake-header-description]");
   const confirmationEmail = dialog.querySelector("[data-confirmation-email]");
+  const confirmationBusiness = dialog.querySelector("[data-confirmation-business]");
+  const confirmationReference = dialog.querySelector("[data-confirmation-reference]");
+  const confirmationSummaryText = dialog.querySelector("[data-confirmation-summary-text]");
+  const correctionLink = dialog.querySelector("[data-correction-link]");
+  const contactReferenceLink = dialog.querySelector("[data-contact-reference]");
   const summaryActions = dialog.querySelector("[data-summary-actions]");
-  const printSummaryButton = dialog.querySelector("[data-print-summary]");
+  const printConfirmationButton = dialog.querySelector("[data-print-confirmation]");
   const downloadSummaryButton = dialog.querySelector("[data-download-summary]");
   let currentStep = 0;
   let lastTrigger = null;
@@ -34,6 +42,7 @@
   let submissionInProgress = false;
   let pendingDocuments = null;
   let lastAttemptAt = 0;
+  let confirmedReference = "";
   const historyStateKey = "langSystemsIntakeOpen";
   const intakeHash = "#project-discovery";
 
@@ -492,6 +501,12 @@
     if (error?.code === "rate_limited") return "There have been several recent attempts. Your answers are still here. Please wait a minute, then try again.";
     if (error?.code === "duplicate_submission") return "This project outline may already have been received. We have not sent it again. Please contact us by email if you would like us to confirm.";
     if (error?.code === "payload") return "We could not prepare the outline for sending. Your answers are still here. Please review the highlighted information and try again.";
+    if (error?.code === "email_delivery" && error?.reference) {
+      const customerSent = error.delivery?.customer === "sent";
+      const internalSent = error.delivery?.internal === "sent";
+      if (customerSent || internalSent) return `We recorded a delivery problem after receiving reference ${error.reference}, so we cannot show a completed confirmation. Please do not send the outline again right now. Contact us and quote this reference so we can check it safely.`;
+      return `We could not complete email delivery for reference ${error.reference}, so your submission is not confirmed. Your answers are still here. Please try again in a few minutes or contact us and quote the reference.`;
+    }
     if (["storage", "email_delivery", "temporary_server"].includes(error?.code)) return "Our submission service is temporarily unavailable. Your answers are still here. Please try again in a few minutes, or contact us by email.";
     if (error?.code === "network") return "The connection was lost before we could confirm delivery. Your answers are still here. Please wait a moment before trying again, or contact us by email.";
     return "We could not send your project outline just now. Your answers are still here. Please try again, or contact us by email.";
@@ -555,21 +570,38 @@
     updateStep();
   });
 
-  printSummaryButton?.addEventListener("click", () => {
-    if (!pendingDocuments?.customerSummaryDocument) return;
+  printConfirmationButton?.addEventListener("click", () => {
+    if (!confirmedReference) return;
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      setMessage("Your browser blocked the print view. Please allow pop-ups for this page and try again.", true);
+      window.alert("Your browser blocked the print view. Please allow pop-ups for this page and try again.");
       return;
     }
     printWindow.opener = null;
-    printWindow.document.open();
-    printWindow.document.write(pendingDocuments.customerSummaryDocument.printableHtml);
-    printWindow.document.close();
-    printWindow.addEventListener("load", () => {
-      printWindow.focus();
-      printWindow.print();
-    }, { once: true });
+    const title = printWindow.document.createElement("title");
+    const style = printWindow.document.createElement("style");
+    const main = printWindow.document.createElement("main");
+    title.textContent = `Lang Systems submission confirmation ${confirmedReference}`;
+    style.textContent = "body{max-width:760px;margin:40px auto;padding:0 24px;color:#17212b;font:16px/1.55 Arial,sans-serif}h1{font-size:28px}h2{font-size:20px;margin-top:28px}.reference{padding:18px;border:2px solid #5d25d9;border-radius:8px;font-size:20px}.notice{padding:16px;background:#f1f4f8;border-left:4px solid #5d25d9}@media print{body{margin:0;max-width:none}}";
+    const heading = printWindow.document.createElement("h1");
+    const received = printWindow.document.createElement("p");
+    const reference = printWindow.document.createElement("p");
+    const nextHeading = printWindow.document.createElement("h2");
+    const nextSteps = printWindow.document.createElement("p");
+    const notice = printWindow.document.createElement("p");
+    heading.textContent = "Project outline received";
+    received.textContent = `Lang Systems received the project outline for ${valueOf("business_name")}.`;
+    reference.className = "reference";
+    reference.textContent = `Submission reference: ${confirmedReference}`;
+    nextHeading.textContent = "What happens next";
+    nextSteps.textContent = "Lang Systems will review the information and may ask follow-up questions. Scope, pricing and timing must be reviewed and agreed separately.";
+    notice.className = "notice";
+    notice.textContent = "This submission is an enquiry, not a binding agreement. It does not accept the project, approve scope or pricing, start development, or guarantee a completion date.";
+    main.append(heading, received, reference, nextHeading, nextSteps, notice);
+    printWindow.document.head.append(title, style);
+    printWindow.document.body.append(main);
+    printWindow.focus();
+    printWindow.print();
   });
 
   downloadSummaryButton?.addEventListener("click", () => {
@@ -617,10 +649,24 @@
     submissionController = new AbortController();
 
     try {
-      await submissionService.submit({ endpoint: form.action, formData, signal: submissionController.signal });
+      const result = await submissionService.submit({ endpoint: form.action, formData, signal: submissionController.signal });
+      if (!result.reference || result.reference !== pendingDocuments.projectReference) {
+        throw new Error("The confirmed submission reference did not match the prepared outline.");
+      }
 
       submissionComplete = true;
+      confirmedReference = result.reference;
       confirmationEmail.textContent = valueOf("email");
+      confirmationBusiness.textContent = valueOf("business_name");
+      confirmationReference.textContent = confirmedReference;
+      confirmationSummaryText.textContent = pendingDocuments.customerSummary;
+      const correctionSubject = encodeURIComponent(`Correction for project submission ${confirmedReference}`);
+      const contactSubject = encodeURIComponent(`Project submission ${confirmedReference}`);
+      correctionLink.href = `mailto:langsystemsdesign@outlook.com?subject=${correctionSubject}`;
+      contactReferenceLink.href = `mailto:langsystemsdesign@outlook.com?subject=${contactSubject}`;
+      intakeHeaderEyebrow.textContent = "Submission confirmation";
+      intakeHeaderTitle.textContent = "Your project outline has been received.";
+      intakeHeaderDescription.textContent = "Keep your submission reference in case you need to contact us about this enquiry.";
       form.hidden = true;
       dialog.querySelector(".intake-progress").hidden = true;
       successPanel.hidden = false;

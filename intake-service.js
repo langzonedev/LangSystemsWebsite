@@ -2,10 +2,12 @@
   "use strict";
 
   class IntakeSubmissionError extends Error {
-    constructor(message, code, cause) {
+    constructor(message, code, cause, details = {}) {
       super(message, { cause });
       this.name = "IntakeSubmissionError";
       this.code = code;
+      this.reference = typeof details.reference === "string" ? details.reference : "";
+      this.delivery = details.delivery && typeof details.delivery === "object" ? details.delivery : null;
     }
   }
 
@@ -68,7 +70,10 @@
         const providerCode = result && safeCodes.includes(result.code) ? result.code :
           (response.status === 409 ? "duplicate_submission" : response.status === 429 ? "rate_limited" :
             (response.status >= 500 ? "temporary_server" : "rejected"));
-        throw new IntakeSubmissionError("The submission service did not accept the project outline.", providerCode);
+        throw new IntakeSubmissionError("The submission service did not accept the project outline.", providerCode, undefined, {
+          reference: result?.reference,
+          delivery: result?.delivery
+        });
       }
 
       return result;

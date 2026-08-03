@@ -34,6 +34,22 @@ module.exports = (async () => {
   assert.strictEqual((await response.json()).success, true);
   assert.strictEqual(calls.length, 1);
 
+  const partialEndpoint = createIntakeEndpoint({
+    environment: {},
+    deliveryService: { async deliver() {
+      return { reference: "LS-ENDPOINT-TEST", customer: "sent", internal: "failed", complete: false };
+    } }
+  });
+  const partialResponse = await partialEndpoint(new Request("https://api.example.test/api/project-submissions", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ submission, documents, honeypot: "" })
+  }));
+  const partialBody = await partialResponse.json();
+  assert.strictEqual(partialResponse.status, 503);
+  assert.strictEqual(partialBody.success, false);
+  assert.strictEqual(partialBody.reference, "LS-ENDPOINT-TEST");
+  assert.strictEqual(partialBody.delivery.internal, "failed");
+
   const preflight = await endpoint(new Request("https://api.example.test/api/project-submissions", {
     method: "OPTIONS", headers: { Origin: "https://langsystems.com.au", "Access-Control-Request-Method": "POST" }
   }));
