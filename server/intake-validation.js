@@ -58,7 +58,15 @@ function validateRequestBody(body) {
 
   const result = IntakeModel.validateSubmission(submission);
   if (!result.valid) throw new IntakeRequestValidationError(result.errors);
-  return submission;
+  // Rebuild the accepted model so whitespace, line endings, lists, enums and
+  // attachment metadata are normalised at the server trust boundary.
+  const normalised = IntakeModel.createSubmission(submission, {
+    submissionId: submission.submissionMetadata.submissionId,
+    now: submission.submissionMetadata.submittedAt
+  });
+  const normalisedResult = IntakeModel.validateSubmission(normalised);
+  if (!normalisedResult.valid) throw new IntakeRequestValidationError(normalisedResult.errors);
+  return normalised;
 }
 
 function validateUpload(file) {
@@ -66,7 +74,7 @@ function validateUpload(file) {
   const extension = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
   const mimeType = file && typeof file.mimeType === "string" ? file.mimeType.toLowerCase() : "";
   const size = file && file.sizeBytes;
-  if (!name || name.length > 255) {
+  if (!name || name.length > 255 || /[\\/]/.test(name) || name === "." || name === "..") {
     throw new IntakeRequestValidationError([{ path: "attachments", code: "invalid_name", message: "This attachment name is not supported." }]);
   }
   if (!ALLOWED_EXTENSIONS.includes(extension)) {
@@ -115,6 +123,20 @@ function safeErrorResponse(error) {
     storage: "storage",
     email_delivery: "email_delivery"
   };
+  if (error instanceof IntakeRequestValidationError) {
+    const attachmentError = error.validationErrors.some((item) => item.path === "attachments" || item.path.startsWith("attachments["));
+    const customerError = error.validationErrors.some((item) => item.path.startsWith("customerAnswers.customer."));
+    return {
+      statusCode: 400,
+      body: {
+        success: false,
+        code: attachmentError ? "unsupported_attachment" : customerError ? "invalid_customer" : "invalid_submission",
+        message: attachmentError
+          ? "One or more attachment references are not supported."
+          : customerError ? "Please check your contact information and try again." : "Please review the project information and try again."
+      }
+    };
+  }
   const messages = {
     400: "Please review the information and try again.",
     409: "This project outline has already been received.",

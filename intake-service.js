@@ -60,13 +60,17 @@
       const response = await fetch(url.href, {
         method: "POST",
         body: JSON.stringify(payload),
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "Idempotency-Key": payload.submission.submissionMetadata.submissionId
+        },
         signal: controller.signal
       });
       const result = await response.json().catch(() => null);
 
-      if (!response.ok || !result || result.success !== true || typeof result.reference !== "string") {
-        const safeCodes = ["duplicate_submission", "storage", "email_delivery", "temporary_server", "rate_limited"];
+      if (!response.ok || !result || result.success !== true || typeof (result.submissionReference || result.reference) !== "string") {
+        const safeCodes = ["duplicate_submission", "storage", "email_delivery", "temporary_server", "rate_limited", "invalid_customer", "invalid_submission", "unsupported_attachment"];
         const providerCode = result && safeCodes.includes(result.code) ? result.code :
           ([404, 405].includes(response.status) ? "configuration" : response.status === 409 ? "duplicate_submission" : response.status === 429 ? "rate_limited" :
             (response.status >= 500 ? "temporary_server" : "rejected"));
@@ -76,6 +80,7 @@
         });
       }
 
+      result.reference = result.submissionReference || result.reference;
       return result;
     } catch (error) {
       if (error instanceof IntakeSubmissionError) throw error;

@@ -1,0 +1,13 @@
+{
+  "name": "lang-systems-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lang Systems website and production project intake service",
+  "scripts": {
+    "start": "node server/local-intake-server.js",
+    "test": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/intake-contract.Tests.ps1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

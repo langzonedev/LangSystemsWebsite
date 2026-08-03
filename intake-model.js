@@ -32,7 +32,7 @@
 
   function text(value, maximum) {
     if (value === undefined || value === null) return null;
-    var normalised = String(value).replace(/\r\n?/g, "\n").trim();
+    var normalised = String(value).replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").trim();
     if (!normalised) return null;
     return normalised.slice(0, maximum || MAX_TEXT);
   }

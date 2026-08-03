@@ -9,6 +9,7 @@ const { createFileSubmissionStore } = require("./submission-store.js");
 const { createInternalSubmissionsEndpoint } = require("./internal-submissions-endpoint.js");
 
 const port = Number(process.env.PORT || 8787);
+const host = process.env.HOST || (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
 const publicRoot = path.resolve(__dirname, "..");
 if (process.env.NODE_ENV === "production" && !process.env.INTAKE_ADMIN_TOKEN) throw new Error("Production requires INTAKE_ADMIN_TOKEN for internal retrieval.");
 const submissionStore = process.env.INTAKE_STORAGE_DIR ? createFileSubmissionStore(process.env.INTAKE_STORAGE_DIR, { publicRoot }) : undefined;
@@ -39,8 +40,13 @@ async function serveStatic(incoming, outgoing) {
   }
 }
 
-http.createServer(async (incoming, outgoing) => {
+const server = http.createServer(async (incoming, outgoing) => {
   const parsedUrl = new URL(incoming.url, `http://127.0.0.1:${port}`);
+  if (parsedUrl.pathname === "/healthz" && incoming.method === "GET") {
+    outgoing.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+    outgoing.end(JSON.stringify({ status: "ok" }));
+    return;
+  }
   const internalMatch = parsedUrl.pathname.match(/^\/api\/internal\/project-submissions\/([A-Za-z0-9][A-Za-z0-9._-]{5,99})(?:\/documents\/([A-Za-z]+))?$/);
   if (internalMatch) {
     if (!handleInternal) {
@@ -75,6 +81,15 @@ http.createServer(async (incoming, outgoing) => {
   const response = await handle(request);
   outgoing.writeHead(response.status, Object.fromEntries(response.headers));
   outgoing.end(Buffer.from(await response.arrayBuffer()));
-}).listen(port, "127.0.0.1", () => {
-  process.stdout.write(`Lang Systems website and intake API listening on http://127.0.0.1:${port}\nEmail mode: ${process.env.INTAKE_EMAIL_MODE || "mock (development default)"}\n`);
 });
+
+server.listen(port, host, () => {
+  process.stdout.write(`Lang Systems website and intake API listening on ${host}:${port}\nEmail mode: ${process.env.INTAKE_EMAIL_MODE || "mock (development default)"}\n`);
+});
+
+function shutdown() {
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+process.once("SIGTERM", shutdown);
+process.once("SIGINT", shutdown);

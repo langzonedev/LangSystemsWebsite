@@ -37,11 +37,19 @@ module.exports = (async () => {
     }, { submissionId: "LS-SECURE-STORAGE-TEST" });
     const documents = { customerSummary: "Private generated summary", technicalSpecification: "Specification", internalBrief: "Brief", clarificationQuestions: "Question?", warnings: "" };
 
-    const stored = await store.create(submission, documents);
+    const stored = await store.create(submission, documents, {
+      internalId: "2bf765c6-6e64-47b6-83a6-45a0aa927040",
+      idempotencyKeyHash: "b".repeat(64), payloadFingerprint: "a".repeat(64), originalSubmission: submission
+    });
+    assert.strictEqual(stored.created, true);
+    assert.strictEqual(stored.internalId, "2bf765c6-6e64-47b6-83a6-45a0aa927040");
     assert.strictEqual(stored.originalSubmission.customerAnswers.customer.emailAddress, "private@example.com");
     assert.strictEqual(stored.attachmentMetadata[0].originalFilename, "outline.pdf");
     assert.ok(!stored.generatedDocumentReferences.customerSummary.includes("customerSummary"), "Stored document names must be random.");
     assert.strictEqual(await store.getDocument(stored.reference, "customerSummary"), "Private generated summary");
+    const replay = await store.create(submission, documents, { payloadFingerprint: "a".repeat(64) });
+    assert.strictEqual(replay.created, false);
+    await assert.rejects(store.create(submission, documents, { payloadFingerprint: "c".repeat(64) }), (error) => error.code === "duplicate_submission" && error.statusCode === 409);
     await store.recordDelivery(stored.reference, { complete: false, customer: "sent", internal: "failed" });
     assert.deepStrictEqual((await store.get(stored.reference)).processingErrors, ["email_delivery_failed"]);
 

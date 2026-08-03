@@ -735,9 +735,7 @@
 
     try {
       const result = await submissionService.submit({ endpoint: form.action, formData, signal: submissionController.signal });
-      if (!result.reference || result.reference !== pendingDocuments.projectReference) {
-        throw new Error("The confirmed submission reference did not match the prepared outline.");
-      }
+      if (!result.reference) throw new Error("The submission service did not return a reference.");
 
       submissionComplete = true;
       if (draftSaveTimer !== null) window.clearTimeout(draftSaveTimer);

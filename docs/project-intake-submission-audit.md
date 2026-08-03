@@ -26,16 +26,18 @@ The client repairs add an authoritative `[hidden]` rule, bounded navigation, fai
 6. Headers are `Accept: application/json` and `Content-Type: application/json`; cross-origin deployment requires CORS preflight.
 7. The intended route is `createIntakeEndpoint()` in `server/intake-endpoint.js`; only the local helper mounts it.
 8. The route checks exact origin, handles `OPTIONS`, requires POST/JSON, limits body size, parses JSON, accepts honeypots silently, validates schema and attachment metadata, and applies rate/duplicate guards.
-9. The reference is browser-generated and server-validated. The server echoes it rather than replacing it.
-10. The submission store creates a private record before email. The file adapter hashes the reference and randomises document filenames; retries reuse an existing record.
+9. The browser-generated value is sent as an idempotency key. The server derives an opaque public reference with a secret HMAC and generates a separate internal UUID.
+10. The submission store creates a private record before email. It retains the normalised original submission, hashes the public reference for its path, randomises document filenames, and rejects conflicting reuse of an idempotency key.
 11. Email delivery sends the customer confirmation first and internal notification second, recording recipients independently.
 12. Live delivery uses the configured HTTPS provider, durable delivery status, and per-recipient idempotency keys.
-13. Complete delivery returns HTTP 200 `{ success: true, reference, delivery }`. Partial delivery returns 503 with safe delivery states. Other failures return bounded codes without customer data.
-14. The frontend accepts only explicit success with the exact prepared reference. Otherwise it maps safe errors, preserves the prepared reference for in-page retry, restores controls, clears sending status, and retains the draft in the tab.
+13. A new complete submission returns HTTP 201; an idempotent replay returns 200. Partial email processing returns 202 success because storage is complete. Responses include `submissionReference`, `receivedAt`, `processingStatus`, and independent email states.
+14. The frontend accepts only explicit success with a server reference and displays that reference in its confirmation. Rejected requests map to safe errors, restore controls, clear sending status, and retain the draft on the device.
 
-## Production correction required
+## Production correction implemented
 
-Deploy the existing handler on a persistent Node service or add a platform-specific serverless adapter that converts the platform request to the standard `Request` expected by `createIntakeEndpoint()`. Do not expose the local helper directly. Proxy the service behind `/api/project-submissions`, or inject its HTTPS URL into the endpoint meta/config value during deployment.
+`render.yaml` now deploys the static site and existing Node handler together. The same-origin `/api/project-submissions` route is included in production, and a one-instance persistent disk supports the atomic file stores. The server binds to the platform host in production, exposes `/healthz`, handles graceful shutdown, and remains loopback-only by default in development.
+
+The endpoint normalises input, strips unsafe control characters, validates attachment references, derives a non-sequential public reference from a server secret and idempotency key, creates a separate internal UUID, and fingerprints content to reject conflicting key reuse. Concurrent matching requests share one processing operation. Storage completes before email. Complete processing returns structured `201`/`200` JSON; partial email processing returns structured `202` success with independent recipient states because the enquiry is safely stored.
 
 Required production configuration:
 
@@ -45,8 +47,9 @@ Required production configuration:
 - exact `INTAKE_ALLOWED_ORIGIN=https://langsystems.com.au` for cross-origin hosting
 - absolute durable private `INTAKE_STATUS_FILE` and `INTAKE_STORAGE_DIR`, or equivalent injected durable adapters
 - `INTAKE_ADMIN_TOKEN` of at least 32 random characters if internal retrieval is deployed
+- `INTAKE_REFERENCE_SECRET` of at least 32 random characters
 
-Secrets belong in the host secret manager, never HTML, source, logs, or analytics. The bundled file adapters require one persistent instance/volume; multi-instance or ephemeral serverless hosting needs durable atomic adapters. GitHub Pages alone cannot meet these requirements.
+Secrets belong in the host secret manager, never HTML, source, logs, or analytics. The Blueprint generates the admin and reference secrets and leaves `RESEND_API_KEY` for secure operator entry. The bundled file adapters require the declared single persistent instance/volume; multi-instance or ephemeral serverless hosting needs durable atomic adapters. GitHub Pages alone cannot meet these requirements.
 
 ## Production test plan
 
@@ -54,5 +57,5 @@ Secrets belong in the host secret manager, never HTML, source, logs, or analytic
 2. In local mock mode, complete all eight steps and verify a matching success reference. Test consent, invalid/oversized files, timeout, offline, rapid repeat, non-JSON/404, and refresh recovery; files must be selected again.
 3. In staging, verify routing or CORS preflight, method/content-type/size/origin rejection, storage-before-delivery, and responses without payload logging.
 4. Submit non-sensitive live data. Confirm private storage, both emails, matching references, delivery status, and confirmation UI, including provider events and junk folders.
-5. Force one recipient failure, confirm 503 and the partial-delivery message, restart the service, then retry the same reference and prove only the failed recipient sends.
+5. Force one recipient failure, confirm `202` acceptance with `email_processing_failed`, restart the service, then retry the same idempotency key and prove only the failed recipient sends.
 6. Verify keyboard/screen-reader announcements, one primary action per step, `Step 8 of 8` on Review, cleared sending status after failure, draft removal after success, and retention/deletion operations.

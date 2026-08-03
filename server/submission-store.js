@@ -72,11 +72,18 @@ function createFileSubmissionStore(rootDirectory, options = {}) {
   }
 
   return Object.freeze({
-    async create(submission, documents) {
+    async create(submission, documents, metadata = {}) {
       return enqueue(async () => {
         const reference = validateReference(submission.submissionMetadata.submissionId);
         const existing = await read(reference);
-        if (existing) return clone(existing);
+        if (existing) {
+          if (metadata.payloadFingerprint && existing.payloadFingerprint && metadata.payloadFingerprint !== existing.payloadFingerprint) {
+            const error = new SubmissionStorageError("duplicate_submission");
+            error.statusCode = 409;
+            throw error;
+          }
+          return Object.assign(clone(existing), { created: false });
+        }
         const location = paths(reference);
         try {
           const generatedDocumentReferences = {};
@@ -90,13 +97,16 @@ function createFileSubmissionStore(rootDirectory, options = {}) {
           const timestamp = now();
           const record = {
             reference,
+            internalId: metadata.internalId || crypto.randomUUID(),
+            idempotencyKeyHash: metadata.idempotencyKeyHash || null,
+            payloadFingerprint: metadata.payloadFingerprint || null,
             submittedAt: submission.submissionMetadata.submittedAt,
             receivedAt: timestamp,
             updatedAt: timestamp,
             processingStatus: "stored",
             schemaVersion: submission.submissionMetadata.schemaVersion,
             templateVersion: submission.submissionMetadata.templateVersion,
-            originalSubmission: clone(submission),
+            originalSubmission: clone(metadata.originalSubmission || submission),
             generatedDocumentReferences,
             emailDelivery: { status: "pending", customer: "pending", internal: "pending", updatedAt: timestamp },
             clarificationStatus: documents.clarificationQuestions && documents.clarificationQuestions.trim() ? "questions_generated" : "not_required",
@@ -106,7 +116,7 @@ function createFileSubmissionStore(rootDirectory, options = {}) {
             audit: [{ at: timestamp, action: "submission_stored" }]
           };
           await atomicWrite(location.record, JSON.stringify(record, null, 2));
-          return clone(record);
+          return Object.assign(clone(record), { created: true });
         } catch (_error) {
           // The verified target is a digest-named child of the configured private root.
           await fs.rm(location.directory, { recursive: true, force: true }).catch(() => undefined);

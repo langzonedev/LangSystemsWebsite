@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: lang-systems-website
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: npm install --ignore-scripts
+    startCommand: npm start
+    healthCheckPath: /healthz
+    numInstances: 1
+    disk:
+      name: lang-systems-intake-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: INTAKE_EMAIL_MODE
+        value: live
+      - key: INTAKE_ALLOWED_ORIGIN
+        value: https://langsystems.com.au
+      - key: INTAKE_STORAGE_DIR
+        value: /var/data/submission-storage
+      - key: INTAKE_STATUS_FILE
+        value: /var/data/delivery-status.json
+      - key: INTAKE_INTERNAL_EMAIL
+        value: langsystemsdesign@outlook.com
+      - key: LANG_SYSTEMS_CONTACT_EMAIL
+        value: langsystemsdesign@outlook.com
+      - key: EMAIL_FROM
+        value: Lang Systems <projects@langsystems.com.au>
+      - key: RESEND_API_KEY
+        sync: false
+      - key: INTAKE_ADMIN_TOKEN
+        generateValue: true
+      - key: INTAKE_REFERENCE_SECRET
+        generateValue: true

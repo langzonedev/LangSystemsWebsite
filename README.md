@@ -21,13 +21,15 @@ integration, workflow automation, and future product development.
 - [Project Intake Submission Workflow Audit](docs/project-intake-submission-audit.md)
 - [Project Scope, Acceptance and Delivery Template Pack](docs/project-scope-acceptance-delivery-templates.md)
 
-## GitHub Pages
+## Hosting
 
-The site is designed to be hosted from the repository root on GitHub Pages.
+The production site and submission API deploy together as one Node web service from
+[`render.yaml`](render.yaml). Serving both from `https://langsystems.com.au` keeps the form on the
+same origin and makes `/api/project-submissions` a production route. The attached persistent disk
+stores submissions and delivery metadata outside the public site directory.
 
-- Temporary URL: `https://langzonedev.github.io/LangSystemsWebsite/`
-- Future domain placeholder: `langsystems.com.au`
-- Contact placeholder: `hello@langsystems.com.au`
+GitHub Pages remains suitable for a static preview, but it cannot host the submission API and is
+not the production target for the discovery wizard.
 
 ## Local Preview
 
@@ -54,13 +56,15 @@ $env:INTAKE_STATUS_FILE="C:\tmp\lang-systems-delivery-status.json"
 node server/local-intake-server.js
 ```
 
-Then open `http://127.0.0.1:8787`. This development server serves the static site and the mock API
-on one origin. It is a local verification helper, not a production web server.
+Then open `http://127.0.0.1:8787`. The entry point serves the static site and API on one origin. It
+binds only to loopback with safe mock delivery by default; the production Blueprint runs the same
+entry point with strict live configuration and a platform network binding.
 
-Production must host the API behind the form's same-origin path, or populate the public
-`lang-systems-intake-endpoint` meta value in `index.html` with an HTTPS API URL during deployment
-(setting `window.LangSystemsConfig.intakeEndpoint` before `intake-service.js` is also supported). A
-cross-origin deployment must set `INTAKE_ALLOWED_ORIGIN` to the exact website origin. Configure:
+Production is declared in `render.yaml`. Create a Render Blueprint from this repository, enter
+`RESEND_API_KEY`, verify the `projects@langsystems.com.au` sender with the email provider, and attach
+the `langsystems.com.au` custom domain. The Blueprint supplies the durable paths, single-instance
+constraint, health check, live mode, exact allowed origin, and generated secrets. For another
+persistent Node host, configure:
 
 - `NODE_ENV=production` and `INTAKE_EMAIL_MODE=live`
 - `RESEND_API_KEY` (or `EMAIL_API_KEY`) and optionally `EMAIL_PROVIDER_URL`
@@ -68,22 +72,28 @@ cross-origin deployment must set `INTAKE_ALLOWED_ORIGIN` to the exact website or
 - an absolute `INTAKE_STATUS_FILE`, or inject a durable status-store adapter
 - an absolute `INTAKE_STORAGE_DIR` outside the public site on platform-encrypted storage
 - a secret `INTAKE_ADMIN_TOKEN` of at least 32 characters
+- a secret `INTAKE_REFERENCE_SECRET` of at least 32 characters
 - optional `INTAKE_REVIEW_BASE_URL` for a secure internal review link
 
 See [.env.example](.env.example) for non-secret examples. Never place real values in that file or
-client-side code. Production refuses to start without explicit live mode, an API key, and durable
-status and submission storage. The status file contains delivery metadata; the separate submission
-storage contains customer answers and generated documents. Restrict both to the service account,
+client-side code. Production refuses to start without explicit live mode, an API key, a reference
+secret, and durable status and submission storage. The status file contains delivery metadata; the
+separate submission storage contains customer answers and generated documents. Restrict both to the service account,
 keep them outside the public website directory, and do not enable request-body logging or tracing.
 The internal API retrieves a known reference and updates a constrained review status; it has no
 public list or customer portal. See [Secure Submission Storage and Internal Retrieval](docs/secure-submission-storage.md)
 for commands, HTTPS/access controls, retention, customer deletion requests, and backup timing.
 
+The response contains a server-generated `submissionReference`, receipt timestamp, processing
+status, and independent customer/internal email states. A stored submission remains successful if
+an email needs a later retry. The browser-generated value is only an idempotency key; it is not the
+public reference or the internal storage identifier.
+
 After deployment, submit one non-sensitive test project and inspect both mailboxes (including junk
-folders), branding, links, and the recorded statuses. To recover a partial failure, use the wizard's
-Retry action while its answers remain open; the same reference is reused and completed recipients
-are not sent again. In-progress answers are stored in the customer's browser local storage on that
-device so a refresh or browser restart can recover the draft. Selected file contents are never
+folders), branding, links, and the recorded statuses. If email processing is partial, the stored
+record and delivery status retain the reference for safe operational follow-up; completed recipients
+are not sent again during an idempotent retry. In-progress answers are stored in the customer's
+browser local storage on that device so a refresh or browser restart can recover the draft. Selected file contents are never
 stored and must be reselected after a refresh. Customers can clear saved answers in the wizard;
 otherwise the draft is removed only after a confirmed submission. If browser recovery is unavailable,
 use the reference and status record for manual follow-up—do not copy customer content into logs or
