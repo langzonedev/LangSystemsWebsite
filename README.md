@@ -15,6 +15,7 @@ integration, workflow automation, and future product development.
 - [Structured Project Intake Data Model](docs/project-intake-data-model.md)
 - [Plain-English Requirements Interpretation Service](docs/requirements-interpretation-service.md)
 - [Internal Technical Requirements Specification Generator](docs/internal-technical-requirements-specification.md)
+- [Internal Project Brief Generator](docs/internal-project-brief.md)
 
 ## GitHub Pages
 

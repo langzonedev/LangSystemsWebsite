@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://langsystems.com.au/schemas/internal-project-brief-1.0.0.json",
+  "title": "Lang Systems internal project brief",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "metadata", "internalStatus", "customerDetails", "businessDetails", "opportunitySummary",
+    "customerProblem", "currentProcess", "desiredOutcome", "essentialFirstReleaseScope",
+    "laterRequirements", "requestedTimeframe", "budgetIndication", "recommendedDeliveryModel",
+    "reusePotential", "intellectualPropertyConsiderations", "majorTechnicalRisks",
+    "majorCommercialRisks", "importantAssumptions", "missingInformation",
+    "contradictoryInformation", "recommendedClarificationQuestions", "estimatedComplexity",
+    "readiness", "suggestedNextAction", "renderedText"
+  ],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["schemaVersion", "templateVersion", "generatedAt", "submissionIdentifier", "submissionDate", "classification", "notice", "manualReviewRequired"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "templateVersion": { "const": "1.0.0" },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "submissionIdentifier": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "submissionDate": { "type": "string", "format": "date-time" },
+        "classification": { "const": "INTERNAL - Lang Systems authorised personnel only" },
+        "notice": { "const": "Internal decision-support brief for manual review. It is not customer-facing, a quote, scope approval, project approval, or permission to begin development." },
+        "manualReviewRequired": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "internalStatus": { "enum": ["Ready for initial review", "Clarification required", "Not enough information to estimate", "Suitable for bespoke-build evaluation", "Suitable for licensed-product evaluation", "Potential co-funded opportunity", "Not currently suitable", "Manual commercial review required"] },
+    "customerDetails": { "$ref": "#/$defs/customerDetails" },
+    "businessDetails": { "$ref": "#/$defs/businessDetails" },
+    "opportunitySummary": { "$ref": "#/$defs/assessment" },
+    "customerProblem": { "$ref": "#/$defs/evidence" },
+    "currentProcess": { "$ref": "#/$defs/evidence" },
+    "desiredOutcome": { "$ref": "#/$defs/evidence" },
+    "essentialFirstReleaseScope": { "$ref": "#/$defs/evidence" },
+    "laterRequirements": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidence" } },
+    "requestedTimeframe": { "$ref": "#/$defs/assessment" },
+    "budgetIndication": { "$ref": "#/$defs/evidence" },
+    "recommendedDeliveryModel": { "$ref": "#/$defs/assessment" },
+    "reusePotential": { "$ref": "#/$defs/assessment" },
+    "intellectualPropertyConsiderations": { "$ref": "#/$defs/assessments" },
+    "majorTechnicalRisks": { "$ref": "#/$defs/assessments" },
+    "majorCommercialRisks": { "$ref": "#/$defs/assessments" },
+    "importantAssumptions": { "$ref": "#/$defs/assessments" },
+    "missingInformation": { "$ref": "#/$defs/texts" },
+    "contradictoryInformation": { "$ref": "#/$defs/texts" },
+    "recommendedClarificationQuestions": { "$ref": "#/$defs/texts" },
+    "estimatedComplexity": { "$ref": "#/$defs/assessment" },
+    "readiness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["estimation", "scopeApproval", "development"],
+      "properties": { "estimation": { "$ref": "#/$defs/readiness" }, "scopeApproval": { "$ref": "#/$defs/readiness" }, "development": { "$ref": "#/$defs/readiness" } }
+    },
+    "suggestedNextAction": { "$ref": "#/$defs/assessment" },
+    "renderedText": { "type": "string", "minLength": 1, "maxLength": 200000 }
+  },
+  "$defs": {
+    "sourcePaths": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^customerAnswers\\." } },
+    "evidence": { "type": "object", "additionalProperties": false, "required": ["value", "basis", "sourcePaths"], "properties": { "value": { "type": "string", "minLength": 1 }, "basis": { "enum": ["customer_evidence", "missing"] }, "sourcePaths": { "$ref": "#/$defs/sourcePaths" } } },
+    "assessment": { "type": "object", "additionalProperties": false, "required": ["value", "basis", "reasons", "sourcePaths"], "properties": { "value": { "type": "string", "minLength": 1 }, "basis": { "enum": ["customer_evidence", "inference", "recommendation"] }, "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }, "sourcePaths": { "$ref": "#/$defs/sourcePaths" } } },
+    "assessments": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/assessment" } },
+    "texts": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "readiness": { "type": "object", "additionalProperties": false, "required": ["status", "reasons"], "properties": { "status": { "enum": ["ready", "not_ready", "manual_review_required"] }, "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } } },
+    "customerDetails": { "type": "object", "additionalProperties": false, "required": ["name", "emailAddress", "phoneNumber"], "properties": { "name": { "$ref": "#/$defs/evidence" }, "emailAddress": { "$ref": "#/$defs/evidence" }, "phoneNumber": { "$ref": "#/$defs/evidence" } } },
+    "businessDetails": { "type": "object", "additionalProperties": false, "required": ["name", "description"], "properties": { "name": { "$ref": "#/$defs/evidence" }, "description": { "$ref": "#/$defs/evidence" } } }
+  }
+}

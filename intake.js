@@ -276,13 +276,6 @@
     addReviewItem("Complete when", valueOf("acceptance_criteria"), 6, true);
   }
 
-  function section(title, rows) {
-    const content = rows
-      .map(([label, value]) => `${label}: ${value || "Not provided"}`)
-      .join("\n");
-    return `${title}\n${"-".repeat(title.length)}\n${content}`;
-  }
-
   function technicalSection(title, items) {
     const content = items.map((item) => {
       const source = item.source ? ` (Source: ${item.source})` : "";
@@ -436,31 +429,7 @@
       ])
     ].join("\n\n");
 
-    const internalBrief = [
-      `Project reference: ${projectReference}`,
-      section("Lead", [
-        ["Contact", valueOf("contact_name")],
-        ["Email", valueOf("email")],
-        ["Phone", valueOf("phone")],
-        ["Organisation", valueOf("business_name")]
-      ]),
-      section("Commercial fit", [
-        ["Customer preference", valueOf("delivery_model")],
-        ["Budget expectation", valueOf("budget")],
-        ["Timing", valueOf("timing")],
-        ["Timing driver", valueOf("timing_context")],
-        ["Day-to-day owner", valueOf("day_to_day_owner")],
-        ["Support expectation", valueOf("ongoing_support")]
-      ]),
-      section("Discovery assessment", [
-        ["Problem", valueOf("problem")],
-        ["Business impact", valueOf("problem_impact")],
-        ["Outcome", valueOf("desired_outcome")],
-        ["First release", valueOf("first_release")],
-        ["Additional notes", valueOf("additional_notes")]
-      ]),
-      section("Recommended next action", [["Action", "Review the generated requirements and open questions, then schedule clarification before estimating or agreeing scope"]])
-    ].join("\n\n");
+    const internalBrief = window.LangSystemsInternalProjectBrief.buildBrief(structuredProject);
 
     return {
       projectReference,
@@ -468,7 +437,7 @@
       customerSummaryDocument: generatedCustomerSummary,
       structuredProject,
       technicalRequirements,
-      internalBrief,
+      internalBrief: internalBrief.renderedText,
       clarificationQuestions: openQuestions.length ? openQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n") : "No automatic gaps identified; confirm all assumptions during discovery.",
       clarificationQuestionItems: openQuestions
     };

@@ -12,6 +12,8 @@ $requirementsPromptPath = Join-Path $projectRoot "server/requirements-interpreta
 $requirementsSchemaPath = Join-Path $projectRoot "server/requirements-interpretation.schema.json"
 $technicalSpecification = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/technical-specification.js")
 $technicalSpecificationSchemaPath = Join-Path $projectRoot "server/technical-specification.schema.json"
+$internalProjectBrief = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "internal-project-brief.js")
+$internalProjectBriefSchemaPath = Join-Path $projectRoot "server/internal-project-brief.schema.json"
 $questionSetPath = Join-Path $projectRoot "docs/client-discovery-question-set.md"
 $questionSet = Get-Content -Raw -Encoding UTF8 $questionSetPath
 
@@ -37,7 +39,7 @@ Assert-True ($index -match 'role="progressbar"' -and $index -match 'aria-valuete
 Assert-True ($index -match 'data-review-summary' -and $controller -match 'data-edit-step') "The review step must offer direct correction controls."
 Assert-True ($controller -match 'LangSystemsIntakeSubmission' -and $controller -notmatch 'await\s+fetch\s*\(') "Submission transport must stay behind the service boundary."
 Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"') "The submission service must reject insecure endpoints."
-Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="customer-summary\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model and customer summary generator must load before submission transport."
+Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="internal-project-brief\.js"></script>\s*<script src="customer-summary\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model and internal/customer document generators must load before submission transport."
 Assert-True ($controller -match 'intakeModel\.serialiseSubmission' -and $service -match 'LangSystemsIntakeModel\.parseSubmission') "Frontend generation and transport must enforce the shared model contract."
 Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"3\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
 Assert-True ($serverValidation -match 'IntakeModel\.validateSubmission' -and $serverValidation -notmatch 'console\.') "The server validation boundary must use the shared contract without logging submissions."
@@ -50,6 +52,8 @@ Assert-True ($serverValidation -match 'MAX_REQUEST_BYTES' -and $serverValidation
 Assert-True ((Test-Path $requirementsPromptPath) -and (Test-Path $requirementsSchemaPath)) "The versioned requirements prompt or schema is missing."
 Assert-True ($requirementsInterpreter -match 'buildModelInput' -and $requirementsInterpreter -match 'deterministic_fallback' -and $requirementsInterpreter -notmatch 'console\.') "The requirements interpreter must minimise model input, recover deterministically, and avoid logging customer content."
 Assert-True ((Test-Path $technicalSpecificationSchemaPath) -and $technicalSpecification -match 'sourceSubmissionId' -and $technicalSpecification -match 'customerApproved' -and $technicalSpecification -notmatch 'console\.') "The internal technical specification must be versioned, traceable, non-authoritative, and must not log customer content."
+Assert-True ((Test-Path $internalProjectBriefSchemaPath) -and $internalProjectBrief -match 'manualReviewRequired' -and $internalProjectBrief -match 'customer_evidence' -and $internalProjectBrief -match 'not a reason to reject' -and $internalProjectBrief -notmatch 'console\.') "The internal project brief must be structured, traceable, manually reviewed, budget-safe, and must not log customer content."
+Assert-True ($controller -match 'LangSystemsInternalProjectBrief\.buildBrief\(structuredProject\)' -and $controller -match 'lang_systems_project_brief_internal' -and $controller -notmatch 'internalStatus.*_autoresponse') "The validated internal brief must feed only the internal email output."
 Assert-True ($customerSummary -match 'Scope, price and timing are not final' -and $customerSummary -match 'printableHtml' -and $customerSummary -notmatch 'console\.') "The customer summary must include safeguards, printable output, and no customer logging."
 Assert-True ($controller -match 'customerSummaryGenerator\.generate' -and $controller -match 'formData\.set\("_autoresponse", documents\.customerSummary\)' -and $index -match 'data-print-summary' -and $index -match 'data-download-summary') "The generated summary must feed customer email, print, and download outputs."
 Assert-True ($controller -match 'INTERNAL TECHNICAL REQUIREMENTS SPECIFICATION' -and $controller -match 'Essential first-release requirements' -and $controller -match 'Recommended investigation tasks' -and $controller -match '\[\$\{item\.status\.toUpperCase\(\)\}\]') "The internal email must include the complete, status-labelled technical specification."
@@ -110,6 +114,10 @@ $modelTestOutput = (& cscript //NoLogo //E:JScript (Join-Path $PSScriptRoot "int
 Assert-True ($LASTEXITCODE -eq 0 -and $modelTestOutput -match "Intake model validation and serialisation checks passed\." -and $modelTestOutput -notmatch "runtime error") "Intake model tests failed: $modelTestOutput"
 Write-Output $modelTestOutput
 
+$briefBrowserTestOutput = (& cscript //NoLogo //E:JScript (Join-Path $PSScriptRoot "internal-project-brief-browser.Tests.js") 2>&1) -join "`n"
+Assert-True ($LASTEXITCODE -eq 0 -and $briefBrowserTestOutput -match "Internal project brief browser generation, evidence, readiness, and budget checks passed\." -and $briefBrowserTestOutput -notmatch "runtime error") "Internal project brief browser tests failed: $briefBrowserTestOutput"
+Write-Output $briefBrowserTestOutput
+
 $node = Get-Command node -ErrorAction SilentlyContinue
 if ($node) {
   $serverTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-validation.Tests.js") 2>&1) -join "`n"
@@ -124,6 +132,9 @@ if ($node) {
   $technicalSpecificationTestOutput = (& $node.Source (Join-Path $PSScriptRoot "technical-specification.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $technicalSpecificationTestOutput -match "Technical specification sections, traceability, validation, privacy, and fallback checks passed\.") "Technical specification tests failed: $technicalSpecificationTestOutput"
   Write-Output $technicalSpecificationTestOutput
+  $internalProjectBriefTestOutput = (& $node.Source (Join-Path $PSScriptRoot "internal-project-brief.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $internalProjectBriefTestOutput -match "Internal project brief structure, recommendations, readiness, privacy, validation, and budget checks passed\.") "Internal project brief tests failed: $internalProjectBriefTestOutput"
+  Write-Output $internalProjectBriefTestOutput
   $summaryTestOutput = (& $node.Source (Join-Path $PSScriptRoot "customer-summary.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $summaryTestOutput -match "Customer summary text, HTML, print, privacy, and safeguard checks passed\.") "Customer summary tests failed: $summaryTestOutput"
   Write-Output $summaryTestOutput
