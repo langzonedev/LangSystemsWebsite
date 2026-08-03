@@ -39,6 +39,18 @@ module.exports = (async () => {
   const accepted = await window.LangSystemsIntakeSubmission.submit({ endpoint: "https://form.example.test/intake", formData });
   assert.strictEqual(accepted.success, true);
 
+  global.fetch = async () => ({ ok: true, status: 202, json: async () => ({
+    success: true,
+    submissionReference: "LS-SERVICE-TEST",
+    processingStatus: "email_processing_failed",
+    customerEmailStatus: "failed",
+    internalEmailStatus: "sent"
+  }) });
+  const partiallyDelivered = await window.LangSystemsIntakeSubmission.submit({ endpoint: "https://form.example.test/intake", formData });
+  assert.strictEqual(partiallyDelivered.reference, "LS-SERVICE-TEST");
+  assert.strictEqual(partiallyDelivered.processingStatus, "email_processing_failed");
+  assert.strictEqual(partiallyDelivered.customerEmailStatus, "failed");
+
   global.fetch = async () => ({ ok: false, status: 503, json: async () => ({ success: false, code: "email_delivery" }) });
   await assert.rejects(
     window.LangSystemsIntakeSubmission.submit({ endpoint: "https://form.example.test/intake", formData }),

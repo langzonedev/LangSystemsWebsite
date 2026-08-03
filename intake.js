@@ -5,8 +5,9 @@
   const intakeModel = window.LangSystemsIntakeModel;
   const customerSummaryGenerator = window.LangSystemsCustomerSummary;
   const intakeDraft = window.LangSystemsIntakeDraft;
+  const submissionStateApi = window.LangSystemsSubmissionState;
 
-  if (!dialog || !form || !submissionService || !intakeModel || !customerSummaryGenerator || !intakeDraft || typeof dialog.showModal !== "function") return;
+  if (!dialog || !form || !submissionService || !intakeModel || !customerSummaryGenerator || !intakeDraft || !submissionStateApi || typeof dialog.showModal !== "function") return;
 
   // DOM order is the single source of truth for progress and navigation, including Review.
   const wizardSteps = Object.freeze([...form.querySelectorAll("[data-step]")]);
@@ -36,6 +37,7 @@
   const confirmationEmail = dialog.querySelector("[data-confirmation-email]");
   const confirmationBusiness = dialog.querySelector("[data-confirmation-business]");
   const confirmationReference = dialog.querySelector("[data-confirmation-reference]");
+  const confirmationDeliveryNote = dialog.querySelector("[data-confirmation-delivery-note]");
   const confirmationSummaryText = dialog.querySelector("[data-confirmation-summary-text]");
   const correctionLink = dialog.querySelector("[data-correction-link]");
   const contactReferenceLink = dialog.querySelector("[data-contact-reference]");
@@ -53,6 +55,8 @@
   let confirmedReference = "";
   let draftSaveTimer = null;
   let rememberedFileCount = 0;
+  const submissionState = submissionStateApi.create();
+  let retryingSubmission = false;
   const historyStateKey = "langSystemsIntakeOpen";
   const intakeHash = "#project-discovery";
 
@@ -115,9 +119,51 @@
     return String(field.value || "").trim();
   }
 
-  function setMessage(text = "", isError = false) {
+  function setMessage(text = "", isError = false, isLoading = false) {
     message.textContent = text;
     message.classList.toggle("error", isError);
+    message.classList.toggle("loading", isLoading);
+  }
+
+  function renderSubmissionState() {
+    const state = submissionState.state;
+    const busy = [
+      submissionStateApi.states.VALIDATING,
+      submissionStateApi.states.SUBMITTING,
+      submissionStateApi.states.RECEIVED,
+      submissionStateApi.states.PROCESSING
+    ].includes(state);
+
+    form.dataset.submissionState = state;
+    backButton.disabled = busy;
+    submitButton.disabled = busy;
+    if (busy) form.setAttribute("aria-busy", "true");
+    else form.removeAttribute("aria-busy");
+
+    if (state === submissionStateApi.states.VALIDATING) {
+      errorSummary.replaceChildren();
+      errorSummary.hidden = true;
+      submitButton.textContent = retryingSubmission ? "Retrying…" : "Send project outline";
+      setMessage("Checking your answers…", false, true);
+    } else if (state === submissionStateApi.states.SUBMITTING) {
+      submitButton.textContent = retryingSubmission ? "Retrying…" : "Sending…";
+      setMessage(retryingSubmission ? "Retrying your project outline. Sending your project outline securely…" : "Sending your project outline securely…", false, true);
+    } else if (state === submissionStateApi.states.RECEIVED) {
+      setMessage("Your project outline has been received securely…", false, true);
+    } else if (state === submissionStateApi.states.PROCESSING) {
+      setMessage("Processing your project outline…", false, true);
+    } else if (state === submissionStateApi.states.FAILED) {
+      submitButton.textContent = "Try again";
+      setMessage();
+    } else if (state === submissionStateApi.states.IDLE) {
+      submitButton.textContent = "Send project outline";
+      setMessage();
+    }
+  }
+
+  function moveSubmissionState(event) {
+    submissionState.transition(event);
+    renderSubmissionState();
   }
 
   function errorId(field) {
@@ -559,6 +605,7 @@
   }
 
   wireFieldDescriptions();
+  renderSubmissionState();
   const restoredDraft = intakeDraft.restore(window, form, finalStepIndex);
   if (restoredDraft) {
     currentStep = restoredDraft.currentStep;
@@ -608,6 +655,7 @@
   });
 
   backButton.addEventListener("click", () => {
+    if (submissionState.state === submissionStateApi.states.FAILED) moveSubmissionState("edit");
     currentStep = Math.max(0, currentStep - 1);
     saveDraftNow();
     updateStep();
@@ -616,6 +664,7 @@
   reviewSummary.addEventListener("click", (event) => {
     const editButton = event.target.closest("[data-edit-step]");
     if (!editButton) return;
+    if (submissionState.state === submissionStateApi.states.FAILED) moveSubmissionState("edit");
     currentStep = Number(editButton.dataset.editStep);
     saveDraftNow();
     updateStep();
@@ -672,6 +721,8 @@
   form.addEventListener("input", (event) => {
     formDirty = true;
     pendingDocuments = null;
+    retryingSubmission = false;
+    if (submissionState.state === submissionStateApi.states.FAILED) moveSubmissionState("edit");
     clearFieldError(event.target);
     errorSummary.hidden = true;
     setMessage();
@@ -680,6 +731,9 @@
 
   form.addEventListener("change", (event) => {
     formDirty = true;
+    pendingDocuments = null;
+    retryingSubmission = false;
+    if (submissionState.state === submissionStateApi.states.FAILED) moveSubmissionState("edit");
     if (event.target.name === "attachments") {
       rememberedFileCount = 0;
       draftFileNote.hidden = true;
@@ -700,6 +754,8 @@
     formDirty = false;
     rememberedFileCount = 0;
     pendingDocuments = null;
+    retryingSubmission = false;
+    if (submissionState.state === submissionStateApi.states.FAILED) moveSubmissionState("edit");
     errorSummary.replaceChildren();
     errorSummary.hidden = true;
     draftStatus.textContent = "Your saved answers have been cleared.";
@@ -712,35 +768,35 @@
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (submissionComplete || submissionInProgress || !validateAllSteps()) return;
+    if (submissionComplete || submissionInProgress) return;
+    retryingSubmission = submissionState.state === submissionStateApi.states.FAILED;
+    moveSubmissionState(retryingSubmission ? "retry" : "validate");
+    if (!validateAllSteps()) {
+      moveSubmissionState("invalid");
+      return;
+    }
     saveDraftNow();
     const now = Date.now();
     if (now - lastAttemptAt < 2000) {
+      moveSubmissionState("submit");
+      moveSubmissionState("fail");
       showSubmissionFailure("Please wait a moment before trying again. Your answers are still here.");
       return;
     }
     lastAttemptAt = now;
     submissionInProgress = true;
-
-    submitButton.disabled = true;
-    submitButton.textContent = "Sending…";
-    backButton.disabled = true;
-    form.setAttribute("aria-busy", "true");
-    setMessage("Sending your project outline securely…");
-
-    const formData = new FormData(form);
-    pendingDocuments ||= buildDocuments();
-    appendGenerated(formData, pendingDocuments);
-    submissionController = new AbortController();
+    moveSubmissionState("submit");
 
     try {
+      const formData = new FormData(form);
+      pendingDocuments ||= buildDocuments();
+      appendGenerated(formData, pendingDocuments);
+      submissionController = new AbortController();
       const result = await submissionService.submit({ endpoint: form.action, formData, signal: submissionController.signal });
       if (!result.reference) throw new Error("The submission service did not return a reference.");
+      moveSubmissionState("received");
+      moveSubmissionState("process");
 
-      submissionComplete = true;
-      if (draftSaveTimer !== null) window.clearTimeout(draftSaveTimer);
-      draftSaveTimer = null;
-      intakeDraft.clear(window);
       confirmedReference = result.reference;
       confirmationEmail.textContent = valueOf("email");
       confirmationBusiness.textContent = valueOf("business_name");
@@ -753,25 +809,36 @@
       intakeHeaderEyebrow.textContent = "Submission confirmation";
       intakeHeaderTitle.textContent = "Your project outline has been received.";
       intakeHeaderDescription.textContent = "Keep your submission reference in case you need to contact us about this enquiry.";
+      const emailPartiallyFailed = result.processingStatus === "email_processing_failed" ||
+        [result.customerEmailStatus, result.internalEmailStatus].some((status) => status && status !== "sent");
+      if (emailPartiallyFailed) {
+        confirmationDeliveryNote.textContent = result.customerEmailStatus === "sent"
+          ? `Your project outline for ${valueOf("business_name")} has been received and the confirmation email was sent to ${valueOf("email")}. There was a delay notifying our team, but you do not need to submit it again.`
+          : `Your project outline for ${valueOf("business_name")} has been received. There was a delay sending the confirmation email to ${valueOf("email")}. You do not need to submit it again.`;
+      } else {
+        confirmationDeliveryNote.textContent = `We have received the project outline for ${valueOf("business_name")} and sent a confirmation to ${valueOf("email")}.`;
+      }
       form.hidden = true;
       dialog.querySelector(".intake-progress").hidden = true;
       successPanel.hidden = false;
       summaryActions.hidden = false;
       successPanel.focus();
+      moveSubmissionState(emailPartiallyFailed ? "partial" : "complete");
+      submissionComplete = true;
+      if (draftSaveTimer !== null) window.clearTimeout(draftSaveTimer);
+      draftSaveTimer = null;
+      intakeDraft.clear(window);
     } catch (error) {
       setMessage();
       if (error?.name === "AbortError") {
-        submitButton.disabled = false;
-        submitButton.textContent = "Send project outline";
+        moveSubmissionState("fail");
+        moveSubmissionState("edit");
         return;
       }
+      moveSubmissionState("fail");
       showSubmissionFailure(submissionFailureMessage(error));
-      submitButton.disabled = false;
-      submitButton.textContent = "Send project outline";
     } finally {
       submissionInProgress = false;
-      backButton.disabled = false;
-      form.removeAttribute("aria-busy");
       submissionController = null;
     }
   });

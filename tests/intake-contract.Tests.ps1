@@ -5,6 +5,7 @@ $index = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "index.html")
 $controller = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake.js")
 $styles = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "styles.css")
 $service = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-service.js")
+$submissionState = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "submission-state.js")
 $draft = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-draft.js")
 $model = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-model.js")
 $clarificationQuestions = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "clarification-questions.js")
@@ -68,7 +69,10 @@ Assert-True ($index -match 'data-clear-draft' -and $index -match 'saved on this 
 Assert-True ($index -match 'data-error-summary' -and $controller -match 'showErrorSummary' -and $controller -match 'field-error') "Accessible field errors and an error summary are required."
 Assert-True ($index -match 'name="attachments"[^>]+accept=' -and $controller -match 'maximumAttachmentBytes' -and $model -match 'ALLOWED_ATTACHMENT_EXTENSIONS') "Attachment type and size validation is required at both boundaries."
 Assert-True ($controller -match 'validateAllSteps' -and $model -match 'required_consent' -and $model -match 'too_long') "Required consent, complete-form validation, and maximum lengths must be enforced."
-Assert-True ($service -match 'timeoutMs' -and $controller -match 'submissionComplete \|\| submissionInProgress' -and $controller -match 'submissionInProgress = true;[\s\S]+submitButton\.disabled = true;[\s\S]+await submissionService\.submit' -and $serverValidation -match 'createSubmissionGuard') "Timeout, in-progress button disabling, rapid-repeat, and duplicate recovery controls are required."
+Assert-True ($service -match 'timeoutMs' -and $controller -match 'submissionComplete \|\| submissionInProgress' -and $controller -match 'submissionInProgress = true;[\s\S]+moveSubmissionState\("submit"\);[\s\S]+await submissionService\.submit' -and $controller -match 'submitButton\.disabled = busy' -and $serverValidation -match 'createSubmissionGuard') "Timeout, in-progress button disabling, rapid-repeat, and duplicate recovery controls are required."
+Assert-True ($submissionState -match 'IDLE:\s*"idle"' -and $submissionState -match 'VALIDATING:\s*"validating"' -and $submissionState -match 'SUBMITTING:\s*"submitting"' -and $submissionState -match 'RECEIVED:\s*"submission_received"' -and $submissionState -match 'PROCESSING:\s*"processing"' -and $submissionState -match 'FAILED:\s*"submission_failed"' -and $submissionState -match 'EMAIL_PARTIAL:\s*"email_partially_failed"' -and $submissionState -match 'COMPLETE:\s*"complete"') "The browser must expose every supported submission state."
+Assert-True ($controller -match 'submitButton\.textContent = "Try again"' -and $controller -match 'setMessage\(\);[\s\S]+showSubmissionFailure' -and $styles -match '\.form-message\.loading::before' -and $index -match 'data-confirmation-delivery-note') "Loading, retry, failure, and partial-email views must be mutually clear."
+Assert-True ($controller -match 'pendingDocuments \|\|= buildDocuments\(\)' -and $service -match 'Idempotency-Key.*submissionMetadata\.submissionId' -and $controller -match 'pendingDocuments = null;[\s\S]+submissionState\.state === submissionStateApi\.states\.FAILED') "Retries must retain their generated idempotency key until the customer edits the answers."
 Assert-True ($serverValidation -match 'MAX_REQUEST_BYTES' -and $serverValidation -match 'safeErrorResponse') "The server boundary must limit payloads and provide safe public errors."
 Assert-True ($service -match 'Idempotency-Key' -and $intakeEndpoint -match 'INTAKE_REFERENCE_SECRET' -and $intakeEndpoint -match 'randomUUID' -and $submissionStore -match 'payloadFingerprint') "Submission references, internal identifiers, and idempotent duplicate protection must be server controlled."
 Assert-True ($index -match 'action="/api/project-submissions"' -and $service -match 'Content-Type": "application/json"' -and $intakeEndpoint -match 'createEmailDeliveryService') "The browser must submit to the configured first-party email endpoint."
@@ -190,6 +194,9 @@ if ($node) {
   $serviceTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-service.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $serviceTestOutput -match "Intake submission success, provider failure, and timeout checks passed\.") "Intake submission service tests failed: $serviceTestOutput"
   Write-Output $serviceTestOutput
+  $submissionStateTestOutput = (& $node.Source (Join-Path $PSScriptRoot "submission-state.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $submissionStateTestOutput -match "Submission state transition, retry, partial-email, and terminal-state checks passed\.") "Submission state tests failed: $submissionStateTestOutput"
+  Write-Output $submissionStateTestOutput
   $draftTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-draft.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $draftTestOutput -match "Intake draft local save, restore, validation, file exclusion, error safety, and cleanup checks passed\.") "Intake draft tests failed: $draftTestOutput"
   Write-Output $draftTestOutput

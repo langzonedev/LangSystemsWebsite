@@ -1130,6 +1130,27 @@ h3 {
   padding: 20px clamp(24px, 5vw, 52px) 0;
 }
 
+.form-message.loading::before {
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.55rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  vertical-align: -0.1rem;
+  animation: intake-submit-spin 0.75s linear infinite;
+}
+
+@keyframes intake-submit-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-message.loading::before { animation-duration: 1.5s; }
+}
+
 .progress-copy {
   display: flex;
   justify-content: space-between;
