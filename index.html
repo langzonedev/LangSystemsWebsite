@@ -8,6 +8,8 @@
       content="Lang Systems builds modern custom software, integrations, and production-ready systems for practical business workflows."
     />
     <meta name="theme-color" content="#14063d" />
+    <!-- Deployment may set this public, non-secret value when the API is on another HTTPS origin. -->
+    <meta name="lang-systems-intake-endpoint" content="" />
     <title>Lang Systems | Idea to Production Ready Software</title>
     <link rel="icon" type="image/png" href="assets/lang-systems-logo.png" />
     <link rel="stylesheet" href="styles.css" />
@@ -317,14 +319,10 @@
         <form
           class="intake-form"
           data-intake-form
-          action="https://formsubmit.co/ajax/langsystemsdesign@outlook.com"
+          action="/api/project-submissions"
           method="post"
           novalidate
         >
-          <input type="hidden" name="_subject" value="New Lang Systems project enquiry" />
-          <input type="hidden" name="_template" value="table" />
-          <input type="hidden" name="_captcha" value="false" />
-          <input type="hidden" name="_autoresponse" value="Thanks for telling Lang Systems about your project. We have received your information and will review it carefully. We will contact you to confirm our understanding, ask any important follow-up questions, and discuss a practical first release. Please do not reply with passwords or other sensitive information." />
           <input type="text" name="_honey" class="form-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
           <section class="form-step" data-step data-step-name="About you">
@@ -415,7 +413,7 @@
             <label><span>What must be working before the project can be considered complete?</span><textarea name="acceptance_criteria" rows="5" maxlength="10000" required placeholder="Describe the results you need to see or tasks people must be able to complete."></textarea></label>
             <label><span>Important rules, constraints, or concerns <em>Optional</em></span><textarea name="constraints" rows="3" maxlength="10000" placeholder="Privacy, approvals, locations, accessibility, industry rules, devices, or business policies."></textarea></label>
             <label><span>Anything else we should know? <em>Optional</em></span><textarea name="additional_notes" rows="3" maxlength="10000"></textarea></label>
-            <label><span>Supporting files <em>Optional</em></span><input type="file" name="attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.txt" multiple /><small>Up to 10 files, no more than 10 MB each. Please do not attach passwords or highly sensitive information.</small></label>
+            <label><span>Supporting file references <em>Optional</em></span><input type="file" name="attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.txt" multiple /><small>We include the file names and sizes with your outline, not the file contents. If needed, we will arrange a secure way to receive them. Please do not select passwords or highly sensitive information.</small></label>
           </section>
 
           <section class="form-step review-step" data-step data-step-name="Review" hidden>

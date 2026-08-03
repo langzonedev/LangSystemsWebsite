@@ -77,7 +77,7 @@ The stable field names and structured payload are an integration contract. Chang
 
 ### First-release flow
 
-The static form posts with `fetch` and `FormData` to the configured FormSubmit AJAX endpoint. No credential is stored in the site. FormSubmit must be activated once for the destination mailbox before production use.
+The static form posts JSON over `fetch` to the configured `/api/project-submissions` boundary. Provider credentials stay in the server environment and are never shipped to the browser. The API validates the versioned submission, sends the customer and internal emails independently, and records metadata-only delivery state so a retry sends only a failed recipient. Production requires explicit live mode and durable status storage.
 
 Immediately before sending, the browser:
 
@@ -90,6 +90,8 @@ Immediately before sending, the browser:
 
 The generated reference is for email correlation, not a guaranteed unique or sequential record identifier. Lang Systems must verify receipt rather than relying only on the browser success screen.
 
+Supporting file contents are not uploaded or attached to email. Only sanitised file names, sizes, and validation states are included as references; Lang Systems arranges secure transfer after review when the files are needed.
+
 ### Failure behavior
 
 Submission success is shown only after the provider returns a successful response. On validation, offline, lost-connection, timeout, temporary server, storage, email-delivery, rate-limit, or duplicate failure, the dialog stays open and the customer’s inputs remain intact. The focused message explains whether to correct an answer, reconnect, wait, retry, or contact `langsystemsdesign@outlook.com`. A timeout or lost connection never claims failure or success when delivery cannot be confirmed. Direct email is a fallback contact route; it does not reproduce the structured intake automatically.
@@ -98,7 +100,7 @@ Submission success is shown only after the provider returns a successful respons
 
 ### Customer email
 
-The delivery provider sends the plain-language project understanding summary to the submitted work email as the acknowledgement. It restates the customer's key answers, distinguishes assumptions and clarification questions, explains that Lang Systems will review and follow up, and warns the customer not to reply with sensitive information. It must not imply that Lang Systems has accepted the project or agreed price, scope, or timing.
+The intake API sends a branded plain-language project understanding summary to the submitted work email. It identifies the customer and business, gives the submission reference, explains review and possible follow-up, and states that scope, price, timing, acceptance, commencement, and any binding agreement require later review and agreement. It does not promise a response time.
 
 ### Lang Systems email
 
@@ -137,16 +139,16 @@ The response records a preference only. Ownership, licensing, support, fees, con
 - Intentional launch from existing “Get Started” project-enquiry controls.
 - Responsive, keyboard-operable eight-step dialog using the current website style.
 - Required/optional field collection, step validation, review, consent, progress, back navigation, close warning, loading state, success state, and recoverable failure state.
-- Email submission through FormSubmit to the configured Lang Systems mailbox.
-- Customer acknowledgement through the provider’s autoresponse facility.
+- Email submission through the environment-configured intake API and provider account.
+- Independently tracked customer acknowledgement and internal notification, with idempotent retry.
 - Original answers, generated summaries, clarification questions, versioned JSON, a correlation reference, and submission timestamp in the internal email payload.
 - Manual Lang Systems review, clarification, qualification, and email-based tracking.
 - A honeypot and provider protections available under the configured service.
 
 ### Designed for later, not implemented now
 
-- Replacing FormSubmit behind a submission-service boundary while retaining or deliberately migrating stable field names and the versioned payload.
-- Server-assigned durable identifiers, reliable retry/deduplication, delivery monitoring, and an auditable record store.
+- Replacing the email provider behind the submission-service boundary while retaining the versioned payload and delivery-state contract.
+- Server-assigned durable identifiers and a richer operational audit system beyond the metadata-only delivery record.
 - Approved import into a customer-management or work-management tool.
 - Richer office-document generation beyond the printable and downloadable HTML customer summary.
 - Save-and-resume, authenticated status viewing, staff dashboards, automated classification, and scheduling.
@@ -170,7 +172,7 @@ The form follows data minimisation: collect only information useful for assessin
 
 For production operation:
 
-- review and approve FormSubmit’s current privacy, retention, processing-location, and security terms;
+- review and approve the configured email provider’s current privacy, retention, processing-location, and security terms;
 - publish or link suitable Lang Systems privacy information before launch;
 - restrict mailbox access to authorised personnel and protect it with strong authentication;
 - define retention and deletion periods for enquiries and generated documents;
@@ -189,7 +191,7 @@ Email is not a secure channel for highly sensitive data. The first-release warni
 | Wizard markup (`index.html`) | Questions, step order, labels, consent, semantic structure | Submission policy or generated-document logic |
 | Presentation (`styles.css`) | Existing brand, responsive layout, focus/error/success states | Business rules |
 | Intake controller (`intake.js`) | Dialog lifecycle, navigation, validation, review, payload generation, send states | Long-term records or workflow decisions |
-| Email-delivery provider (FormSubmit) | Accept form data, deliver internal email, send acknowledgement | Project approval, authoritative storage, or scope decisions |
+| Intake API and email provider | Validate submissions, deliver two emails, record delivery metadata, and retry failed recipients | Project approval, customer-content logging, or scope decisions |
 | Lang Systems mailbox/manual process | Authoritative first-release receipt, review, follow-up, and tracking | Automatic commitments based on generated text |
 | Future intake service | Potential server validation, durable IDs, controlled integrations, observability | Customer-management features unless separately approved |
 
@@ -208,7 +210,7 @@ The first release is complete only when all of the following are true:
 - one successful production-like test reaches the authorised mailbox with every original and generated field intact;
 - the same test sends an acknowledgement to the supplied customer address with approved wording;
 - a simulated provider/network failure keeps answers available and presents the retry/direct-email path without showing success;
-- the FormSubmit destination has been activated and mailbox/junk-folder behavior has been checked;
+- the live provider credentials, sender domain, both mailboxes, and junk-folder behavior have been checked;
 - the site remains responsive and its existing automated checks/build, if any, pass; and
 - this document and README operational guidance remain accurate.
 
@@ -218,9 +220,9 @@ A successful browser request alone does not satisfy email acceptance; both deliv
 
 ### Assumptions in force
 
-- The website remains a static GitHub Pages site for the first release.
+- The customer website remains static; email delivery uses a separately hosted HTTPS API routed at, or configured for, the submission endpoint.
 - `langsystemsdesign@outlook.com` is the authorised operational mailbox.
-- FormSubmit is acceptable provisionally, subject to production privacy/terms review and activation.
+- Resend is the default provider adapter, subject to production privacy/terms review and sender-domain verification; another compatible HTTPS endpoint may be configured.
 - One internal email plus one customer acknowledgement is adequate first-release tracking.
 - The browser-generated reference and time are sufficient for correlation, not authoritative audit.
 - Lang Systems staff manually review outputs and clarify them with the customer before estimating or agreeing scope.
@@ -230,8 +232,8 @@ A successful browser request alone does not satisfy email acceptance; both deliv
 
 | Decision | Owner | Effect if unresolved |
 | --- | --- | --- |
-| Approve FormSubmit privacy, retention, security, processing locations, and reliability | Lang Systems | Do not treat the form as production-approved |
-| Activate the destination address and verify internal and acknowledgement delivery | Mailbox owner | Submissions may not arrive |
+| Approve provider privacy, retention, security, processing locations, and reliability | Lang Systems | Do not treat the form as production-approved |
+| Configure live credentials and verify internal and acknowledgement delivery | Mailbox owner | Submissions may not arrive |
 | Publish or confirm the privacy notice and enquiry retention/deletion policy | Lang Systems | Privacy expectations and operations remain incomplete |
 | Define mailbox ownership, response target, backup coverage, and manual tracking convention | Lang Systems | Follow-up may be inconsistent |
 | Confirm supported browser/device test set and complete accessibility review | Lang Systems | Launch quality is not fully evidenced |
@@ -272,7 +274,7 @@ The following names are the submitted-field contract. All fields are plain text 
 | Success | `additional_notes` | No | Long text |
 | Review | `privacy_consent` | Yes | Checkbox submitted as `Agreed` |
 
-Provider configuration fields (`_subject`, `_template`, `_captcha`, `_autoresponse`, and the `_honey` honeypot) are transport settings, not customer project data. Their exact values live with the form markup and must be reviewed whenever the provider changes.
+The `_honey` honeypot is a transport control, not customer project data. Provider addresses, credentials, allowed origin, review URL, mode, and durable status location are environment configuration. The browser sends generated documents under the stable API document keys described above.
 
 The review screen shows every customer-provided answer, grouped in step order. Optional blanks are identified as not provided. Internal generated documents, assumptions, and clarification questions are not presented as customer answers. Detailed interaction, responsive, accessibility, browser, and recovery behaviour is defined in [Customer Project Discovery Journey](customer-project-discovery-journey.md).
 

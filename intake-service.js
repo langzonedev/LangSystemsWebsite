@@ -9,12 +9,30 @@
     }
   }
 
+  function requestPayload(formData) {
+    const structured = window.LangSystemsIntakeModel.parseSubmission(formData.get("structured_project_data_json"));
+    return {
+      submission: structured,
+      documents: {
+        customerSummary: String(formData.get("customer_friendly_project_summary") || ""),
+        technicalSpecification: String(formData.get("technical_requirements_specification_internal") || ""),
+        internalBrief: String(formData.get("lang_systems_project_brief_internal") || ""),
+        clarificationQuestions: String(formData.get("clarification_questions_internal") || ""),
+        warnings: String(formData.get("processing_generation_warnings") || "")
+      },
+      honeypot: String(formData.get("_honey") || "")
+    };
+  }
+
   async function submit({ endpoint, formData, signal, timeoutMs = 20000 }) {
     let url;
     let timeout;
+    let payload;
 
     try {
-      window.LangSystemsIntakeModel.parseSubmission(formData.get("structured_project_data_json"));
+      const metaEndpoint = typeof document === "undefined" ? "" : document.querySelector('meta[name="lang-systems-intake-endpoint"]')?.content;
+      endpoint = window.LangSystemsConfig?.intakeEndpoint || metaEndpoint || endpoint;
+      payload = requestPayload(formData);
     } catch (error) {
       throw new IntakeSubmissionError("Please review the project outline before sending it.", "payload", error);
     }
@@ -25,7 +43,8 @@
       throw new IntakeSubmissionError("The submission service is not configured correctly.", "configuration", error);
     }
 
-    if (url.protocol !== "https:") {
+    const isLocalDevelopment = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
+    if (url.protocol !== "https:" && !isLocalDevelopment) {
       throw new IntakeSubmissionError("The submission service must use a secure connection.", "configuration");
     }
 
@@ -38,8 +57,8 @@
       timeout = window.setTimeout(() => controller.abort(), timeoutMs);
       const response = await fetch(url.href, {
         method: "POST",
-        body: formData,
-        headers: { Accept: "application/json" },
+        body: JSON.stringify(payload),
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
         signal: controller.signal
       });
       const result = await response.json().catch(() => null);
@@ -66,5 +85,5 @@
     }
   }
 
-  window.LangSystemsIntakeSubmission = Object.freeze({ submit });
+  window.LangSystemsIntakeSubmission = Object.freeze({ submit, requestPayload });
 })();

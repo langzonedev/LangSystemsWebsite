@@ -8,6 +8,8 @@ $model = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-model.j
 $clarificationQuestions = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "clarification-questions.js")
 $customerSummary = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "customer-summary.js")
 $serverValidation = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-validation.js")
+$emailDelivery = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/email-delivery.js")
+$intakeEndpoint = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-endpoint.js")
 $requirementsInterpreter = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/requirements-interpreter.js")
 $requirementsPromptPath = Join-Path $projectRoot "server/requirements-interpretation-prompt.md"
 $requirementsSchemaPath = Join-Path $projectRoot "server/requirements-interpretation.schema.json"
@@ -39,7 +41,7 @@ Assert-True ($controller -match 'dialog\.addEventListener\("close", \(\) => last
 Assert-True ($index -match 'role="progressbar"' -and $index -match 'aria-valuetext=') "Progress must be exposed to assistive technology."
 Assert-True ($index -match 'data-review-summary' -and $controller -match 'data-edit-step') "The review step must offer direct correction controls."
 Assert-True ($controller -match 'LangSystemsIntakeSubmission' -and $controller -notmatch 'await\s+fetch\s*\(') "Submission transport must stay behind the service boundary."
-Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"') "The submission service must reject insecure endpoints."
+Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"' -and $service -match 'isLocalDevelopment') "The submission service must reject insecure non-local endpoints."
 Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="clarification-questions\.js"></script>\s*<script src="internal-project-brief\.js"></script>\s*<script src="customer-summary\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model and internal/customer document generators must load before submission transport."
 Assert-True ($controller -match 'intakeModel\.serialiseSubmission' -and $service -match 'LangSystemsIntakeModel\.parseSubmission') "Frontend generation and transport must enforce the shared model contract."
 Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"3\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
@@ -50,6 +52,9 @@ Assert-True ($index -match 'name="attachments"[^>]+accept=' -and $controller -ma
 Assert-True ($controller -match 'validateAllSteps' -and $model -match 'required_consent' -and $model -match 'too_long') "Required consent, complete-form validation, and maximum lengths must be enforced."
 Assert-True ($service -match 'timeoutMs' -and $controller -match 'submissionInProgress' -and $serverValidation -match 'createSubmissionGuard') "Timeout, rapid-repeat, and duplicate recovery controls are required."
 Assert-True ($serverValidation -match 'MAX_REQUEST_BYTES' -and $serverValidation -match 'safeErrorResponse') "The server boundary must limit payloads and provide safe public errors."
+Assert-True ($index -match 'action="/api/project-submissions"' -and $service -match 'Content-Type": "application/json"' -and $intakeEndpoint -match 'createEmailDeliveryService') "The browser must submit to the configured first-party email endpoint."
+Assert-True ($emailDelivery -match 'INTAKE_EMAIL_MODE' -and $emailDelivery -match 'RESEND_API_KEY' -and $emailDelivery -match 'escapeHtml' -and $emailDelivery -notmatch 'console\.') "Email delivery must be environment-configured, escaped, and keep customer content out of logs."
+Assert-True ($emailDelivery -match 'record\.customer\.status !== "sent"' -and $emailDelivery -match 'record\.internal\.status !== "sent"' -and $emailDelivery -match 'createMemoryStatusStore') "Email recipients must be independently retried with recorded status and duplicate prevention."
 Assert-True ((Test-Path $requirementsPromptPath) -and (Test-Path $requirementsSchemaPath)) "The versioned requirements prompt or schema is missing."
 Assert-True ($requirementsInterpreter -match 'buildModelInput' -and $requirementsInterpreter -match 'deterministic_fallback' -and $requirementsInterpreter -notmatch 'console\.') "The requirements interpreter must minimise model input, recover deterministically, and avoid logging customer content."
 Assert-True ((Test-Path $technicalSpecificationSchemaPath) -and $technicalSpecification -match 'sourceSubmissionId' -and $technicalSpecification -match 'customerApproved' -and $technicalSpecification -notmatch 'console\.') "The internal technical specification must be versioned, traceable, non-authoritative, and must not log customer content."
@@ -57,7 +62,7 @@ Assert-True ((Test-Path $internalProjectBriefSchemaPath) -and $internalProjectBr
 Assert-True ($controller -match 'LangSystemsInternalProjectBrief\.buildBrief\(structuredProject\)' -and $controller -match 'lang_systems_project_brief_internal' -and $controller -notmatch 'internalStatus.*_autoresponse') "The validated internal brief must feed only the internal email output."
 Assert-True ($controller -match 'LangSystemsClarificationQuestions\.generate\(structuredProject\)' -and $clarificationQuestions -match 'requiredBeforeEstimation' -and $clarificationQuestions -match 'requiredBeforeDevelopment' -and $clarificationQuestions -match 'helpfulButNonBlocking' -and $clarificationQuestions -match 'manualReviewRequired' -and $clarificationQuestions -notmatch 'console\.') "Clarification questions must be grouped, manually reviewed, validated, and kept out of logs."
 Assert-True ($customerSummary -match 'Scope, price and timing are not final' -and $customerSummary -match 'printableHtml' -and $customerSummary -notmatch 'console\.') "The customer summary must include safeguards, printable output, and no customer logging."
-Assert-True ($controller -match 'customerSummaryGenerator\.generate' -and $controller -match 'formData\.set\("_autoresponse", documents\.customerSummary\)' -and $index -match 'data-print-summary' -and $index -match 'data-download-summary') "The generated summary must feed customer email, print, and download outputs."
+Assert-True ($controller -match 'customerSummaryGenerator\.generate' -and $controller -match 'customer_friendly_project_summary' -and $index -match 'data-print-summary' -and $index -match 'data-download-summary') "The generated summary must feed customer email, print, and download outputs."
 Assert-True ($controller -match 'INTERNAL TECHNICAL REQUIREMENTS SPECIFICATION' -and $controller -match 'Essential first-release requirements' -and $controller -match 'Recommended investigation tasks' -and $controller -match '\[\$\{item\.status\.toUpperCase\(\)\}\]') "The internal email must include the complete, status-labelled technical specification."
 Assert-True (Test-Path -LiteralPath $questionSetPath) "The client discovery question set is missing."
 
@@ -132,6 +137,12 @@ if ($node) {
   $serviceTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-service.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $serviceTestOutput -match "Intake submission success, provider failure, and timeout checks passed\.") "Intake submission service tests failed: $serviceTestOutput"
   Write-Output $serviceTestOutput
+  $emailTestOutput = (& $node.Source (Join-Path $PSScriptRoot "email-delivery.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $emailTestOutput -match "Email branding, sanitisation, partial failure, status, retry, and duplicate-prevention checks passed\.") "Email delivery tests failed: $emailTestOutput"
+  Write-Output $emailTestOutput
+  $endpointTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-endpoint.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $endpointTestOutput -match "Intake endpoint validation, origin, honeypot, and safe-response checks passed\.") "Intake endpoint tests failed: $endpointTestOutput"
+  Write-Output $endpointTestOutput
   $interpreterTestOutput = (& $node.Source (Join-Path $PSScriptRoot "requirements-interpreter.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $interpreterTestOutput -match "Requirements interpretation, privacy minimisation, schema, and fallback checks passed\.") "Requirements interpreter tests failed: $interpreterTestOutput"
   Write-Output $interpreterTestOutput

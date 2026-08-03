@@ -454,7 +454,7 @@
     formData.append("submission_schema_version", intakeModel.SCHEMA_VERSION);
     formData.append("submission_template_version", intakeModel.TEMPLATE_VERSION);
     formData.append("submitted_at_utc", structuredProject.submissionMetadata.submittedAt);
-    formData.set("_autoresponse", documents.customerSummary);
+    formData.append("processing_generation_warnings", "No processing or generation warnings reported by the browser generators.");
   }
 
   function isIntakeHistoryEntry() {

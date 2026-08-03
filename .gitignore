@@ -1,0 +1,5 @@
+.env
+.env.*
+!.env.example
+delivery-status*.json
+node_modules/

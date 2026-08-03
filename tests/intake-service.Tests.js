@@ -19,10 +19,23 @@ const submission = model.createSubmission({
   acceptance_criteria: "Staff can close a job", delivery_model: "Recommendation required",
   budget: "Not sure — please advise", timing: "Exploring options only", privacy_consent: "Agreed"
 }, { submissionId: "LS-SERVICE-TEST" });
-const formData = { get: (name) => name === "structured_project_data_json" ? model.serialiseSubmission(submission) : null };
+const generated = {
+  structured_project_data_json: model.serialiseSubmission(submission),
+  customer_friendly_project_summary: "Customer summary",
+  technical_requirements_specification_internal: "Technical specification",
+  lang_systems_project_brief_internal: "Internal brief",
+  clarification_questions_internal: "Questions"
+};
+const formData = { get: (name) => generated[name] || null };
 
 module.exports = (async () => {
-  global.fetch = async () => ({ ok: true, status: 200, json: async () => ({ success: true }) });
+  global.fetch = async (_url, options) => {
+    assert.strictEqual(options.headers["Content-Type"], "application/json");
+    const payload = JSON.parse(options.body);
+    assert.strictEqual(payload.submission.submissionMetadata.submissionId, "LS-SERVICE-TEST");
+    assert.strictEqual(payload.documents.internalBrief, "Internal brief");
+    return { ok: true, status: 200, json: async () => ({ success: true }) };
+  };
   const accepted = await window.LangSystemsIntakeSubmission.submit({ endpoint: "https://form.example.test/intake", formData });
   assert.strictEqual(accepted.success, true);
 

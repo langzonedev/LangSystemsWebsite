@@ -36,23 +36,45 @@ python -m http.server 4173
 
 ## Project intake email
 
-The “Get Started” project discovery wizard submits through FormSubmit to
-`langsystemsdesign@outlook.com`. FormSubmit sends Lang Systems the customer's answers plus a
-generated customer summary, technical requirements specification, internal project brief, and
-clarification questions. Its `_autoresponse` field sends the customer the plain-language project
-understanding summary. After a successful submission, the customer can also print or download the
-same branded summary as a self-contained HTML document.
+The discovery wizard posts JSON to `/api/project-submissions`. The intake API validates the shared
+submission model, sends a branded customer confirmation and a detailed internal email, and records
+metadata-only status for each recipient. If one email fails, a repeat request with the same project
+reference retries only the failed recipient. Provider idempotency keys also protect live retries
+from duplicate sends within the provider's supported window. Supporting file names and sizes are included as
+references; file contents are not emailed or retained by this service.
 
-Before using the form in production, send one test submission and follow the activation email sent
-to `langsystemsdesign@outlook.com`. FormSubmit requires that one-time confirmation for a new form.
-Also verify the test submission and customer confirmation email, including junk-mail folders.
+Development defaults to safe mock delivery and makes no provider requests:
 
-To change providers later, update the form `action` in `index.html` and adapt
-`intake-service.js` if the replacement does not accept the existing form payload. Keep the stable
-field names or map them in the replacement service. The browser does not save submissions to local storage,
-put them in URLs, or send them to analytics. Form contents are transmitted to the configured form
-provider for email delivery, so the provider and the site's privacy wording should be reviewed
-before launch.
+```powershell
+$env:INTAKE_EMAIL_MODE="mock"
+$env:INTAKE_STATUS_FILE="C:\tmp\lang-systems-delivery-status.json"
+node server/local-intake-server.js
+```
+
+Then open `http://127.0.0.1:8787`. This development server serves the static site and the mock API
+on one origin. It is a local verification helper, not a production web server.
+
+Production must host the API behind the form's same-origin path, or populate the public
+`lang-systems-intake-endpoint` meta value in `index.html` with an HTTPS API URL during deployment
+(setting `window.LangSystemsConfig.intakeEndpoint` before `intake-service.js` is also supported). A
+cross-origin deployment must set `INTAKE_ALLOWED_ORIGIN` to the exact website origin. Configure:
+
+- `NODE_ENV=production` and `INTAKE_EMAIL_MODE=live`
+- `RESEND_API_KEY` (or `EMAIL_API_KEY`) and optionally `EMAIL_PROVIDER_URL`
+- `EMAIL_FROM`, `INTAKE_INTERNAL_EMAIL`, and `LANG_SYSTEMS_CONTACT_EMAIL`
+- an absolute `INTAKE_STATUS_FILE`, or inject a durable status-store adapter
+- optional `INTAKE_REVIEW_BASE_URL` for a secure internal review link
+
+See [.env.example](.env.example) for non-secret examples. Never place real values in that file or
+client-side code. Production refuses to start without explicit live mode, an API key, and durable
+status storage. The status file contains references and delivery metadata only, not customer
+answers. Restrict it to the service account and keep it outside the public website directory.
+
+After deployment, submit one non-sensitive test project and inspect both mailboxes (including junk
+folders), branding, links, and the recorded statuses. To recover a partial failure, use the wizard's
+Retry action while its answers remain open; the same reference is reused and completed recipients
+are not sent again. If browser recovery is unavailable, use the reference and status record for
+manual follow-up—do not copy customer content into logs or issue trackers.
 
 ## Checks
 
@@ -62,9 +84,10 @@ Run the dependency-free intake contract checks from the repository root:
 powershell -NoProfile -ExecutionPolicy Bypass -File tests/intake-contract.Tests.ps1
 ```
 
-The site is static and has no compilation step. A production check consists of running the contract
-checks and serving the repository root with the local preview command above. When Node.js is
-available, the same command also runs `tests/intake-validation.Tests.js`; otherwise it reports that
-the server runtime portion was skipped. Before launch, manually verify keyboard and screen-reader
+The browser application is static and has no compilation step. A production check consists of
+running the contract checks and serving the repository root with the local preview command above.
+When Node.js is available, the same command also runs the validation, transport, endpoint, email,
+and document-generator runtime tests; otherwise it reports that the server runtime portion was
+skipped. Before launch, manually verify keyboard and screen-reader
 error announcements, an unsupported/oversized file, offline and timeout recovery, and a successful
-activated FormSubmit delivery in a supported browser.
+live provider delivery in a supported browser.
