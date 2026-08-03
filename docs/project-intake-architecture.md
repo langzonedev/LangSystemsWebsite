@@ -34,7 +34,7 @@ Internal generated documents may use precise technical language because they are
 2. The visitor intentionally chooses “Get Started” or “Tell us about your project”.
 3. A focused project-discovery dialog opens at step 1. Focus remains manageable by keyboard and returns to the triggering control when the dialog closes.
 4. The visitor completes one subject at a time. They can move back without losing answers. Required answers are checked before moving forward.
-5. At step 8, the visitor reviews a concise project outline, can return to edit it, and gives explicit privacy consent.
+5. At step 8, the visitor reviews every submitted answer, can return to edit it, and gives explicit privacy consent.
 6. On submission, the browser creates the documented summaries and structured payload, then sends the form once to the configured email-delivery service.
 7. If delivery succeeds, the visitor sees an on-screen receipt and receives a plain-language acknowledgement at their supplied email address.
 8. If delivery fails, entered answers remain available, submission is re-enabled, and the visitor receives a clear retry and direct-email option. A failed request must not show success.
@@ -270,6 +270,6 @@ The following names are the submitted-field contract. All fields are plain text 
 
 Provider configuration fields (`_subject`, `_template`, `_captcha`, `_autoresponse`, and the `_honey` honeypot) are transport settings, not customer project data. Their exact values live with the form markup and must be reviewed whenever the provider changes.
 
-The review screen deliberately shows a concise subset: contact, business, problem, desired outcome, essential first release, investment, timing, working arrangement, and completion criteria. The full submission still contains every answer.
+The review screen shows every customer-provided answer, grouped in step order. Optional blanks are identified as not provided. Internal generated documents, assumptions, and clarification questions are not presented as customer answers. Detailed interaction, responsive, accessibility, browser, and recovery behaviour is defined in [Customer Project Discovery Journey](customer-project-discovery-journey.md).
 
 The structured JSON groups the same answers under `contact`, `discovery`, `scope`, and `commercial`, followed by top-level `constraints` and `additionalNotes`. Its project reference must match the separately submitted reference. Automatic clarification questions are raised when existing systems, information needs, explicit exclusions, constraints, timing context, or later additions are blank; when the customer requests a delivery-model recommendation; or when the budget is uncertain. These questions identify discovery gaps only and never rewrite the customer’s answer or block submission.
