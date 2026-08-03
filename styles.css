@@ -620,6 +620,38 @@ h3 {
   flex-direction: column;
 }
 
+.services-invitation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 28px;
+  align-items: center;
+  margin-top: 24px;
+  padding: clamp(24px, 4vw, 36px);
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(14, 165, 183, 0.3), transparent 18rem),
+    linear-gradient(135deg, var(--ink), var(--violet-dark));
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.services-invitation h3 {
+  margin-bottom: 8px;
+  color: #ffffff;
+}
+
+.services-invitation p {
+  max-width: 720px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.services-invitation .button.primary {
+  color: var(--ink);
+  background: #ffffff;
+  box-shadow: none;
+}
+
 .service-card:nth-child(2) {
   border-top-color: rgba(14, 165, 183, 0.52);
 }
@@ -1470,9 +1502,14 @@ h3 {
   .section-heading,
   .intro,
   .timeline,
+  .services-invitation,
   .contact,
   .site-footer {
     grid-template-columns: 1fr;
+  }
+
+  .services-invitation .button {
+    justify-self: start;
   }
 
   .service-grid {

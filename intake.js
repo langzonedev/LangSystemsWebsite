@@ -26,6 +26,8 @@
   let submissionComplete = false;
   let formDirty = false;
   let submissionController = null;
+  const historyStateKey = "langSystemsIntakeOpen";
+  const intakeHash = "#project-discovery";
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -306,22 +308,39 @@
     formData.append("submitted_at_utc", structuredProject.submissionMetadata.submittedAt);
   }
 
-  function requestClose() {
-    if (!submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available until you leave or refresh this page.")) return;
+  function isIntakeHistoryEntry() {
+    return window.history.state?.[historyStateKey] === true;
+  }
+
+  function openDialog(trigger = null, addHistoryEntry = true) {
+    if (dialog.open) return;
+    if (trigger) lastTrigger = trigger;
+    document.body.classList.remove("nav-open");
+    document.querySelector(".nav-toggle")?.setAttribute("aria-expanded", "false");
+
+    if (addHistoryEntry && !isIntakeHistoryEntry()) {
+      window.history.pushState(
+        { ...(window.history.state || {}), [historyStateKey]: true },
+        "",
+        intakeHash
+      );
+    }
+
+    dialog.showModal();
+    updateStep();
+  }
+
+  function requestClose({ syncHistory = true, confirmDirty = true } = {}) {
+    if (confirmDirty && !submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available until you leave or refresh this page.")) return;
     submissionController?.abort();
     dialog.close();
+    if (syncHistory && isIntakeHistoryEntry()) window.history.back();
   }
 
   wireFieldDescriptions();
 
   openButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      lastTrigger = button;
-      document.body.classList.remove("nav-open");
-      document.querySelector(".nav-toggle")?.setAttribute("aria-expanded", "false");
-      dialog.showModal();
-      updateStep();
-    });
+    button.addEventListener("click", () => openDialog(button));
   });
 
   closeButtons.forEach((button) => button.addEventListener("click", requestClose));
@@ -330,6 +349,19 @@
     requestClose();
   });
   dialog.addEventListener("close", () => lastTrigger?.focus());
+  window.addEventListener("popstate", () => {
+    if (isIntakeHistoryEntry()) {
+      openDialog(null, false);
+      return;
+    }
+
+    if (!dialog.open) return;
+    if (!submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available until you leave or refresh this page.")) {
+      window.history.forward();
+      return;
+    }
+    requestClose({ syncHistory: false, confirmDirty: false });
+  });
 
   nextButton.addEventListener("click", () => {
     if (!validateStep()) return;
