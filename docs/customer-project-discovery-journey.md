@@ -254,7 +254,7 @@ Before Send, state that Lang Systems will review the information, confirm its un
 | Exit with changes | Explain same-page retention and loss on refresh/leave | Keep working is unchanged; Close hides but retains in-page values; Leave discards with the page |
 | Abandoned session | No reminder, email, background send, or prompt occurs | Reopen resumes while the page lives; refresh, navigation, tab close, or crash may discard it |
 
-Errors never expose provider names, response bodies, internal codes, or customer answers. The fallback address is `langsystemsdesign@outlook.com`; direct email does not automatically include the structured outline.
+Errors never expose provider names, response bodies, internal codes, or customer answers. The interim fallback address is `langsystemsdesign@outlook.com`; the browser downloads a structured HTML package, but the customer must attach it to the draft and send the email before Lang Systems receives anything.
 
 ## 8. What happens next
 

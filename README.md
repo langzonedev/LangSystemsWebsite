@@ -19,17 +19,27 @@ integration, workflow automation, and future product development.
 - [Targeted Project Clarification Question Generator](docs/clarification-question-generator.md)
 - [Secure Submission Storage and Internal Retrieval](docs/secure-submission-storage.md)
 - [Project Intake Submission Workflow Audit](docs/project-intake-submission-audit.md)
+- [Project Intake Production Roadmap](docs/project-intake-production-roadmap.md)
 - [Project Scope, Acceptance and Delivery Template Pack](docs/project-scope-acceptance-delivery-templates.md)
 
-## Hosting
+## Current hosting and production intake delivery
 
-The production site and submission API deploy together as one Node web service from
-[`render.yaml`](render.yaml). Serving both from `https://langsystems.com.au` keeps the form on the
-same origin and makes `/api/project-submissions` a production route. The attached persistent disk
-stores submissions and delivery metadata outside the public site directory.
+The public site remains on GitHub Pages and the questionnaire uses `api` mode to submit securely to
+the production Cloudflare Worker. The Worker stores the validated submission and generated documents
+in D1 before Resend sends the customer confirmation and the internal copy to
+`langsystemsdesign@outlook.com`. The email-client package generator remains in the codebase as a
+controlled rollback option; it is not shown as the primary production action.
 
-GitHub Pages remains suitable for a static preview, but it cannot host the submission API and is
-not the production target for the discovery wizard.
+See the [Project Intake Production Roadmap](docs/project-intake-production-roadmap.md) for deployment
+evidence, rollback steps, and the remaining operational improvements.
+
+## Target hosting
+
+The public website remains on GitHub Pages. A small Cloudflare Worker in
+[`worker/index.ts`](worker/index.ts) provides the cross-origin `/api/project-submissions` endpoint,
+and Cloudflare D1 stores the original submission, generated documents, delivery state, and audit
+events before Resend is called. This keeps the initial production path within the intended free
+tiers and avoids moving the website DNS.
 
 ## Local Preview
 
@@ -39,7 +49,7 @@ Open `index.html` in a browser, or run a small static server from the repo root:
 python -m http.server 4173
 ```
 
-## Project intake email
+## Target production project intake email
 
 The discovery wizard posts JSON to `/api/project-submissions`. The intake API validates the shared
 submission model, sends a branded customer confirmation and a detailed internal email, and records
@@ -56,33 +66,25 @@ $env:INTAKE_STATUS_FILE="C:\tmp\lang-systems-delivery-status.json"
 node server/local-intake-server.js
 ```
 
-Then open `http://127.0.0.1:8787`. The entry point serves the static site and API on one origin. It
-binds only to loopback with safe mock delivery by default; the production Blueprint runs the same
-entry point with strict live configuration and a platform network binding.
+Then open `http://127.0.0.1:8787`. This legacy local Node entry point remains useful for
+dependency-free contract tests. The production target is declared in `wrangler.jsonc` and uses the
+D1 migration in `migrations/0001_initial.sql`.
 
-Production is declared in `render.yaml`. Create a Render Blueprint from this repository, enter
-`RESEND_API_KEY`, verify the `projects@langsystems.com.au` sender with the email provider, and attach
-the `langsystems.com.au` custom domain. The Blueprint supplies the durable paths, single-instance
-constraint, health check, live mode, exact allowed origin, and generated secrets. For another
-persistent Node host, configure:
+For Cloudflare production, configure:
 
 - `NODE_ENV=production` and `INTAKE_EMAIL_MODE=live`
 - `RESEND_API_KEY` (or `EMAIL_API_KEY`) and optionally `EMAIL_PROVIDER_URL`
 - `EMAIL_FROM`, `INTAKE_INTERNAL_EMAIL`, and `LANG_SYSTEMS_CONTACT_EMAIL`
-- an absolute `INTAKE_STATUS_FILE`, or inject a durable status-store adapter
-- an absolute `INTAKE_STORAGE_DIR` outside the public site on platform-encrypted storage
-- a secret `INTAKE_ADMIN_TOKEN` of at least 32 characters
+- the `INTAKE_DB` D1 binding
 - a secret `INTAKE_REFERENCE_SECRET` of at least 32 characters
 - optional `INTAKE_REVIEW_BASE_URL` for a secure internal review link
 
 See [.env.example](.env.example) for non-secret examples. Never place real values in that file or
-client-side code. Production refuses to start without explicit live mode, an API key, a reference
-secret, and durable status and submission storage. The status file contains delivery metadata; the
-separate submission storage contains customer answers and generated documents. Restrict both to the service account,
-keep them outside the public website directory, and do not enable request-body logging or tracing.
-The internal API retrieves a known reference and updates a constrained review status; it has no
-public list or customer portal. See [Secure Submission Storage and Internal Retrieval](docs/secure-submission-storage.md)
-for commands, HTTPS/access controls, retention, customer deletion requests, and backup timing.
+client-side code. Production refuses to process a submission without explicit live mode, an API key,
+a reference secret, and D1. Do not log request bodies or customer content. See
+[Secure Submission Storage and Internal Retrieval](docs/secure-submission-storage.md) for retention,
+customer deletion requests, and backup requirements; the authenticated Worker review surface is a
+later roadmap item.
 
 The response contains a server-generated `submissionReference`, receipt timestamp, processing
 status, and independent customer/internal email states. A stored submission remains successful if
@@ -105,6 +107,9 @@ Run the dependency-free intake contract checks from the repository root:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tests/intake-contract.Tests.ps1
+pnpm test:worker
+pnpm typecheck:worker
+pnpm worker:deploy:dry
 ```
 
 The browser application is static and has no compilation step. A production check consists of

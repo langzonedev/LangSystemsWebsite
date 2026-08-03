@@ -9,7 +9,9 @@
     />
     <meta name="theme-color" content="#14063d" />
     <!-- Deployment may set this public, non-secret value when the API is on another HTTPS origin. -->
-    <meta name="lang-systems-intake-endpoint" content="" />
+    <meta name="lang-systems-intake-endpoint" content="https://lang-systems-intake.langsystemsdesign.workers.dev/api/project-submissions" />
+    <!-- Verified Cloudflare Worker production delivery. Retain the email-client code path for controlled rollback only. -->
+    <meta name="lang-systems-intake-mode" content="api" />
     <title>Lang Systems | Idea to Production Ready Software</title>
     <link rel="icon" type="image/png" href="assets/lang-systems-logo.png" />
     <link rel="stylesheet" href="styles.css" />
@@ -425,8 +427,8 @@
               <div><h3>Review your project outline.</h3><p>Check the key details below. You can go back to make changes before sending.</p></div>
             </div>
             <div class="review-summary" data-review-summary></div>
-            <label class="consent"><input type="checkbox" name="privacy_consent" value="Agreed" required /><span>I agree that Lang Systems may use this information to assess my enquiry and contact me about it. I understand it will be sent through an email delivery service. I have not included passwords, payment details, health records, or other highly sensitive information.</span></label>
-            <p class="submission-note">After you send this, we will review the information, confirm our understanding, and contact you with any questions or recommended next steps.</p>
+            <label class="consent"><input type="checkbox" name="privacy_consent" value="Agreed" required /><span data-intake-consent-text>I agree that Lang Systems may securely receive and use this information to assess my enquiry and contact me about it. I have not included passwords, payment details, health records, or other highly sensitive information.</span></label>
+            <p class="submission-note" data-submission-note>Your project outline will be sent securely to Lang Systems. You will receive a confirmation email with the submission reference after it is accepted.</p>
           </section>
 
           <div class="error-summary" data-error-summary tabindex="-1" role="alert" aria-live="assertive" aria-atomic="true" hidden></div>
@@ -436,6 +438,7 @@
             <button class="button secondary" type="button" data-form-back hidden>Back</button>
             <button class="button primary" type="button" data-form-next>Continue</button>
             <button class="button primary" type="submit" data-form-submit hidden>Send project outline</button>
+            <button class="button primary" type="button" data-email-fallback hidden>Download package &amp; open email</button>
           </footer>
         </form>
 
@@ -505,6 +508,7 @@
     <script src="clarification-questions.js"></script>
     <script src="internal-project-brief.js"></script>
     <script src="customer-summary.js"></script>
+    <script src="project-submission-package.js"></script>
     <script src="intake-service.js"></script>
     <script src="intake-draft.js"></script>
     <script src="submission-state.js"></script>

@@ -1,0 +1,4 @@
+# Copy this file to .dev.vars for local Worker development.
+# Never commit the real values.
+INTAKE_REFERENCE_SECRET="generate-a-random-secret-of-at-least-32-characters"
+RESEND_API_KEY="re_your_resend_api_key"

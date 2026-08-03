@@ -94,7 +94,7 @@ Supporting file contents are not uploaded or attached to email. Only sanitised f
 
 ### Failure behavior
 
-Submission success is shown only after the provider returns a successful response. On validation, offline, lost-connection, timeout, temporary server, storage, email-delivery, rate-limit, or duplicate failure, the dialog stays open and the customer’s inputs remain intact. The focused message explains whether to correct an answer, reconnect, wait, retry, or contact `langsystemsdesign@outlook.com`. A timeout or lost connection never claims failure or success when delivery cannot be confirmed. Direct email is a fallback contact route; it does not reproduce the structured intake automatically.
+Submission success is shown only after the provider returns a successful response. On validation, offline, lost-connection, timeout, temporary server, storage, email-delivery, rate-limit, or duplicate failure, the dialog stays open and the customer’s inputs remain intact. The focused message explains whether to correct an answer, reconnect, wait, retry, or contact `langsystemsdesign@outlook.com`. A timeout or lost connection never claims failure or success when delivery cannot be confirmed. While the production API is unavailable, email-client mode downloads the structured intake package and opens a draft; the customer must attach the package and send it manually.
 
 ## 7. Email and generated document outputs
 

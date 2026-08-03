@@ -42,4 +42,4 @@
   }
 
   return Object.freeze({ states, transitions, create });
-}));
+});

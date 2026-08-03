@@ -1,0 +1,31 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "lang-systems-intake",
+  "account_id": "a1cd88dd75366462838a0839581f03d6",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "NODE_ENV": "production",
+    "INTAKE_ALLOWED_ORIGIN": "https://langsystems.com.au",
+    "INTAKE_EMAIL_MODE": "live",
+    "INTAKE_INTERNAL_EMAIL": "langsystemsdesign@outlook.com",
+    "LANG_SYSTEMS_CONTACT_EMAIL": "langsystemsdesign@outlook.com",
+    "EMAIL_FROM": "Lang Systems <projects@send.langsystems.com.au>",
+    "EMAIL_PROVIDER_URL": "https://api.resend.com/emails",
+    "INTAKE_REVIEW_BASE_URL": ""
+  },
+  "d1_databases": [
+    {
+      "binding": "INTAKE_DB",
+      "database_name": "lang-systems-intake",
+      "database_id": "b147260f-d287-4eca-897e-df73f8bcb361",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
