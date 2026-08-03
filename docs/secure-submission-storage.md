@@ -6,6 +6,8 @@ The intake API durably stores the validated original structured submission befor
 
 The browser currently sends attachment metadata only. File contents do not leave the browser and are not stored or emailed; this avoids placing customer files in JSON, logs, mailboxes, or a public web directory. The server revalidates every declared attachment name, type, count, and size. If file-content upload is added later, it must use the same validation boundary plus signature/content inspection and malware scanning before release from a non-executable quarantine. Partial upload objects must expire within 24 hours.
 
+While a customer is completing the wizard, ordinary answer fields and the current step are copied to tab-scoped `sessionStorage` so an accidental refresh can recover the draft. File selections and the honeypot are excluded because browsers cannot safely restore file inputs. The draft is removed after a server-confirmed submission and otherwise expires when the browser tab is closed; it is never written to logs or shared across tabs. Customers using a shared device should close the tab when abandoning a draft.
+
 Records are stored beneath `INTAKE_STORAGE_DIR`, keyed by a SHA-256 digest of the customer-facing reference. Documents use cryptographically random names. The storage directory must be an absolute path outside the repository and public website root. Files are created with owner-only modes where the operating system supports them; the service account must be the only account with directory access.
 
 ## Production controls

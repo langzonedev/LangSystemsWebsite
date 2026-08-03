@@ -18,6 +18,7 @@ integration, workflow automation, and future product development.
 - [Internal Project Brief Generator](docs/internal-project-brief.md)
 - [Targeted Project Clarification Question Generator](docs/clarification-question-generator.md)
 - [Secure Submission Storage and Internal Retrieval](docs/secure-submission-storage.md)
+- [Project Intake Submission Workflow Audit](docs/project-intake-submission-audit.md)
 - [Project Scope, Acceptance and Delivery Template Pack](docs/project-scope-acceptance-delivery-templates.md)
 
 ## GitHub Pages
@@ -81,7 +82,9 @@ for commands, HTTPS/access controls, retention, customer deletion requests, and 
 After deployment, submit one non-sensitive test project and inspect both mailboxes (including junk
 folders), branding, links, and the recorded statuses. To recover a partial failure, use the wizard's
 Retry action while its answers remain open; the same reference is reused and completed recipients
-are not sent again. If browser recovery is unavailable, use the reference and status record for
+are not sent again. In-progress answers (but not selected files) are kept in tab-scoped session
+storage so a refresh can recover the draft; the draft is removed after confirmed submission or
+when the tab closes. If browser recovery is unavailable, use the reference and status record for
 manual follow-up—do not copy customer content into logs or issue trackers.
 
 ## Checks

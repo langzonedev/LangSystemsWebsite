@@ -45,6 +45,12 @@ module.exports = (async () => {
     (error) => error.code === "email_delivery"
   );
 
+  global.fetch = async () => ({ ok: false, status: 404, json: async () => null });
+  await assert.rejects(
+    window.LangSystemsIntakeSubmission.submit({ endpoint: "https://form.example.test/intake", formData }),
+    (error) => error.code === "configuration"
+  );
+
   global.fetch = async () => ({ ok: false, status: 503, json: async () => ({
     success: false, code: "email_delivery", reference: "LS-SERVICE-TEST",
     delivery: { customer: "sent", internal: "failed", complete: false }

@@ -65,10 +65,10 @@
       });
       const result = await response.json().catch(() => null);
 
-      if (!response.ok || !result || result.success === false) {
+      if (!response.ok || !result || result.success !== true || typeof result.reference !== "string") {
         const safeCodes = ["duplicate_submission", "storage", "email_delivery", "temporary_server", "rate_limited"];
         const providerCode = result && safeCodes.includes(result.code) ? result.code :
-          (response.status === 409 ? "duplicate_submission" : response.status === 429 ? "rate_limited" :
+          ([404, 405].includes(response.status) ? "configuration" : response.status === 409 ? "duplicate_submission" : response.status === 429 ? "rate_limited" :
             (response.status >= 500 ? "temporary_server" : "rejected"));
         throw new IntakeSubmissionError("The submission service did not accept the project outline.", providerCode, undefined, {
           reference: result?.reference,

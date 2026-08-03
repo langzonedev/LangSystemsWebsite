@@ -1155,6 +1155,10 @@ h3 {
   animation: step-in 180ms ease;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .form-step[hidden],
 .intake-success[hidden] {
   display: none;

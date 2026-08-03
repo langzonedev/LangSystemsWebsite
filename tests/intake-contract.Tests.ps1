@@ -3,7 +3,9 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $index = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "index.html")
 $controller = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake.js")
+$styles = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "styles.css")
 $service = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-service.js")
+$draft = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-draft.js")
 $model = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-model.js")
 $clarificationQuestions = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "clarification-questions.js")
 $customerSummary = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "customer-summary.js")
@@ -53,7 +55,9 @@ Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script s
 Assert-True ($controller -match 'intakeModel\.serialiseSubmission' -and $service -match 'LangSystemsIntakeModel\.parseSubmission') "Frontend generation and transport must enforce the shared model contract."
 Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"3\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
 Assert-True ($serverValidation -match 'IntakeModel\.validateSubmission' -and $serverValidation -notmatch 'console\.') "The server validation boundary must use the shared contract without logging submissions."
-Assert-True ($controller -notmatch 'localStorage|sessionStorage|console\.') "Customer answers must not be stored in browser storage or written to the console."
+Assert-True ($controller -notmatch 'localStorage|console\.' -and $draft -match 'sessionStorage' -and $draft -notmatch 'localStorage|console\.' -and $draft -match 'EXCLUDED_FIELDS.*attachments') "Draft recovery must use tab-scoped storage, exclude attachments, and avoid customer logging."
+Assert-True ($controller -match 'Math\.min\(Math\.max\(0, currentStep\), steps\.length - 1\)' -and $controller -match 'currentStep >= steps\.length - 1' -and $index -match 'data-form-submit hidden' -and $styles -match '(?s)\[hidden\]\s*\{\s*display:\s*none\s*!important' -and $controller -match 'setMessage\(\);\s*if \(error\?\.name') "Review navigation must stay within eight steps, hidden actions must stay hidden, and failed submission must clear the sending status."
+Assert-True ($draft -match 'intakeDraft|LangSystemsIntakeDraft' -or $controller -match 'intakeDraft\.restore') "The intake draft recovery module is not wired into the browser controller."
 Assert-True ($index -match 'data-error-summary' -and $controller -match 'showErrorSummary' -and $controller -match 'field-error') "Accessible field errors and an error summary are required."
 Assert-True ($index -match 'name="attachments"[^>]+accept=' -and $controller -match 'maximumAttachmentBytes' -and $model -match 'ALLOWED_ATTACHMENT_EXTENSIONS') "Attachment type and size validation is required at both boundaries."
 Assert-True ($controller -match 'validateAllSteps' -and $model -match 'required_consent' -and $model -match 'too_long') "Required consent, complete-form validation, and maximum lengths must be enforced."
@@ -177,6 +181,9 @@ if ($node) {
   $serviceTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-service.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $serviceTestOutput -match "Intake submission success, provider failure, and timeout checks passed\.") "Intake submission service tests failed: $serviceTestOutput"
   Write-Output $serviceTestOutput
+  $draftTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-draft.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $draftTestOutput -match "Intake draft save, restore, exclusion, and cleanup checks passed\.") "Intake draft tests failed: $draftTestOutput"
+  Write-Output $draftTestOutput
   $emailTestOutput = (& $node.Source (Join-Path $PSScriptRoot "email-delivery.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $emailTestOutput -match "Email branding, sanitisation, partial failure, status, retry, and duplicate-prevention checks passed\.") "Email delivery tests failed: $emailTestOutput"
   Write-Output $emailTestOutput

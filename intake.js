@@ -4,8 +4,9 @@
   const submissionService = window.LangSystemsIntakeSubmission;
   const intakeModel = window.LangSystemsIntakeModel;
   const customerSummaryGenerator = window.LangSystemsCustomerSummary;
+  const intakeDraft = window.LangSystemsIntakeDraft;
 
-  if (!dialog || !form || !submissionService || !intakeModel || !customerSummaryGenerator || typeof dialog.showModal !== "function") return;
+  if (!dialog || !form || !submissionService || !intakeModel || !customerSummaryGenerator || !intakeDraft || typeof dialog.showModal !== "function") return;
 
   const steps = [...form.querySelectorAll("[data-step]")];
   const openButtons = [...document.querySelectorAll("[data-open-intake]")];
@@ -206,6 +207,7 @@
   }
 
   function updateStep() {
+    currentStep = Math.min(Math.max(0, currentStep), steps.length - 1);
     steps.forEach((step, index) => { step.hidden = index !== currentStep; });
     stepLabel.textContent = `Step ${currentStep + 1} of ${steps.length}`;
     stepName.textContent = steps[currentStep].dataset.stepName;
@@ -489,7 +491,7 @@
   }
 
   function requestClose({ syncHistory = true, confirmDirty = true } = {}) {
-    if (confirmDirty && !submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available until you leave or refresh this page.")) return;
+    if (confirmDirty && !submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available in this tab, including after a refresh, until you submit or close the tab.")) return;
     submissionController?.abort();
     dialog.close();
     if (syncHistory && isIntakeHistoryEntry()) window.history.back();
@@ -501,6 +503,7 @@
     if (error?.code === "rate_limited") return "There have been several recent attempts. Your answers are still here. Please wait a minute, then try again.";
     if (error?.code === "duplicate_submission") return "This project outline may already have been received. We have not sent it again. Please contact us by email if you would like us to confirm.";
     if (error?.code === "payload") return "We could not prepare the outline for sending. Your answers are still here. Please review the highlighted information and try again.";
+    if (error?.code === "configuration") return "The submission service is not available on this website. Your answers are still saved in this tab. Please contact us by email while we restore the service.";
     if (error?.code === "email_delivery" && error?.reference) {
       const customerSent = error.delivery?.customer === "sent";
       const internalSent = error.delivery?.internal === "sent";
@@ -526,6 +529,12 @@
   }
 
   wireFieldDescriptions();
+  const restoredDraft = intakeDraft.restore(window, form, steps.length - 1);
+  if (restoredDraft) {
+    currentStep = restoredDraft.currentStep;
+    formDirty = true;
+    if (currentStep === steps.length - 1) buildReview();
+  }
 
   openButtons.forEach((button) => {
     button.addEventListener("click", () => openDialog(button));
@@ -544,7 +553,7 @@
     }
 
     if (!dialog.open) return;
-    if (!submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available until you leave or refresh this page.")) {
+    if (!submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available in this tab, including after a refresh, until you submit or close the tab.")) {
       window.history.forward();
       return;
     }
@@ -553,13 +562,16 @@
 
   nextButton.addEventListener("click", () => {
     if (!validateStep()) return;
-    currentStep += 1;
+    if (currentStep >= steps.length - 1) return;
+    currentStep = Math.min(currentStep + 1, steps.length - 1);
     if (currentStep === steps.length - 1) buildReview();
+    intakeDraft.save(window, form, currentStep);
     updateStep();
   });
 
   backButton.addEventListener("click", () => {
     currentStep = Math.max(0, currentStep - 1);
+    intakeDraft.save(window, form, currentStep);
     updateStep();
   });
 
@@ -567,6 +579,7 @@
     const editButton = event.target.closest("[data-edit-step]");
     if (!editButton) return;
     currentStep = Number(editButton.dataset.editStep);
+    intakeDraft.save(window, form, currentStep);
     updateStep();
   });
 
@@ -624,7 +637,10 @@
     clearFieldError(event.target);
     errorSummary.hidden = true;
     setMessage();
+    intakeDraft.save(window, form, currentStep);
   });
+
+  form.addEventListener("change", () => intakeDraft.save(window, form, currentStep));
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -655,6 +671,7 @@
       }
 
       submissionComplete = true;
+      intakeDraft.clear(window);
       confirmedReference = result.reference;
       confirmationEmail.textContent = valueOf("email");
       confirmationBusiness.textContent = valueOf("business_name");
@@ -673,6 +690,7 @@
       summaryActions.hidden = false;
       successPanel.focus();
     } catch (error) {
+      setMessage();
       if (error?.name === "AbortError") {
         submitButton.disabled = false;
         submitButton.textContent = "Send project outline";
