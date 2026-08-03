@@ -343,19 +343,15 @@
 
   function buildDocuments() {
     const projectReference = intakeModel.newSubmissionId();
-    const openQuestions = [];
-
-    if (!valueOf("existing_systems")) openQuestions.push("Are there existing systems or services the solution must connect with?");
-    if (!valueOf("data_needs")) openQuestions.push("What business information will the solution need to read, store, or produce?");
-    if (!valueOf("excluded_functionality")) openQuestions.push("Is there any related functionality that should be explicitly outside the first release?");
-    if (!valueOf("constraints")) openQuestions.push("Are there privacy, security, accessibility, approval, location, device, or industry requirements to consider?");
-    if (!valueOf("timing_context")) openQuestions.push("Is the preferred timing linked to a fixed date or external dependency?");
-    if (valueOf("delivery_model") === "Recommendation required") openQuestions.push("Which ownership and payment arrangement best fits the business and likely solution?");
-    if (valueOf("budget").startsWith("Not sure")) openQuestions.push("What investment range is practical once the first release options are explained?");
-    if (!valueOf("optional_requirements")) openQuestions.push("Which useful additions should be recorded for a later release?");
-
     const submittedAt = new Date().toISOString();
-    const structuredProject = createStructuredProject(projectReference, submittedAt, openQuestions);
+    const structuredProject = createStructuredProject(projectReference, submittedAt, []);
+    const clarificationReview = window.LangSystemsClarificationQuestions.generate(structuredProject);
+    const openQuestions = [
+      ...clarificationReview.customerFollowUp.requiredBeforeEstimation,
+      ...clarificationReview.customerFollowUp.requiredBeforeDevelopment,
+      ...clarificationReview.customerFollowUp.helpfulButNonBlocking
+    ];
+    structuredProject.processing.clarificationQuestions = openQuestions;
     const generatedCustomerSummary = customerSummaryGenerator.generate(structuredProject);
 
     const unknown = (statement) => ({ status: "unknown", statement });
@@ -418,7 +414,9 @@
       ]),
       technicalSection("Dependencies", [integrations, data, constraints]),
       technicalSection("Risks", [assumption("Unconfirmed requirements may change scope, estimation, acceptance criteria, or delivery planning.")]),
-      technicalSection("Conflicts or contradictions", [technicalRecommendation("No conflict was identified automatically. Compare the original answers and clarify any inconsistent wording during manual review.")]),
+      technicalSection("Conflicts or contradictions", clarificationReview.contradictions.length
+        ? clarificationReview.contradictions.map((conflict) => ({ status: "unknown", statement: conflict.summary, source: conflict.sourcePaths.join(", ") }))
+        : [technicalRecommendation("No conflict was identified automatically. Compare the original answers and clarify any inconsistent wording during manual review.")]),
       technicalSection("Open technical questions", openQuestions.length
         ? openQuestions.map((question) => ({ status: "unknown", statement: question }))
         : [technicalRecommendation("No automatic gaps were identified; confirm all assumptions during discovery.")]),
@@ -438,8 +436,9 @@
       structuredProject,
       technicalRequirements,
       internalBrief: internalBrief.renderedText,
-      clarificationQuestions: openQuestions.length ? openQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n") : "No automatic gaps identified; confirm all assumptions during discovery.",
-      clarificationQuestionItems: openQuestions
+      clarificationQuestions: clarificationReview.renderedInternal,
+      clarificationQuestionItems: openQuestions,
+      clarificationReview
     };
   }
 

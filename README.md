@@ -16,6 +16,7 @@ integration, workflow automation, and future product development.
 - [Plain-English Requirements Interpretation Service](docs/requirements-interpretation-service.md)
 - [Internal Technical Requirements Specification Generator](docs/internal-technical-requirements-specification.md)
 - [Internal Project Brief Generator](docs/internal-project-brief.md)
+- [Targeted Project Clarification Question Generator](docs/clarification-question-generator.md)
 
 ## GitHub Pages
 

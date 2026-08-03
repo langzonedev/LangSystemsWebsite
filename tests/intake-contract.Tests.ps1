@@ -5,6 +5,7 @@ $index = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "index.html")
 $controller = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake.js")
 $service = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-service.js")
 $model = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-model.js")
+$clarificationQuestions = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "clarification-questions.js")
 $customerSummary = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "customer-summary.js")
 $serverValidation = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-validation.js")
 $requirementsInterpreter = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/requirements-interpreter.js")
@@ -39,7 +40,7 @@ Assert-True ($index -match 'role="progressbar"' -and $index -match 'aria-valuete
 Assert-True ($index -match 'data-review-summary' -and $controller -match 'data-edit-step') "The review step must offer direct correction controls."
 Assert-True ($controller -match 'LangSystemsIntakeSubmission' -and $controller -notmatch 'await\s+fetch\s*\(') "Submission transport must stay behind the service boundary."
 Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"') "The submission service must reject insecure endpoints."
-Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="internal-project-brief\.js"></script>\s*<script src="customer-summary\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model and internal/customer document generators must load before submission transport."
+Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="clarification-questions\.js"></script>\s*<script src="internal-project-brief\.js"></script>\s*<script src="customer-summary\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model and internal/customer document generators must load before submission transport."
 Assert-True ($controller -match 'intakeModel\.serialiseSubmission' -and $service -match 'LangSystemsIntakeModel\.parseSubmission') "Frontend generation and transport must enforce the shared model contract."
 Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"3\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
 Assert-True ($serverValidation -match 'IntakeModel\.validateSubmission' -and $serverValidation -notmatch 'console\.') "The server validation boundary must use the shared contract without logging submissions."
@@ -54,6 +55,7 @@ Assert-True ($requirementsInterpreter -match 'buildModelInput' -and $requirement
 Assert-True ((Test-Path $technicalSpecificationSchemaPath) -and $technicalSpecification -match 'sourceSubmissionId' -and $technicalSpecification -match 'customerApproved' -and $technicalSpecification -notmatch 'console\.') "The internal technical specification must be versioned, traceable, non-authoritative, and must not log customer content."
 Assert-True ((Test-Path $internalProjectBriefSchemaPath) -and $internalProjectBrief -match 'manualReviewRequired' -and $internalProjectBrief -match 'customer_evidence' -and $internalProjectBrief -match 'not a reason to reject' -and $internalProjectBrief -notmatch 'console\.') "The internal project brief must be structured, traceable, manually reviewed, budget-safe, and must not log customer content."
 Assert-True ($controller -match 'LangSystemsInternalProjectBrief\.buildBrief\(structuredProject\)' -and $controller -match 'lang_systems_project_brief_internal' -and $controller -notmatch 'internalStatus.*_autoresponse') "The validated internal brief must feed only the internal email output."
+Assert-True ($controller -match 'LangSystemsClarificationQuestions\.generate\(structuredProject\)' -and $clarificationQuestions -match 'requiredBeforeEstimation' -and $clarificationQuestions -match 'requiredBeforeDevelopment' -and $clarificationQuestions -match 'helpfulButNonBlocking' -and $clarificationQuestions -match 'manualReviewRequired' -and $clarificationQuestions -notmatch 'console\.') "Clarification questions must be grouped, manually reviewed, validated, and kept out of logs."
 Assert-True ($customerSummary -match 'Scope, price and timing are not final' -and $customerSummary -match 'printableHtml' -and $customerSummary -notmatch 'console\.') "The customer summary must include safeguards, printable output, and no customer logging."
 Assert-True ($controller -match 'customerSummaryGenerator\.generate' -and $controller -match 'formData\.set\("_autoresponse", documents\.customerSummary\)' -and $index -match 'data-print-summary' -and $index -match 'data-download-summary') "The generated summary must feed customer email, print, and download outputs."
 Assert-True ($controller -match 'INTERNAL TECHNICAL REQUIREMENTS SPECIFICATION' -and $controller -match 'Essential first-release requirements' -and $controller -match 'Recommended investigation tasks' -and $controller -match '\[\$\{item\.status\.toUpperCase\(\)\}\]') "The internal email must include the complete, status-labelled technical specification."
@@ -118,6 +120,10 @@ $briefBrowserTestOutput = (& cscript //NoLogo //E:JScript (Join-Path $PSScriptRo
 Assert-True ($LASTEXITCODE -eq 0 -and $briefBrowserTestOutput -match "Internal project brief browser generation, evidence, readiness, and budget checks passed\." -and $briefBrowserTestOutput -notmatch "runtime error") "Internal project brief browser tests failed: $briefBrowserTestOutput"
 Write-Output $briefBrowserTestOutput
 
+$clarificationBrowserTestOutput = (& cscript //NoLogo //E:JScript (Join-Path $PSScriptRoot "clarification-questions-browser.Tests.js") 2>&1) -join "`n"
+Assert-True ($LASTEXITCODE -eq 0 -and $clarificationBrowserTestOutput -match "Clarification question browser targeting, grouping, contradiction, and limit checks passed\." -and $clarificationBrowserTestOutput -notmatch "runtime error") "Clarification question browser tests failed: $clarificationBrowserTestOutput"
+Write-Output $clarificationBrowserTestOutput
+
 $node = Get-Command node -ErrorAction SilentlyContinue
 if ($node) {
   $serverTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-validation.Tests.js") 2>&1) -join "`n"
@@ -138,6 +144,9 @@ if ($node) {
   $summaryTestOutput = (& $node.Source (Join-Path $PSScriptRoot "customer-summary.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $summaryTestOutput -match "Customer summary text, HTML, print, privacy, and safeguard checks passed\.") "Customer summary tests failed: $summaryTestOutput"
   Write-Output $summaryTestOutput
+  $clarificationTestOutput = (& $node.Source (Join-Path $PSScriptRoot "clarification-questions.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $clarificationTestOutput -match "Clarification question targeting, grouping, contradictions, validation, and limits passed\.") "Clarification question tests failed: $clarificationTestOutput"
+  Write-Output $clarificationTestOutput
 } else {
   Write-Output "Node.js is unavailable; server and submission-service runtime tests were skipped after static contract checks."
 }
