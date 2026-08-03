@@ -31,6 +31,7 @@
         <a href="#process">Process</a>
         <a href="#portfolio">Portfolio</a>
         <a href="#contact">Contact</a>
+        <button class="nav-start" type="button" data-open-intake>Get Started</button>
       </nav>
     </header>
 
@@ -44,7 +45,7 @@
             engineer the solution, and build software ready for real business use.
           </p>
           <div class="hero-actions">
-            <a class="button primary" href="#contact">Start a project</a>
+            <button class="button primary" type="button" data-open-intake>Get Started</button>
             <a class="button secondary" href="#portfolio">View portfolio</a>
           </div>
           <dl class="hero-proof" aria-label="Lang Systems focus areas">
@@ -277,6 +278,7 @@
             Share the idea, workflow challenge, or integration gap you want to solve. We will help
             shape the path from first conversation to practical software delivery.
           </p>
+          <button class="button primary" type="button" data-open-intake>Tell us about your project</button>
         </div>
         <address class="contact-panel">
           <span>Lang Systems</span>
@@ -284,6 +286,153 @@
         </address>
       </section>
     </main>
+
+    <dialog class="intake-dialog" data-intake-dialog aria-labelledby="intake-title">
+      <div class="intake-shell">
+        <header class="intake-header">
+          <div>
+            <p class="eyebrow">Project discovery</p>
+            <h2 id="intake-title">Tell us what you want to achieve.</h2>
+            <p>You do not need to know what technology you need. We will handle the technical translation.</p>
+          </div>
+          <button class="dialog-close" type="button" data-close-intake aria-label="Close project discovery">&times;</button>
+        </header>
+
+        <div class="intake-progress" aria-label="Project discovery progress">
+          <div class="progress-copy"><span data-step-label>Step 1 of 8</span><strong data-step-name>About you</strong></div>
+          <div class="progress-track" aria-hidden="true"><span data-progress-bar></span></div>
+        </div>
+
+        <form
+          class="intake-form"
+          data-intake-form
+          action="https://formsubmit.co/ajax/langsystemsdesign@outlook.com"
+          method="post"
+          novalidate
+        >
+          <input type="hidden" name="_subject" value="New Lang Systems project enquiry" />
+          <input type="hidden" name="_template" value="table" />
+          <input type="hidden" name="_captcha" value="false" />
+          <input type="hidden" name="_autoresponse" value="Thanks for telling Lang Systems about your project. We have received your information and will review it carefully. We will contact you to confirm our understanding, ask any important follow-up questions, and discuss a practical first release. Please do not reply with passwords or other sensitive information." />
+          <input type="text" name="_honey" class="form-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+          <section class="form-step" data-step data-step-name="About you">
+            <div class="step-heading">
+              <span>01</span>
+              <div><h3>First, who should we speak with?</h3><p>This helps us understand the business context and respond to the right person.</p></div>
+            </div>
+            <div class="field-grid two-columns">
+              <label><span>Your name</span><input name="contact_name" autocomplete="name" required /><small>Tell us what you would like us to call you.</small></label>
+              <label><span>Work email</span><input type="email" name="email" autocomplete="email" required /><small>We will send your confirmation here.</small></label>
+              <label><span>Phone <em>Optional</em></span><input type="tel" name="phone" autocomplete="tel" /></label>
+              <label><span>Business or organisation</span><input name="business_name" autocomplete="organization" required /></label>
+            </div>
+            <label><span>What does your business do?</span><textarea name="business_description" rows="3" required placeholder="A short, plain-English description is perfect."></textarea></label>
+          </section>
+
+          <section class="form-step" data-step data-step-name="The problem" hidden>
+            <div class="step-heading">
+              <span>02</span>
+              <div><h3>What is happening today?</h3><p>Describe the situation as you would to a colleague. Technical detail is not expected.</p></div>
+            </div>
+            <label><span>What problem or opportunity would you like help with?</span><textarea name="problem" rows="5" required placeholder="For example: Our team copies order details between three systems and mistakes are becoming common."></textarea></label>
+            <label><span>How do you handle this today?</span><textarea name="current_process" rows="4" required placeholder="Walk us through the current process, including manual steps or workarounds."></textarea></label>
+            <label><span>Who is affected, and what impact does it have?</span><textarea name="problem_impact" rows="3" required placeholder="Consider time, cost, customer experience, errors, risk, or missed opportunities."></textarea></label>
+          </section>
+
+          <section class="form-step" data-step data-step-name="The outcome" hidden>
+            <div class="step-heading">
+              <span>03</span>
+              <div><h3>What would a better result look like?</h3><p>Focus on what people should be able to do, not how the software should be built.</p></div>
+            </div>
+            <label><span>What would you like the new solution to achieve?</span><textarea name="desired_outcome" rows="5" required></textarea></label>
+            <label><span>Who will use it?</span><textarea name="users" rows="3" required placeholder="For example: five office staff, field technicians, managers, or customers."></textarea></label>
+            <div class="field-grid two-columns">
+              <label><span>Existing systems it may need to work with <em>Optional</em></span><textarea name="existing_systems" rows="3" placeholder="Accounting, payments, spreadsheets, website, email, or other tools."></textarea></label>
+              <label><span>Information it may need to use <em>Optional</em></span><textarea name="data_needs" rows="3" placeholder="Customer records, orders, documents, reports, or other business information."></textarea></label>
+            </div>
+          </section>
+
+          <section class="form-step" data-step data-step-name="First release" hidden>
+            <div class="step-heading">
+              <span>04</span>
+              <div><h3>Shape a practical first release.</h3><p>Separating essentials from later ideas keeps the first delivery clear and achievable.</p></div>
+            </div>
+            <label><span>Essential for the first release</span><textarea name="first_release" rows="5" required placeholder="What must people be able to do from day one?"></textarea></label>
+            <div class="field-grid two-columns">
+              <label><span>Useful, but can be added later <em>Optional</em></span><textarea name="optional_requirements" rows="3"></textarea></label>
+              <label><span>Future ideas <em>Optional</em></span><textarea name="future_ideas" rows="3"></textarea></label>
+            </div>
+            <label><span>Anything specifically not included? <em>Optional</em></span><textarea name="excluded_functionality" rows="3" placeholder="This can include work another supplier or your team will handle."></textarea></label>
+          </section>
+
+          <section class="form-step" data-step data-step-name="Budget and timing" hidden>
+            <div class="step-heading">
+              <span>05</span>
+              <div><h3>Help us recommend a realistic approach.</h3><p>Estimates can be refined after discovery. A range is enough at this stage.</p></div>
+            </div>
+            <div class="field-grid two-columns">
+              <label><span>Expected investment</span><select name="budget" required><option value="">Choose the closest answer</option><option>Under AUD $5,000</option><option>AUD $5,000–$15,000</option><option>AUD $15,000–$40,000</option><option>AUD $40,000–$100,000</option><option>Over AUD $100,000</option><option>Not sure — please advise</option></select></label>
+              <label><span>Preferred timing</span><select name="timing" required><option value="">Choose the closest answer</option><option>As soon as practical</option><option>Within 1–2 months</option><option>Within 3–6 months</option><option>More than 6 months away</option><option>Exploring options only</option></select></label>
+            </div>
+            <label><span>Is there an important date or reason for the timing? <em>Optional</em></span><textarea name="timing_context" rows="3" placeholder="A launch, contract, busy season, compliance date, or another dependency."></textarea></label>
+          </section>
+
+          <section class="form-step" data-step data-step-name="Working arrangement" hidden>
+            <div class="step-heading">
+              <span>06</span>
+              <div><h3>How would you prefer to work together?</h3><p>It is completely fine not to know. We can recommend the most suitable arrangement.</p></div>
+            </div>
+            <fieldset class="choice-group">
+              <legend>Preferred commercial arrangement</legend>
+              <label class="choice-card"><input type="radio" name="delivery_model" value="Recommendation required" required checked /><span><strong>Please recommend the best approach</strong><small>We will explain the suitable options in plain English.</small></span></label>
+              <label class="choice-card"><input type="radio" name="delivery_model" value="Customer-owned bespoke build" /><span><strong>We want to own the finished solution</strong><small>A purpose-built project funded through agreed stages, with the agreed ownership transferred to you.</small></span></label>
+              <label class="choice-card"><input type="radio" name="delivery_model" value="Lang Systems licensed product" /><span><strong>We are open to licensing a Lang Systems product</strong><small>Lang Systems retains ownership while your business pays to set up and use the product.</small></span></label>
+              <label class="choice-card"><input type="radio" name="delivery_model" value="Co-funded product partnership — manual review" /><span><strong>We may be interested in a product partnership</strong><small>A manually reviewed arrangement where the idea may also help other businesses.</small></span></label>
+            </fieldset>
+            <div class="field-grid two-columns">
+              <label><span>Who will manage the solution day to day?</span><select name="day_to_day_owner" required><option value="">Choose an answer</option><option>Our team</option><option>Lang Systems</option><option>A shared responsibility</option><option>Not sure yet</option></select></label>
+              <label><span>Ongoing help after launch</span><select name="ongoing_support" required><option value="">Choose an answer</option><option>We expect ongoing support</option><option>Occasional support when needed</option><option>Handover and documentation only</option><option>Not sure yet</option></select></label>
+            </div>
+          </section>
+
+          <section class="form-step" data-step data-step-name="Success" hidden>
+            <div class="step-heading">
+              <span>07</span>
+              <div><h3>How will we know the project is complete?</h3><p>Clear completion measures help both teams agree when the first release is ready.</p></div>
+            </div>
+            <label><span>What must be working before the project can be considered complete?</span><textarea name="acceptance_criteria" rows="5" required placeholder="Describe the results you need to see or tasks people must be able to complete."></textarea></label>
+            <label><span>Important rules, constraints, or concerns <em>Optional</em></span><textarea name="constraints" rows="3" placeholder="Privacy, approvals, locations, accessibility, industry rules, devices, or business policies."></textarea></label>
+            <label><span>Anything else we should know? <em>Optional</em></span><textarea name="additional_notes" rows="3"></textarea></label>
+          </section>
+
+          <section class="form-step review-step" data-step data-step-name="Review" hidden>
+            <div class="step-heading">
+              <span>08</span>
+              <div><h3>Review your project outline.</h3><p>Check the key details below. You can go back to make changes before sending.</p></div>
+            </div>
+            <div class="review-summary" data-review-summary></div>
+            <label class="consent"><input type="checkbox" name="privacy_consent" value="Agreed" required /><span>I agree that Lang Systems may use this information to assess my enquiry and contact me about it. I understand it will be sent through an email delivery service. I have not included passwords, payment details, health records, or other highly sensitive information.</span></label>
+            <p class="submission-note">After you send this, we will review the information, confirm our understanding, and contact you with any questions or recommended next steps.</p>
+          </section>
+
+          <div class="form-message" data-form-message role="alert" aria-live="polite"></div>
+          <footer class="form-actions">
+            <button class="button secondary" type="button" data-form-back hidden>Back</button>
+            <button class="button primary" type="button" data-form-next>Continue</button>
+            <button class="button primary" type="submit" data-form-submit hidden>Send project outline</button>
+          </footer>
+        </form>
+
+        <section class="intake-success" data-intake-success hidden tabindex="-1">
+          <span class="success-mark" aria-hidden="true">&#10003;</span>
+          <p class="eyebrow">Project outline received</p>
+          <h2>Thank you. We will take it from here.</h2>
+          <p>We have sent a confirmation to <strong data-confirmation-email></strong>. Lang Systems will review your outline and contact you to confirm the next step.</p>
+          <button class="button primary" type="button" data-close-intake>Close</button>
+        </section>
+      </div>
+    </dialog>
 
     <footer class="site-footer">
       <a class="footer-brand" href="#top">
@@ -297,5 +446,6 @@
     </footer>
 
     <script src="script.js"></script>
+    <script src="intake.js"></script>
   </body>
 </html>
