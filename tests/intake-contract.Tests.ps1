@@ -10,6 +10,8 @@ $draft = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-draft.j
 $model = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-model.js")
 $clarificationQuestions = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "clarification-questions.js")
 $customerSummary = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "customer-summary.js")
+$submissionPackagePath = Join-Path $projectRoot "project-submission-package.js"
+$submissionPackage = Get-Content -Raw -Encoding UTF8 $submissionPackagePath
 $serverValidation = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-validation.js")
 $emailDelivery = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/email-delivery.js")
 $intakeEndpoint = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-endpoint.js")
@@ -24,8 +26,11 @@ $technicalSpecification = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoo
 $technicalSpecificationSchemaPath = Join-Path $projectRoot "server/technical-specification.schema.json"
 $internalProjectBrief = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "internal-project-brief.js")
 $internalProjectBriefSchemaPath = Join-Path $projectRoot "server/internal-project-brief.schema.json"
-$productionManifestPath = Join-Path $projectRoot "render.yaml"
-$productionManifest = Get-Content -Raw -Encoding UTF8 $productionManifestPath
+$workerPath = Join-Path $projectRoot "worker/index.ts"
+$worker = Get-Content -Raw -Encoding UTF8 $workerPath
+$workerManifestPath = Join-Path $projectRoot "wrangler.jsonc"
+$workerManifest = Get-Content -Raw -Encoding UTF8 $workerManifestPath
+$workerMigrationPath = Join-Path $projectRoot "migrations/0001_initial.sql"
 $questionSetPath = Join-Path $projectRoot "docs/client-discovery-question-set.md"
 $questionSet = Get-Content -Raw -Encoding UTF8 $questionSetPath
 $scopeTemplatePath = Join-Path $projectRoot "docs/project-scope-acceptance-delivery-templates.md"
@@ -56,7 +61,7 @@ Assert-True ($index -match 'role="progressbar"' -and $controller -match 'setAttr
 Assert-True ($index -match 'data-review-summary' -and $controller -match 'data-edit-step') "The review step must offer direct correction controls."
 Assert-True ($controller -match 'LangSystemsIntakeSubmission' -and $controller -notmatch 'await\s+fetch\s*\(') "Submission transport must stay behind the service boundary."
 Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"' -and $service -match 'isLocalDevelopment') "The submission service must reject insecure non-local endpoints."
-Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="clarification-questions\.js"></script>\s*<script src="internal-project-brief\.js"></script>\s*<script src="customer-summary\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model and internal/customer document generators must load before submission transport."
+Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="clarification-questions\.js"></script>\s*<script src="internal-project-brief\.js"></script>\s*<script src="customer-summary\.js"></script>\s*<script src="project-submission-package\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model and internal/customer document generators must load before package generation and submission transport."
 Assert-True ($controller -match 'intakeModel\.serialiseSubmission' -and $service -match 'LangSystemsIntakeModel\.parseSubmission') "Frontend generation and transport must enforce the shared model contract."
 Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"3\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
 Assert-True ($serverValidation -match 'IntakeModel\.validateSubmission' -and $serverValidation -notmatch 'console\.') "The server validation boundary must use the shared contract without logging submissions."
@@ -89,10 +94,11 @@ Assert-True ($controller -match 'LangSystemsInternalProjectBrief\.buildBrief\(st
 Assert-True ($controller -match 'LangSystemsClarificationQuestions\.generate\(structuredProject\)' -and $clarificationQuestions -match 'requiredBeforeEstimation' -and $clarificationQuestions -match 'requiredBeforeDevelopment' -and $clarificationQuestions -match 'helpfulButNonBlocking' -and $clarificationQuestions -match 'manualReviewRequired' -and $clarificationQuestions -notmatch 'console\.') "Clarification questions must be grouped, manually reviewed, validated, and kept out of logs."
 Assert-True ($customerSummary -match 'Scope, price and timing are not final' -and $customerSummary -match 'printableHtml' -and $customerSummary -notmatch 'console\.') "The customer summary must include safeguards, printable output, and no customer logging."
 Assert-True ($controller -match 'customerSummaryGenerator\.generate' -and $controller -match 'customer_friendly_project_summary' -and $index -match 'data-confirmation-summary-text' -and $index -match 'data-download-summary') "The generated summary must feed customer email, the confirmation view, and download output."
+Assert-True ((Test-Path $submissionPackagePath) -and $index -match 'lang-systems-intake-mode" content="api"' -and $index -match 'https://lang-systems-intake\.langsystemsdesign\.workers\.dev/api/project-submissions' -and $index -match 'data-email-fallback' -and $controller -match 'submissionPackage\.build' -and $controller -match 'window\.location\.href = output\.mailto' -and $submissionPackage -match 'Original questionnaire answers' -and $submissionPackage -match 'Customer action required') "Production delivery must use the verified Worker while retaining the complete customer-controlled package path for rollback."
 Assert-True ($index -match 'data-confirmation-reference' -and $index -match 'data-confirmation-business' -and $index -match 'not a binding agreement' -and $index -match 'data-correction-link') "The confirmation must show the safe reference and business context, explain the non-binding status, and provide a correction route."
 Assert-True ($index -match 'data-print-confirmation' -and $controller -match 'if \(!result\.reference\)' -and $controller -match 'submissionComplete \|\| submissionInProgress') "The confirmation must be printable and must only display after the server returns its public reference without duplicate submission."
 Assert-True ($intakeEndpoint -match 'email_processing_failed' -and $intakeEndpoint -match 'statusCode:\s*202' -and $intakeEndpoint -match 'success: true') "A safely stored submission must remain accepted when email processing is partial."
-Assert-True ((Test-Path $productionManifestPath) -and $productionManifest -match 'runtime:\s*node' -and $productionManifest -match 'healthCheckPath:\s*/healthz' -and $productionManifest -match 'mountPath:\s*/var/data' -and $productionManifest -match 'INTAKE_EMAIL_MODE' -and $productionManifest -match 'INTAKE_REFERENCE_SECRET') "The production deployment must include the Node API, health check, durable storage, and required bindings."
+Assert-True ((Test-Path $workerPath) -and (Test-Path $workerManifestPath) -and (Test-Path $workerMigrationPath) -and $worker -match '/healthz' -and $worker -match 'INTAKE_REFERENCE_SECRET' -and $workerManifest -match 'INTAKE_DB' -and $workerManifest -match 'INTAKE_EMAIL_MODE') "The production deployment must include the Worker API, health check, D1 migration, and required bindings."
 Assert-True ($controller -match 'INTERNAL TECHNICAL REQUIREMENTS SPECIFICATION' -and $controller -match 'Essential first-release requirements' -and $controller -match 'Recommended investigation tasks' -and $controller -match '\[\$\{item\.status\.toUpperCase\(\)\}\]') "The internal email must include the complete, status-labelled technical specification."
 Assert-True (Test-Path -LiteralPath $questionSetPath) "The client discovery question set is missing."
 Assert-True (Test-Path -LiteralPath $scopeTemplatePath) "The project scope, acceptance and delivery template pack is missing."
@@ -194,6 +200,9 @@ if ($node) {
   $serviceTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-service.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $serviceTestOutput -match "Intake submission success, provider failure, and timeout checks passed\.") "Intake submission service tests failed: $serviceTestOutput"
   Write-Output $serviceTestOutput
+  $packageTestOutput = (& $node.Source (Join-Path $PSScriptRoot "project-submission-package.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $packageTestOutput -match "Customer email package content, escaping, filename, and mail draft checks passed\.") "Customer email package tests failed: $packageTestOutput"
+  Write-Output $packageTestOutput
   $submissionStateTestOutput = (& $node.Source (Join-Path $PSScriptRoot "submission-state.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $submissionStateTestOutput -match "Submission state transition, retry, partial-email, and terminal-state checks passed\.") "Submission state tests failed: $submissionStateTestOutput"
   Write-Output $submissionStateTestOutput

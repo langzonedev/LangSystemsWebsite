@@ -4,10 +4,11 @@
   const submissionService = window.LangSystemsIntakeSubmission;
   const intakeModel = window.LangSystemsIntakeModel;
   const customerSummaryGenerator = window.LangSystemsCustomerSummary;
+  const submissionPackage = window.LangSystemsSubmissionPackage;
   const intakeDraft = window.LangSystemsIntakeDraft;
   const submissionStateApi = window.LangSystemsSubmissionState;
 
-  if (!dialog || !form || !submissionService || !intakeModel || !customerSummaryGenerator || !intakeDraft || !submissionStateApi || typeof dialog.showModal !== "function") return;
+  if (!dialog || !form || !submissionService || !intakeModel || !customerSummaryGenerator || !submissionPackage || !intakeDraft || !submissionStateApi || typeof dialog.showModal !== "function") return;
 
   // DOM order is the single source of truth for progress and navigation, including Review.
   const wizardSteps = Object.freeze([...form.querySelectorAll("[data-step]")]);
@@ -19,6 +20,7 @@
   const backButton = form.querySelector("[data-form-back]");
   const nextButton = form.querySelector("[data-form-next]");
   const submitButton = form.querySelector("[data-form-submit]");
+  const emailFallbackButton = form.querySelector("[data-email-fallback]");
   const clearDraftButton = form.querySelector("[data-clear-draft]");
   const message = form.querySelector("[data-form-message]");
   const draftStatus = form.querySelector("[data-draft-status]");
@@ -44,6 +46,8 @@
   const summaryActions = dialog.querySelector("[data-summary-actions]");
   const printConfirmationButton = dialog.querySelector("[data-print-confirmation]");
   const downloadSummaryButton = dialog.querySelector("[data-download-summary]");
+  const intakeMode = document.querySelector('meta[name="lang-systems-intake-mode"]')?.content === "api" ? "api" : "email-client";
+  const fallbackEmail = "langsystemsdesign@outlook.com";
   let currentStep = 0;
   let lastTrigger = null;
   let submissionComplete = false;
@@ -292,7 +296,8 @@
     stepAnnouncement.textContent = accessibleProgressText;
     backButton.hidden = currentStep === 0;
     nextButton.hidden = isFinalStep;
-    submitButton.hidden = !isFinalStep;
+    submitButton.hidden = !isFinalStep || intakeMode !== "api";
+    emailFallbackButton.hidden = !isFinalStep || intakeMode !== "email-client";
     setMessage();
     dialog.scrollTo({ top: 0, behavior: reducedMotion.matches ? "auto" : "smooth" });
     visibleStep.querySelector("h3")?.focus({ preventScroll: true });
@@ -597,7 +602,7 @@
     const email = document.createElement("a");
     heading.textContent = "Your project outline has not been confirmed";
     copy.textContent = text;
-    email.href = "mailto:langsystemsdesign@outlook.com";
+    email.href = `mailto:${fallbackEmail}`;
     email.textContent = "Email Lang Systems";
     errorSummary.replaceChildren(heading, copy, email);
     errorSummary.hidden = false;
@@ -718,6 +723,30 @@
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
+  emailFallbackButton.addEventListener("click", () => {
+    if (submissionComplete || submissionInProgress) return;
+    if (!validateAllSteps()) return;
+    saveDraftNow();
+    pendingDocuments ||= buildDocuments();
+    const output = submissionPackage.build({
+      reference: pendingDocuments.projectReference,
+      submission: pendingDocuments.structuredProject,
+      documents: pendingDocuments,
+      targetEmail: fallbackEmail
+    });
+    const url = URL.createObjectURL(new Blob([output.html], { type: "text/html;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = output.filename;
+    link.hidden = true;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setMessage(`Downloaded ${output.filename}. Attach it to the email draft, add any supporting files separately, then choose Send in your email application.`);
+    window.location.href = output.mailto;
+  });
+
   form.addEventListener("input", (event) => {
     formDirty = true;
     pendingDocuments = null;
@@ -804,8 +833,8 @@
       confirmationSummaryText.textContent = pendingDocuments.customerSummary;
       const correctionSubject = encodeURIComponent(`Correction for project submission ${confirmedReference}`);
       const contactSubject = encodeURIComponent(`Project submission ${confirmedReference}`);
-      correctionLink.href = `mailto:langsystemsdesign@outlook.com?subject=${correctionSubject}`;
-      contactReferenceLink.href = `mailto:langsystemsdesign@outlook.com?subject=${contactSubject}`;
+      correctionLink.href = `mailto:${fallbackEmail}?subject=${correctionSubject}`;
+      contactReferenceLink.href = `mailto:${fallbackEmail}?subject=${contactSubject}`;
       intakeHeaderEyebrow.textContent = "Submission confirmation";
       intakeHeaderTitle.textContent = "Your project outline has been received.";
       intakeHeaderDescription.textContent = "Keep your submission reference in case you need to contact us about this enquiry.";

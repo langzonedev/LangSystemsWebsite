@@ -64,6 +64,9 @@ function details(submission, documents, config) {
     email: emailAddress(customer.emailAddress, "Customer email"),
     phone: cleanLine(customer.phoneNumber, 80),
     businessDescription: cleanText(answers.currentProcess.businessDescription, 10000),
+    problemStatement: cleanText(answers.desiredOutcome.problemStatement, 1200),
+    desiredOutcome: cleanText(answers.desiredOutcome.outcome, 1200),
+    firstRelease: cleanText(answers.scope.essentialFirstRelease, 1200),
     summary: cleanText(documents.customerSummary),
     technical: cleanText(documents.technicalSpecification),
     brief: cleanText(documents.internalBrief),
@@ -85,10 +88,20 @@ function brandedHtml(title, preheader, body) {
 
 function customerMessage(data, config) {
   const businessLine = data.business ? ` for ${data.business}` : "";
-  const subject = cleanLine(`We received your Lang Systems project outline — ${data.reference}`, 200);
-  const summary = data.summary || "We received the project information you supplied through our discovery form.";
-  const text = `Hello ${data.name},\n\nThank you for sharing your project${businessLine}. We have received your information.\n\nSubmission reference: ${data.reference}\n\nYour request\n${summary}\n\nWhat happens next\nLang Systems will review the information and may contact you with follow-up questions. Scope, price and timing require review and written agreement. This submission does not automatically accept the project, start development, or create a binding agreement.\n\nPlease do not email passwords or highly sensitive information.\n\nContact: ${config.contactEmail}`;
-  const html = brandedHtml("Project outline received", `Reference ${data.reference}`, `<p>Hello ${escapeHtml(data.name)},</p><p>Thank you for sharing your project${escapeHtml(businessLine)}. We have received your information.</p><p><strong>Submission reference:</strong> ${escapeHtml(data.reference)}</p><h2 style="font-size:18px">Your request</h2><div style="padding:16px;background:#f4f6f8;border-radius:8px">${textBlock(summary)}</div><h2 style="font-size:18px">What happens next</h2><p>Lang Systems will review the information and may contact you with follow-up questions.</p><p><strong>Scope, price and timing require review and written agreement.</strong> This submission does not automatically accept the project, start development, or create a binding agreement.</p><p>Please do not email passwords or highly sensitive information.</p><p>Contact: <a href="mailto:${escapeHtml(config.contactEmail)}">${escapeHtml(config.contactEmail)}</a></p>`);
+  const subject = "We received your Lang Systems project outline";
+  const snapshot = [
+    ["The problem", data.problemStatement],
+    ["The outcome you want", data.desiredOutcome],
+    ["First release", data.firstRelease]
+  ].filter((item) => item[1]);
+  const snapshotText = snapshot.length
+    ? snapshot.map((item) => `${item[0]}\n${item[1]}`).join("\n\n")
+    : "We received the project information you supplied through our discovery form.";
+  const snapshotHtml = snapshot.length
+    ? snapshot.map((item) => `<p style="margin:0 0 14px"><strong>${escapeHtml(item[0])}</strong><br>${textBlock(item[1])}</p>`).join("")
+    : "<p>We received the project information you supplied through our discovery form.</p>";
+  const text = `Hello ${data.name},\n\nThanks for sharing your project${businessLine}. Your project outline has arrived safely.\n\nA quick snapshot\n${snapshotText}\n\nWhat happens next\nWe will review your outline and get in touch if we need to clarify anything. If it looks like a good fit, we will then discuss scope, price and timing with you. Nothing starts, and there is no commitment, until we agree those details together.\n\nPlease do not email passwords, payment details or other highly sensitive information.\n\nQuestions? Reply to this email or contact ${config.contactEmail}.\n\nFor your records: ${data.reference}`;
+  const html = brandedHtml("Project outline received", "Thanks — your project outline has arrived safely.", `<p>Hello ${escapeHtml(data.name)},</p><p>Thanks for sharing your project${escapeHtml(businessLine)}. Your project outline has arrived safely.</p><h2 style="font-size:18px;margin-top:24px">A quick snapshot</h2><div style="padding:16px;background:#f4f6f8;border-radius:8px">${snapshotHtml}</div><h2 style="font-size:18px;margin-top:24px">What happens next</h2><p>We will review your outline and get in touch if we need to clarify anything. If it looks like a good fit, we will then discuss scope, price and timing with you.</p><p><strong>Nothing starts, and there is no commitment, until we agree those details together.</strong></p><p style="color:#516477;font-size:14px">Please do not email passwords, payment details or other highly sensitive information.</p><p>Questions? Reply to this email or contact <a href="mailto:${escapeHtml(config.contactEmail)}">${escapeHtml(config.contactEmail)}</a>.</p><p style="margin-top:28px;color:#687783;font-size:12px">For your records: ${escapeHtml(data.reference)}</p>`);
   return { to: data.email, subject, text, html, idempotencyKey: cleanLine(`project-confirmation/${data.reference}`, 256) };
 }
 

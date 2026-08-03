@@ -2,9 +2,13 @@
 
 Audit date: 3 August 2026
 
-## Finding
+## Original finding and current status
 
-Production submission fails because the website is deployed as static GitHub Pages content while the form targets the same-origin `/api/project-submissions`. The endpoint override in `index.html` is empty, and the repository has no GitHub Pages Function, deployment workflow, serverless manifest, or production adapter mounting `server/intake-endpoint.js`. GitHub Pages serves files only, so the POST reaches no application route and receives a static-host error/non-JSON response. Storage and both email operations are therefore never reached.
+The original production submission failed because the static GitHub Pages site targeted the
+same-origin `/api/project-submissions`, where no application route existed. That finding has now
+been corrected: the questionnaire is configured for the deployed Cloudflare Worker endpoint, with
+GitHub Pages remaining the static host. The Worker stores accepted submissions and documents in D1
+before sending customer and internal messages through Resend.
 
 The Node backend is implemented and tested, but only `server/local-intake-server.js` mounts it. That server is a local helper, not a production deployment. Mock email is the non-production default and makes no provider requests.
 
@@ -35,7 +39,15 @@ The client repairs add an authoritative `[hidden]` rule, bounded navigation, fai
 
 ## Production correction implemented
 
-`render.yaml` now deploys the static site and existing Node handler together. The same-origin `/api/project-submissions` route is included in production, and a one-instance persistent disk supports the atomic file stores. The server binds to the platform host in production, exposes `/healthz`, handles graceful shutdown, and remains loopback-only by default in development.
+The selected correction keeps GitHub Pages for the public site and deploys `worker/index.ts` as a
+Cloudflare Worker backed by D1. The Worker implements the cross-origin API, exact-origin CORS,
+Web-Crypto references and fingerprints, D1 rate limiting, storage-before-delivery, Resend delivery,
+recipient-specific retry state, audit events, safe errors, and `/healthz`. The production database
+and migration have been created and applied. The Worker is deployed at
+`https://lang-systems-intake.langsystemsdesign.workers.dev`, the Resend sending subdomain is
+verified, and production secrets are stored only as encrypted Worker secrets. The public site uses
+API mode; the customer-controlled email package remains available only as a deliberate rollback
+path described in the [Project Intake Production Roadmap](project-intake-production-roadmap.md).
 
 The endpoint normalises input, strips unsafe control characters, validates attachment references, derives a non-sequential public reference from a server secret and idempotency key, creates a separate internal UUID, and fingerprints content to reject conflicting key reuse. Concurrent matching requests share one processing operation. Storage completes before email. Complete processing returns structured `201`/`200` JSON; partial email processing returns structured `202` success with independent recipient states because the enquiry is safely stored.
 
@@ -45,11 +57,12 @@ Required production configuration:
 - `RESEND_API_KEY` (or `EMAIL_API_KEY`), `EMAIL_FROM`, `INTAKE_INTERNAL_EMAIL`, `LANG_SYSTEMS_CONTACT_EMAIL`
 - optional HTTPS `EMAIL_PROVIDER_URL` and `INTAKE_REVIEW_BASE_URL`
 - exact `INTAKE_ALLOWED_ORIGIN=https://langsystems.com.au` for cross-origin hosting
-- absolute durable private `INTAKE_STATUS_FILE` and `INTAKE_STORAGE_DIR`, or equivalent injected durable adapters
-- `INTAKE_ADMIN_TOKEN` of at least 32 random characters if internal retrieval is deployed
+- Cloudflare D1 binding `INTAKE_DB`
 - `INTAKE_REFERENCE_SECRET` of at least 32 random characters
 
-Secrets belong in the host secret manager, never HTML, source, logs, or analytics. The Blueprint generates the admin and reference secrets and leaves `RESEND_API_KEY` for secure operator entry. The bundled file adapters require the declared single persistent instance/volume; multi-instance or ephemeral serverless hosting needs durable atomic adapters. GitHub Pages alone cannot meet these requirements.
+Secrets belong in Cloudflare Worker secrets, never HTML, source, logs, analytics, or
+`wrangler.jsonc`. GitHub Pages alone cannot meet these requirements, but it can continue serving the
+static frontend while the Worker handles the API.
 
 ## Production test plan
 

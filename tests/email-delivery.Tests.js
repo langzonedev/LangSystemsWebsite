@@ -53,9 +53,14 @@ module.exports = (async () => {
   const partial = await service.deliver(submission(), documents);
   assert.deepStrictEqual({ customer: partial.customer, internal: partial.internal, complete: partial.complete }, { customer: "sent", internal: "failed", complete: false });
   assert.strictEqual(sent[0].to, "alex@example.com");
-  assert.ok(sent[0].subject.includes("LS-EMAIL-TEST") && !/[\r\n]/.test(sent[0].subject));
+  assert.strictEqual(sent[0].subject, "We received your Lang Systems project outline");
+  assert.ok(!/[\r\n]/.test(sent[0].subject));
   assert.ok(sent[0].html.includes("Alex &lt;Example&gt;") && !sent[0].html.includes("<customer>"));
-  assert.ok(sent[0].text.includes("does not automatically accept the project"));
+  assert.ok(sent[0].text.includes("A quick snapshot"));
+  assert.ok(sent[0].text.includes("The outcome you want\nOne clear view"));
+  assert.ok(sent[0].text.includes("Nothing starts, and there is no commitment"));
+  assert.ok(sent[0].text.endsWith("For your records: LS-EMAIL-TEST"));
+  assert.ok(!sent[0].text.includes(documents.customerSummary), "The customer email should not paste the full generated document.");
   assert.ok(sent[1].text.includes("Customer confirmation: sent"));
   assert.ok(sent[1].text.includes("Files are not attached to email"));
 

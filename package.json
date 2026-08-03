@@ -5,9 +5,21 @@
   "description": "Lang Systems website and production project intake service",
   "scripts": {
     "start": "node server/local-intake-server.js",
-    "test": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/intake-contract.Tests.ps1"
+    "test": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/intake-contract.Tests.ps1",
+    "test:worker": "vitest run --config vitest.config.mts",
+    "typecheck:worker": "tsc --noEmit -p tsconfig.worker.json",
+    "worker:dev": "wrangler dev",
+    "worker:types": "wrangler types",
+    "worker:deploy:dry": "wrangler deploy --dry-run"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.20.1",
+    "@cloudflare/workers-types": "^5.20260801.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.118.0"
   }
 }
