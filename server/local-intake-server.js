@@ -5,10 +5,16 @@ const { Readable } = require("stream");
 const fs = require("fs/promises");
 const path = require("path");
 const { createIntakeEndpoint } = require("./intake-endpoint.js");
+const { createFileSubmissionStore } = require("./submission-store.js");
+const { createInternalSubmissionsEndpoint } = require("./internal-submissions-endpoint.js");
 
 const port = Number(process.env.PORT || 8787);
-const handle = createIntakeEndpoint();
 const publicRoot = path.resolve(__dirname, "..");
+if (process.env.NODE_ENV === "production" && !process.env.INTAKE_ADMIN_TOKEN) throw new Error("Production requires INTAKE_ADMIN_TOKEN for internal retrieval.");
+const submissionStore = process.env.INTAKE_STORAGE_DIR ? createFileSubmissionStore(process.env.INTAKE_STORAGE_DIR, { publicRoot }) : undefined;
+const handle = createIntakeEndpoint({ submissionStore });
+const handleInternal = submissionStore && process.env.INTAKE_ADMIN_TOKEN
+  ? createInternalSubmissionsEndpoint({ submissionStore }) : null;
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon" };
 
 async function serveStatic(incoming, outgoing) {
@@ -34,6 +40,23 @@ async function serveStatic(incoming, outgoing) {
 }
 
 http.createServer(async (incoming, outgoing) => {
+  const parsedUrl = new URL(incoming.url, `http://127.0.0.1:${port}`);
+  const internalMatch = parsedUrl.pathname.match(/^\/api\/internal\/project-submissions\/([A-Za-z0-9][A-Za-z0-9._-]{5,99})(?:\/documents\/([A-Za-z]+))?$/);
+  if (internalMatch) {
+    if (!handleInternal) {
+      outgoing.writeHead(404, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      outgoing.end(JSON.stringify({ success: false, code: "not_found" }));
+      return;
+    }
+    const request = new Request(`http://localhost:${port}${incoming.url}`, {
+      method: incoming.method, headers: incoming.headers,
+      body: ["GET", "HEAD"].includes(incoming.method) ? undefined : Readable.toWeb(incoming), duplex: "half"
+    });
+    const response = await handleInternal(request, { reference: internalMatch[1], documentKey: internalMatch[2] || null });
+    outgoing.writeHead(response.status, Object.fromEntries(response.headers));
+    outgoing.end(Buffer.from(await response.arrayBuffer()));
+    return;
+  }
   if (incoming.url !== "/api/project-submissions" && ["GET", "HEAD"].includes(incoming.method)) {
     await serveStatic(incoming, outgoing);
     return;

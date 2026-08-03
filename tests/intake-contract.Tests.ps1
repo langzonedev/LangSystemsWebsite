@@ -10,6 +10,10 @@ $customerSummary = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "cust
 $serverValidation = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-validation.js")
 $emailDelivery = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/email-delivery.js")
 $intakeEndpoint = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-endpoint.js")
+$submissionStorePath = Join-Path $projectRoot "server/submission-store.js"
+$internalEndpointPath = Join-Path $projectRoot "server/internal-submissions-endpoint.js"
+$submissionStore = Get-Content -Raw -Encoding UTF8 $submissionStorePath
+$internalEndpoint = Get-Content -Raw -Encoding UTF8 $internalEndpointPath
 $requirementsInterpreter = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/requirements-interpreter.js")
 $requirementsPromptPath = Join-Path $projectRoot "server/requirements-interpretation-prompt.md"
 $requirementsSchemaPath = Join-Path $projectRoot "server/requirements-interpretation.schema.json"
@@ -55,6 +59,9 @@ Assert-True ($serverValidation -match 'MAX_REQUEST_BYTES' -and $serverValidation
 Assert-True ($index -match 'action="/api/project-submissions"' -and $service -match 'Content-Type": "application/json"' -and $intakeEndpoint -match 'createEmailDeliveryService') "The browser must submit to the configured first-party email endpoint."
 Assert-True ($emailDelivery -match 'INTAKE_EMAIL_MODE' -and $emailDelivery -match 'RESEND_API_KEY' -and $emailDelivery -match 'escapeHtml' -and $emailDelivery -notmatch 'console\.') "Email delivery must be environment-configured, escaped, and keep customer content out of logs."
 Assert-True ($emailDelivery -match 'record\.customer\.status !== "sent"' -and $emailDelivery -match 'record\.internal\.status !== "sent"' -and $emailDelivery -match 'createMemoryStatusStore') "Email recipients must be independently retried with recorded status and duplicate prevention."
+Assert-True ((Test-Path $submissionStorePath) -and $submissionStore -match 'sha256' -and $submissionStore -match 'randomBytes' -and $submissionStore -match 'originalSubmission' -and $submissionStore -notmatch 'console\.') "Private submission storage must use non-public derived paths, random document names, retain the original record, and avoid logging content."
+Assert-True ((Test-Path $internalEndpointPath) -and $internalEndpoint -match 'timingSafeEqual' -and $internalEndpoint -match 'INTAKE_ADMIN_TOKEN' -and $internalEndpoint -match 'manualReviewStatus' -and $internalEndpoint -match 'no-store, private') "Internal retrieval must authenticate, validate review updates, and prevent caching."
+Assert-True ($intakeEndpoint -match 'submissionStore\.create\(submission, documents\)' -and $intakeEndpoint -match 'submissionStore\.recordDelivery' -and $intakeEndpoint -match 'forEach\(validateUpload\)') "The intake endpoint must validate attachments and store submissions plus delivery state."
 Assert-True ((Test-Path $requirementsPromptPath) -and (Test-Path $requirementsSchemaPath)) "The versioned requirements prompt or schema is missing."
 Assert-True ($requirementsInterpreter -match 'buildModelInput' -and $requirementsInterpreter -match 'deterministic_fallback' -and $requirementsInterpreter -notmatch 'console\.') "The requirements interpreter must minimise model input, recover deterministically, and avoid logging customer content."
 Assert-True ((Test-Path $technicalSpecificationSchemaPath) -and $technicalSpecification -match 'sourceSubmissionId' -and $technicalSpecification -match 'customerApproved' -and $technicalSpecification -notmatch 'console\.') "The internal technical specification must be versioned, traceable, non-authoritative, and must not log customer content."
@@ -146,6 +153,9 @@ if ($node) {
   $endpointTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-endpoint.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $endpointTestOutput -match "Intake endpoint validation, origin, honeypot, and safe-response checks passed\.") "Intake endpoint tests failed: $endpointTestOutput"
   Write-Output $endpointTestOutput
+  $storageTestOutput = (& $node.Source (Join-Path $PSScriptRoot "submission-storage.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $storageTestOutput -match "Secure submission storage, retrieval authentication, document access, and review validation checks passed\.") "Submission storage tests failed: $storageTestOutput"
+  Write-Output $storageTestOutput
   $interpreterTestOutput = (& $node.Source (Join-Path $PSScriptRoot "requirements-interpreter.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $interpreterTestOutput -match "Requirements interpretation, privacy minimisation, schema, and fallback checks passed\.") "Requirements interpreter tests failed: $interpreterTestOutput"
   Write-Output $interpreterTestOutput

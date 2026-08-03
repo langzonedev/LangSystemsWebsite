@@ -34,6 +34,24 @@ module.exports = (async () => {
   assert.strictEqual((await response.json()).success, true);
   assert.strictEqual(calls.length, 1);
 
+  const lifecycle = [];
+  const storedEndpoint = createIntakeEndpoint({
+    environment: {},
+    submissionStore: {
+      async create(value, generated) { lifecycle.push(`stored:${value.submissionMetadata.submissionId}:${generated.customerSummary}`); },
+      async recordDelivery(reference, status) { lifecycle.push(`delivery:${reference}:${status.complete}`); }
+    },
+    deliveryService: { async deliver() {
+      lifecycle.push("email");
+      return { reference: "LS-ENDPOINT-TEST", customer: "sent", internal: "sent", complete: true };
+    } }
+  });
+  const storedResponse = await storedEndpoint(new Request("https://api.example.test/api/project-submissions", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ submission, documents })
+  }));
+  assert.strictEqual(storedResponse.status, 200);
+  assert.deepStrictEqual(lifecycle, ["stored:LS-ENDPOINT-TEST:Customer summary", "email", "delivery:LS-ENDPOINT-TEST:true"]);
+
   const partialEndpoint = createIntakeEndpoint({
     environment: {},
     deliveryService: { async deliver() {

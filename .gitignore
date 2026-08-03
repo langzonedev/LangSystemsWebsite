@@ -2,4 +2,5 @@
 .env.*
 !.env.example
 delivery-status*.json
+submission-storage/
 node_modules/

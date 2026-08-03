@@ -17,6 +17,7 @@ integration, workflow automation, and future product development.
 - [Internal Technical Requirements Specification Generator](docs/internal-technical-requirements-specification.md)
 - [Internal Project Brief Generator](docs/internal-project-brief.md)
 - [Targeted Project Clarification Question Generator](docs/clarification-question-generator.md)
+- [Secure Submission Storage and Internal Retrieval](docs/secure-submission-storage.md)
 
 ## GitHub Pages
 
@@ -63,12 +64,18 @@ cross-origin deployment must set `INTAKE_ALLOWED_ORIGIN` to the exact website or
 - `RESEND_API_KEY` (or `EMAIL_API_KEY`) and optionally `EMAIL_PROVIDER_URL`
 - `EMAIL_FROM`, `INTAKE_INTERNAL_EMAIL`, and `LANG_SYSTEMS_CONTACT_EMAIL`
 - an absolute `INTAKE_STATUS_FILE`, or inject a durable status-store adapter
+- an absolute `INTAKE_STORAGE_DIR` outside the public site on platform-encrypted storage
+- a secret `INTAKE_ADMIN_TOKEN` of at least 32 characters
 - optional `INTAKE_REVIEW_BASE_URL` for a secure internal review link
 
 See [.env.example](.env.example) for non-secret examples. Never place real values in that file or
 client-side code. Production refuses to start without explicit live mode, an API key, and durable
-status storage. The status file contains references and delivery metadata only, not customer
-answers. Restrict it to the service account and keep it outside the public website directory.
+status and submission storage. The status file contains delivery metadata; the separate submission
+storage contains customer answers and generated documents. Restrict both to the service account,
+keep them outside the public website directory, and do not enable request-body logging or tracing.
+The internal API retrieves a known reference and updates a constrained review status; it has no
+public list or customer portal. See [Secure Submission Storage and Internal Retrieval](docs/secure-submission-storage.md)
+for commands, HTTPS/access controls, retention, customer deletion requests, and backup timing.
 
 After deployment, submit one non-sensitive test project and inspect both mailboxes (including junk
 folders), branding, links, and the recorded statuses. To recover a partial failure, use the wizard's

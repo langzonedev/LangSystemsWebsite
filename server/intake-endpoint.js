@@ -1,8 +1,9 @@
 "use strict";
 
-const { validateRequestBody, createSubmissionGuard, safeErrorResponse } = require("./intake-validation.js");
+const { validateRequestBody, validateUpload, createSubmissionGuard, safeErrorResponse } = require("./intake-validation.js");
 const { createEmailDeliveryService } = require("./email-delivery.js");
 const { createFileDeliveryStatusStore } = require("./file-delivery-status-store.js");
+const { createFileSubmissionStore } = require("./submission-store.js");
 
 const MAX_HTTP_BODY_BYTES = 768 * 1024;
 const DOCUMENT_FIELDS = ["customerSummary", "technicalSpecification", "internalBrief", "clarificationQuestions", "warnings"];
@@ -47,9 +48,13 @@ function createIntakeEndpoint(options = {}) {
   if (environment.NODE_ENV === "production" && !options.statusStore && !environment.INTAKE_STATUS_FILE) {
     throw new Error("Production requires a durable delivery status store or INTAKE_STATUS_FILE.");
   }
+  if (environment.NODE_ENV === "production" && !options.submissionStore && !environment.INTAKE_STORAGE_DIR) {
+    throw new Error("Production requires a durable submission store or INTAKE_STORAGE_DIR.");
+  }
   if (environment.NODE_ENV === "production" && !environment.INTAKE_ALLOWED_ORIGIN) throw new Error("Production requires INTAKE_ALLOWED_ORIGIN.");
   const guard = options.guard || createSubmissionGuard();
   const statusStore = options.statusStore || (environment.INTAKE_STATUS_FILE ? createFileDeliveryStatusStore(environment.INTAKE_STATUS_FILE) : undefined);
+  const submissionStore = options.submissionStore || (environment.INTAKE_STORAGE_DIR ? createFileSubmissionStore(environment.INTAKE_STORAGE_DIR) : undefined);
   const delivery = options.deliveryService || createEmailDeliveryService({ environment, statusStore, fetch: options.fetch });
   const allowedOrigin = configuredOrigin(environment.INTAKE_ALLOWED_ORIGIN);
 
@@ -72,13 +77,16 @@ function createIntakeEndpoint(options = {}) {
       const payload = JSON.parse(raw);
       if (payload && payload.honeypot) return jsonResponse(200, { success: true }, responseOrigin);
       const submission = validateRequestBody(payload && payload.submission);
+      (submission.attachments || []).forEach(validateUpload);
       const documents = validateDocuments(payload && payload.documents);
       const clientKey = (request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "anonymous").split(",")[0].trim();
       // A delivery record, rather than the guard alone, provides idempotence: retries only send failed recipients.
       try { guard.check(submission, clientKey); } catch (error) {
         if (error.code !== "duplicate_submission") throw error;
       }
+      if (submissionStore) await submissionStore.create(submission, documents);
       const status = await delivery.deliver(submission, documents);
+      if (submissionStore) await submissionStore.recordDelivery(submission.submissionMetadata.submissionId, status);
       if (!status.complete) return jsonResponse(503, { success: false, code: "email_delivery", reference: status.reference, delivery: status }, responseOrigin);
       return jsonResponse(200, { success: true, reference: status.reference, delivery: status }, responseOrigin);
     } catch (error) {

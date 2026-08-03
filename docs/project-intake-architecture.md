@@ -88,7 +88,7 @@ Immediately before sending, the browser:
 5. adds `submission_schema_version: "3.0.0"` and the independent template version; and
 6. adds the UTC submission time.
 
-The generated reference is for email correlation, not a guaranteed unique or sequential record identifier. Lang Systems must verify receipt rather than relying only on the browser success screen.
+The generated reference is used for correlation and lookup, not as an access credential. The intake service stores the validated structured submission and generated documents under a one-way-derived storage key before email delivery. Authorised retrieval still requires server-side authentication; Lang Systems must verify receipt rather than relying only on the browser success screen.
 
 Supporting file contents are not uploaded or attached to email. Only sanitised file names, sizes, and validation states are included as references; Lang Systems arranges secure transfer after review when the files are needed.
 
@@ -164,7 +164,7 @@ These are design directions, not commitments. Each requires approval, security/p
 - Automated commercial, legal, or delivery decisions.
 - Collection of passwords, payment details, health records, government identifiers, or other highly sensitive information. Optional supporting files are limited to approved business-document and image formats.
 - Background prompts, automatic pop-ups, advertising, and unrelated overlays.
-- Guaranteed permanent storage, email delivery, or recovery of an unfinished form.
+- Indefinite storage, guaranteed email delivery, or recovery of an unfinished form. Stored submissions follow the documented 18-month retention policy.
 
 ## 10. Data protection and security
 
@@ -191,9 +191,9 @@ Email is not a secure channel for highly sensitive data. The first-release warni
 | Wizard markup (`index.html`) | Questions, step order, labels, consent, semantic structure | Submission policy or generated-document logic |
 | Presentation (`styles.css`) | Existing brand, responsive layout, focus/error/success states | Business rules |
 | Intake controller (`intake.js`) | Dialog lifecycle, navigation, validation, review, payload generation, send states | Long-term records or workflow decisions |
-| Intake API and email provider | Validate submissions, deliver two emails, record delivery metadata, and retry failed recipients | Project approval, customer-content logging, or scope decisions |
+| Intake API, private submission store, and email provider | Validate and privately store submissions/documents, deliver two emails, record delivery/processing state, provide authenticated reference retrieval, and retry failed recipients | Project approval, customer-content logging, or scope decisions |
 | Lang Systems mailbox/manual process | Authoritative first-release receipt, review, follow-up, and tracking | Automatic commitments based on generated text |
-| Future intake service | Potential server validation, durable IDs, controlled integrations, observability | Customer-management features unless separately approved |
+| Internal submissions endpoint | Retrieve a known reference/document and update a constrained manual-review state for authenticated staff | Public listing, customer portal, arbitrary notes, CRM, or ticketing |
 
 Generated-document functions should remain separable from dialog navigation and transport. A future provider replacement should not require rewriting customer questions or presentation merely to change delivery.
 
