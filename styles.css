@@ -325,6 +325,12 @@ h3 {
   border-color: var(--line);
 }
 
+.button:disabled {
+  opacity: 0.62;
+  cursor: wait;
+  transform: none;
+}
+
 .hero-proof {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1065,6 +1071,17 @@ h3 {
   cursor: pointer;
 }
 
+.dialog-close:focus-visible,
+.nav-start:focus-visible,
+.nav-toggle:focus-visible,
+.button:focus-visible,
+.review-edit:focus-visible,
+.choice-card:has(input:focus-visible),
+.consent:has(input:focus-visible) {
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
+}
+
 .intake-progress {
   padding: 20px clamp(24px, 5vw, 52px) 0;
 }
@@ -1271,12 +1288,32 @@ h3 {
 }
 
 .review-item dt {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 6px;
   color: var(--violet-dark);
   font-size: 0.76rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.review-edit {
+  padding: 4px 7px;
+  color: var(--violet-dark);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.review-edit:hover {
+  background: rgba(108, 25, 255, 0.06);
 }
 
 .review-item dd {

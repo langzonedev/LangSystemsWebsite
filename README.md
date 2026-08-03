@@ -38,8 +38,20 @@ Before using the form in production, send one test submission and follow the act
 to `langsystemsdesign@outlook.com`. FormSubmit requires that one-time confirmation for a new form.
 Also verify the test submission and customer confirmation email, including junk-mail folders.
 
-To change providers later, update the form `action` in `index.html`. Keep the existing field names
-or map them in the replacement service. The browser does not save submissions to local storage,
+To change providers later, update the form `action` in `index.html` and adapt
+`intake-service.js` if the replacement does not accept the existing form payload. Keep the stable
+field names or map them in the replacement service. The browser does not save submissions to local storage,
 put them in URLs, or send them to analytics. Form contents are transmitted to the configured form
 provider for email delivery, so the provider and the site's privacy wording should be reviewed
 before launch.
+
+## Checks
+
+Run the dependency-free intake contract checks from the repository root:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/intake-contract.Tests.ps1
+```
+
+The site is static and has no compilation step. A production check consists of running the contract
+checks and serving the repository root with the local preview command above.

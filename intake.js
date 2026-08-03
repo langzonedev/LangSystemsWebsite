@@ -1,8 +1,9 @@
 (() => {
   const dialog = document.querySelector("[data-intake-dialog]");
   const form = document.querySelector("[data-intake-form]");
+  const submissionService = window.LangSystemsIntakeSubmission;
 
-  if (!dialog || !form || typeof dialog.showModal !== "function") return;
+  if (!dialog || !form || !submissionService || typeof dialog.showModal !== "function") return;
 
   const steps = [...form.querySelectorAll("[data-step]")];
   const openButtons = [...document.querySelectorAll("[data-open-intake]")];
@@ -12,8 +13,10 @@
   const submitButton = form.querySelector("[data-form-submit]");
   const message = form.querySelector("[data-form-message]");
   const progressBar = dialog.querySelector("[data-progress-bar]");
+  const progressTrack = dialog.querySelector("[data-progress-track]");
   const stepLabel = dialog.querySelector("[data-step-label]");
   const stepName = dialog.querySelector("[data-step-name]");
+  const stepAnnouncement = dialog.querySelector("[data-step-announcement]");
   const reviewSummary = form.querySelector("[data-review-summary]");
   const successPanel = dialog.querySelector("[data-intake-success]");
   const confirmationEmail = dialog.querySelector("[data-confirmation-email]");
@@ -21,6 +24,9 @@
   let lastTrigger = null;
   let submissionComplete = false;
   let formDirty = false;
+  let submissionController = null;
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   const fieldLabels = {
     contact_name: "Your name",
@@ -61,27 +67,57 @@
     message.classList.toggle("error", isError);
   }
 
+  function describedByTokens(field) {
+    return new Set((field.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean));
+  }
+
+  function updateDescription(field, id, include) {
+    const tokens = describedByTokens(field);
+    if (include) tokens.add(id);
+    else tokens.delete(id);
+    if (tokens.size) field.setAttribute("aria-describedby", [...tokens].join(" "));
+    else field.removeAttribute("aria-describedby");
+  }
+
+  function wireFieldDescriptions() {
+    [...form.elements].forEach((field, index) => {
+      if (!(field instanceof HTMLElement) || !field.name) return;
+      const helper = field.closest("label")?.querySelector("small");
+      if (!helper) return;
+      helper.id ||= `intake-field-help-${index + 1}`;
+      updateDescription(field, helper.id, true);
+    });
+    steps.forEach((step) => step.querySelector("h3")?.setAttribute("tabindex", "-1"));
+  }
+
   function updateStep() {
     steps.forEach((step, index) => { step.hidden = index !== currentStep; });
     stepLabel.textContent = `Step ${currentStep + 1} of ${steps.length}`;
     stepName.textContent = steps[currentStep].dataset.stepName;
     progressBar.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
+    progressTrack.setAttribute("aria-valuenow", String(currentStep + 1));
+    progressTrack.setAttribute("aria-valuetext", `Step ${currentStep + 1} of ${steps.length}: ${steps[currentStep].dataset.stepName}`);
+    stepAnnouncement.textContent = `Step ${currentStep + 1} of ${steps.length}: ${steps[currentStep].dataset.stepName}`;
     backButton.hidden = currentStep === 0;
     nextButton.hidden = currentStep === steps.length - 1;
     submitButton.hidden = currentStep !== steps.length - 1;
     setMessage();
-    dialog.scrollTo({ top: 0, behavior: "smooth" });
+    dialog.scrollTo({ top: 0, behavior: reducedMotion.matches ? "auto" : "smooth" });
     steps[currentStep].querySelector("h3")?.focus({ preventScroll: true });
   }
 
   function validateStep() {
     const fields = [...steps[currentStep].querySelectorAll("input, textarea, select")];
-    fields.forEach((field) => field.removeAttribute("aria-invalid"));
+    fields.forEach((field) => {
+      field.removeAttribute("aria-invalid");
+      updateDescription(field, message.id, false);
+    });
     const invalid = fields.find((field) => !field.checkValidity());
 
     if (!invalid) return true;
 
     invalid.setAttribute("aria-invalid", "true");
+    updateDescription(invalid, message.id, true);
     const label = fieldLabels[invalid.name] || "This question";
     const text = invalid.validity.typeMismatch
       ? `Please enter a valid email address for “${label}”.`
@@ -91,12 +127,20 @@
     return false;
   }
 
-  function addReviewItem(title, value, wide = false) {
+  function addReviewItem(title, value, editStep, wide = false) {
     const item = document.createElement("dl");
     item.className = `review-item${wide ? " wide" : ""}`;
     const term = document.createElement("dt");
     const description = document.createElement("dd");
-    term.textContent = title;
+    const termLabel = document.createElement("span");
+    const editButton = document.createElement("button");
+    termLabel.textContent = title;
+    editButton.type = "button";
+    editButton.className = "review-edit";
+    editButton.dataset.editStep = String(editStep);
+    editButton.textContent = "Edit";
+    editButton.setAttribute("aria-label", `Edit ${title.toLowerCase()}`);
+    term.append(termLabel, editButton);
     description.textContent = value || "Not provided";
     item.append(term, description);
     reviewSummary.append(item);
@@ -104,15 +148,15 @@
 
   function buildReview() {
     reviewSummary.replaceChildren();
-    addReviewItem("Contact", `${valueOf("contact_name")} · ${valueOf("email")}`);
-    addReviewItem("Business", valueOf("business_name"));
-    addReviewItem("The problem", valueOf("problem"), true);
-    addReviewItem("Desired outcome", valueOf("desired_outcome"), true);
-    addReviewItem("Essential first release", valueOf("first_release"), true);
-    addReviewItem("Expected investment", valueOf("budget"));
-    addReviewItem("Preferred timing", valueOf("timing"));
-    addReviewItem("Working arrangement", valueOf("delivery_model"), true);
-    addReviewItem("Complete when", valueOf("acceptance_criteria"), true);
+    addReviewItem("Contact", `${valueOf("contact_name")} · ${valueOf("email")}`, 0);
+    addReviewItem("Business", valueOf("business_name"), 0);
+    addReviewItem("The problem", valueOf("problem"), 1, true);
+    addReviewItem("Desired outcome", valueOf("desired_outcome"), 2, true);
+    addReviewItem("Essential first release", valueOf("first_release"), 3, true);
+    addReviewItem("Expected investment", valueOf("budget"), 4);
+    addReviewItem("Preferred timing", valueOf("timing"), 4);
+    addReviewItem("Working arrangement", valueOf("delivery_model"), 5, true);
+    addReviewItem("Complete when", valueOf("acceptance_criteria"), 6, true);
   }
 
   function section(title, rows) {
@@ -266,9 +310,12 @@
   }
 
   function requestClose() {
-    if (!submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will not be saved.")) return;
+    if (!submissionComplete && formDirty && !window.confirm("Close project discovery? Your answers will stay available until you leave or refresh this page.")) return;
+    submissionController?.abort();
     dialog.close();
   }
+
+  wireFieldDescriptions();
 
   openButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -299,9 +346,17 @@
     updateStep();
   });
 
+  reviewSummary.addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-edit-step]");
+    if (!editButton) return;
+    currentStep = Number(editButton.dataset.editStep);
+    updateStep();
+  });
+
   form.addEventListener("input", (event) => {
     formDirty = true;
     event.target.removeAttribute("aria-invalid");
+    updateDescription(event.target, message.id, false);
     setMessage();
   });
 
@@ -311,19 +366,16 @@
 
     submitButton.disabled = true;
     submitButton.textContent = "Sending…";
+    backButton.disabled = true;
+    form.setAttribute("aria-busy", "true");
     setMessage("Sending your project outline securely…");
 
     const formData = new FormData(form);
     appendGenerated(formData, buildDocuments());
+    submissionController = new AbortController();
 
     try {
-      const response = await fetch(form.action, {
-        method: "POST",
-        body: formData,
-        headers: { Accept: "application/json" }
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || result.success === false) throw new Error("Submission service rejected the request");
+      await submissionService.submit({ endpoint: form.action, formData, signal: submissionController.signal });
 
       submissionComplete = true;
       confirmationEmail.textContent = valueOf("email");
@@ -331,10 +383,19 @@
       dialog.querySelector(".intake-progress").hidden = true;
       successPanel.hidden = false;
       successPanel.focus();
-    } catch (_error) {
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        submitButton.disabled = false;
+        submitButton.textContent = "Send project outline";
+        return;
+      }
       setMessage("We could not send your project outline just now. Please try again, or email langs​ystemsdesign@outlook.com if the problem continues.".replace("​", ""), true);
       submitButton.disabled = false;
       submitButton.textContent = "Send project outline";
+    } finally {
+      backButton.disabled = false;
+      form.removeAttribute("aria-busy");
+      submissionController = null;
     }
   });
 })();
