@@ -283,6 +283,25 @@
     return `${title}\n${"-".repeat(title.length)}\n${content}`;
   }
 
+  function technicalSection(title, items) {
+    const content = items.map((item) => {
+      const source = item.source ? ` (Source: ${item.source})` : "";
+      return `- [${item.status.toUpperCase()}] ${item.statement}${source}`;
+    }).join("\n");
+    return `${title}\n${"-".repeat(title.length)}\n${content}`;
+  }
+
+  function technicalAnswer(fieldName, missingStatement) {
+    const answer = valueOf(fieldName);
+    return answer
+      ? { status: "confirmed", statement: answer, source: fieldName }
+      : { status: "unknown", statement: missingStatement };
+  }
+
+  function technicalRecommendation(statement) {
+    return { status: "recommendation", statement };
+  }
+
   function createStructuredProject(projectReference, submittedAt, clarificationQuestions) {
     const customerFieldNames = [
       "contact_name", "email", "phone", "business_name", "business_description", "problem",
@@ -346,29 +365,75 @@
     const structuredProject = createStructuredProject(projectReference, submittedAt, openQuestions);
     const generatedCustomerSummary = customerSummaryGenerator.generate(structuredProject);
 
+    const unknown = (statement) => ({ status: "unknown", statement });
+    const assumption = (statement) => ({ status: "assumption", statement });
+    const businessContext = technicalAnswer("business_description", "The business context is unknown.");
+    const problem = technicalAnswer("problem", "The business problem is unknown.");
+    const process = technicalAnswer("current_process", "The current process is unknown.");
+    const impact = technicalAnswer("problem_impact", "The business impact is unknown.");
+    const outcome = technicalAnswer("desired_outcome", "The desired outcome is unknown.");
+    const users = technicalAnswer("users", "User types are unknown.");
+    const firstRelease = technicalAnswer("first_release", "Essential first-release requirements are unknown.");
+    const later = technicalAnswer("optional_requirements", "Later enhancements have not been provided.");
+    const future = technicalAnswer("future_ideas", "Future ideas have not been provided.");
+    const exclusions = technicalAnswer("excluded_functionality", "Explicit exclusions have not been confirmed.");
+    const data = technicalAnswer("data_needs", "Existing data sources and data requirements are unknown.");
+    const integrations = technicalAnswer("existing_systems", "Integration requirements are unknown.");
+    const constraints = technicalAnswer("constraints", "Additional platform or operational constraints are unknown.");
+    const acceptance = technicalAnswer("acceptance_criteria", "Acceptance criteria are unknown.");
     const technicalRequirements = [
+      "INTERNAL TECHNICAL REQUIREMENTS SPECIFICATION",
+      "INTERNAL - Lang Systems authorised personnel only",
       `Project reference: ${projectReference}`,
-      section("Users and business workflow", [
-        ["User groups", valueOf("users")],
-        ["Current workflow", valueOf("current_process")],
-        ["Target outcome", valueOf("desired_outcome")]
+      `Generated at: ${submittedAt}`,
+      "Customer approved: No",
+      "Internal discovery document for manual review; not customer-approved scope, a quote, a contract, or permission to begin development.",
+      "Status key: CONFIRMED = supplied customer information; ASSUMPTION = requires review; RECOMMENDATION = non-binding technical guidance; UNKNOWN = customer confirmation or investigation required.",
+      technicalSection("Project overview", [businessContext, problem, outcome]),
+      technicalSection("Business problem", [problem, process, impact]),
+      technicalSection("Project goals", [outcome]),
+      technicalSection("Non-goals", [exclusions]),
+      technicalSection("User types", [users]),
+      technicalSection("User journeys", [process, outcome]),
+      technicalSection("Functional requirements", [firstRelease]),
+      technicalSection("Essential first-release requirements", [firstRelease]),
+      technicalSection("Later enhancements", [later, future]),
+      technicalSection("Explicit exclusions", [exclusions]),
+      technicalSection("Proposed data entities", [technicalRecommendation("Identify candidate data entities from confirmed workflows and information needs during technical discovery; names and fields are not yet confirmed.")]),
+      technicalSection("Likely data relationships", [technicalRecommendation("Map relationships, ownership, lifecycle, retention, and authoritative sources after candidate data entities are confirmed.")]),
+      technicalSection("Existing data sources", [data]),
+      technicalSection("Data-import requirements", [unknown("Import formats, volumes, cleansing, mapping, validation, reconciliation, and cutover requirements have not been confirmed.")]),
+      technicalSection("Integration requirements", [integrations]),
+      technicalSection("File and document requirements", [unknown("File upload, generated document, format, size, retention, scanning, and export requirements have not been confirmed.")]),
+      technicalSection("Authentication considerations", [unknown("Authentication method, identity provider, session rules, account recovery, and multi-factor requirements have not been confirmed.")]),
+      technicalSection("Permission and role considerations", [unknown("Roles, permissions, approval boundaries, and least-privilege rules have not been confirmed.")]),
+      technicalSection("Reporting requirements", [unknown("Reports, dashboards, exports, measures, filters, and audiences have not been confirmed.")]),
+      technicalSection("Notification requirements", [unknown("Notification events, recipients, channels, templates, retry behaviour, and delivery evidence have not been confirmed.")]),
+      technicalSection("Offline requirements", [unknown("Offline operation and synchronisation requirements have not been confirmed.")]),
+      technicalSection("Device requirements", [unknown("Required device types, screen sizes, assistive technologies, and managed-device constraints have not been confirmed.")]),
+      technicalSection("Platform constraints", [constraints]),
+      technicalSection("Security considerations", [unknown("Security controls, threat assumptions, audit needs, and incident requirements need customer confirmation.")]),
+      technicalSection("Privacy considerations", [unknown("Data classification, residency, consent, access, retention, deletion, and privacy obligations need customer confirmation.")]),
+      technicalSection("Performance considerations", [unknown("Usage volumes, concurrency, response-time targets, availability, and capacity limits have not been confirmed.")]),
+      technicalSection("Backup and recovery considerations", [unknown("Backup scope, recovery point, recovery time, restore testing, and continuity requirements have not been confirmed.")]),
+      technicalSection("Deployment considerations", [technicalRecommendation("Select hosting, environments, release controls, monitoring, and rollback arrangements after constraints are confirmed; no technology stack is selected here.")]),
+      technicalSection("Support considerations", [technicalAnswer("ongoing_support", "Support hours, service targets, maintenance ownership, escalation, training, and handover requirements have not been confirmed.")]),
+      technicalSection("Acceptance criteria", [acceptance, technicalRecommendation("Rewrite agreed criteria as observable pass/fail checks during manual review without changing the customer's intended outcome.")]),
+      technicalSection("Assumptions", [
+        assumption("This interpretation requires Lang Systems and customer review; no inferred item is approved scope."),
+        assumption("Requests after agreed scope will be assessed as future work or a formal variation.")
       ]),
-      section("Included first-release requirements", [["Required capabilities", valueOf("first_release")]]),
-      section("Optional requirements", [["Later capabilities", valueOf("optional_requirements")]]),
-      section("Future enhancements", [["Ideas", valueOf("future_ideas")]]),
-      section("Excluded functionality", [["Exclusions", valueOf("excluded_functionality")]]),
-      section("Systems and information", [
-        ["Existing systems / integrations", valueOf("existing_systems")],
-        ["Information / data", valueOf("data_needs")]
-      ]),
-      section("Non-functional requirements and constraints", [["Known constraints", valueOf("constraints")]]),
-      section("Completion and acceptance criteria", [["Acceptance", valueOf("acceptance_criteria")]]),
-      section("Assumptions", [
-        ["Scope status", "Discovery input only; the first-release scope remains subject to clarification and written agreement"],
-        ["Changes", "Requests after scope approval will be assessed as future work or a formal variation"],
-        ["Sensitive information", "The customer confirmed that no passwords, payment details, health records, or other highly sensitive information were included"]
-      ]),
-      section("Open questions", openQuestions.length ? openQuestions.map((q, i) => [`${i + 1}`, q]) : [["Status", "No automatic gaps identified; confirm all assumptions during discovery"]])
+      technicalSection("Dependencies", [integrations, data, constraints]),
+      technicalSection("Risks", [assumption("Unconfirmed requirements may change scope, estimation, acceptance criteria, or delivery planning.")]),
+      technicalSection("Conflicts or contradictions", [technicalRecommendation("No conflict was identified automatically. Compare the original answers and clarify any inconsistent wording during manual review.")]),
+      technicalSection("Open technical questions", openQuestions.length
+        ? openQuestions.map((question) => ({ status: "unknown", statement: question }))
+        : [technicalRecommendation("No automatic gaps were identified; confirm all assumptions during discovery.")]),
+      technicalSection("Recommended investigation tasks", [
+        technicalRecommendation("Validate first-release workflow boundaries and testable acceptance criteria with the customer before estimation."),
+        technicalRecommendation("Investigate the data, integration, identity, permissions, security, privacy, performance, recovery, deployment, and support gaps recorded above."),
+        technicalRecommendation("Complete manual Lang Systems review before estimation, scope agreement, task decomposition, or development.")
+      ])
     ].join("\n\n");
 
     const internalBrief = [

@@ -14,6 +14,7 @@ integration, workflow automation, and future product development.
 - [Plain-English Client Discovery Question Set](docs/client-discovery-question-set.md)
 - [Structured Project Intake Data Model](docs/project-intake-data-model.md)
 - [Plain-English Requirements Interpretation Service](docs/requirements-interpretation-service.md)
+- [Internal Technical Requirements Specification Generator](docs/internal-technical-requirements-specification.md)
 
 ## GitHub Pages
 

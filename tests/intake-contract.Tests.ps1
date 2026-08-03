@@ -10,6 +10,8 @@ $serverValidation = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "ser
 $requirementsInterpreter = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/requirements-interpreter.js")
 $requirementsPromptPath = Join-Path $projectRoot "server/requirements-interpretation-prompt.md"
 $requirementsSchemaPath = Join-Path $projectRoot "server/requirements-interpretation.schema.json"
+$technicalSpecification = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/technical-specification.js")
+$technicalSpecificationSchemaPath = Join-Path $projectRoot "server/technical-specification.schema.json"
 $questionSetPath = Join-Path $projectRoot "docs/client-discovery-question-set.md"
 $questionSet = Get-Content -Raw -Encoding UTF8 $questionSetPath
 
@@ -47,8 +49,10 @@ Assert-True ($service -match 'timeoutMs' -and $controller -match 'submissionInPr
 Assert-True ($serverValidation -match 'MAX_REQUEST_BYTES' -and $serverValidation -match 'safeErrorResponse') "The server boundary must limit payloads and provide safe public errors."
 Assert-True ((Test-Path $requirementsPromptPath) -and (Test-Path $requirementsSchemaPath)) "The versioned requirements prompt or schema is missing."
 Assert-True ($requirementsInterpreter -match 'buildModelInput' -and $requirementsInterpreter -match 'deterministic_fallback' -and $requirementsInterpreter -notmatch 'console\.') "The requirements interpreter must minimise model input, recover deterministically, and avoid logging customer content."
+Assert-True ((Test-Path $technicalSpecificationSchemaPath) -and $technicalSpecification -match 'sourceSubmissionId' -and $technicalSpecification -match 'customerApproved' -and $technicalSpecification -notmatch 'console\.') "The internal technical specification must be versioned, traceable, non-authoritative, and must not log customer content."
 Assert-True ($customerSummary -match 'Scope, price and timing are not final' -and $customerSummary -match 'printableHtml' -and $customerSummary -notmatch 'console\.') "The customer summary must include safeguards, printable output, and no customer logging."
 Assert-True ($controller -match 'customerSummaryGenerator\.generate' -and $controller -match 'formData\.set\("_autoresponse", documents\.customerSummary\)' -and $index -match 'data-print-summary' -and $index -match 'data-download-summary') "The generated summary must feed customer email, print, and download outputs."
+Assert-True ($controller -match 'INTERNAL TECHNICAL REQUIREMENTS SPECIFICATION' -and $controller -match 'Essential first-release requirements' -and $controller -match 'Recommended investigation tasks' -and $controller -match '\[\$\{item\.status\.toUpperCase\(\)\}\]') "The internal email must include the complete, status-labelled technical specification."
 Assert-True (Test-Path -LiteralPath $questionSetPath) "The client discovery question set is missing."
 
 $questionSetSections = @(
@@ -117,6 +121,9 @@ if ($node) {
   $interpreterTestOutput = (& $node.Source (Join-Path $PSScriptRoot "requirements-interpreter.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $interpreterTestOutput -match "Requirements interpretation, privacy minimisation, schema, and fallback checks passed\.") "Requirements interpreter tests failed: $interpreterTestOutput"
   Write-Output $interpreterTestOutput
+  $technicalSpecificationTestOutput = (& $node.Source (Join-Path $PSScriptRoot "technical-specification.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $technicalSpecificationTestOutput -match "Technical specification sections, traceability, validation, privacy, and fallback checks passed\.") "Technical specification tests failed: $technicalSpecificationTestOutput"
+  Write-Output $technicalSpecificationTestOutput
   $summaryTestOutput = (& $node.Source (Join-Path $PSScriptRoot "customer-summary.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $summaryTestOutput -match "Customer summary text, HTML, print, privacy, and safeguard checks passed\.") "Customer summary tests failed: $summaryTestOutput"
   Write-Output $summaryTestOutput

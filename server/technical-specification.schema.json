@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://langsystems.com.au/schemas/technical-specification-1.0.0.json",
+  "title": "Lang Systems internal technical requirements specification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["metadata", "sections", "renderedText"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "templateVersion", "generatedAt", "sourceSubmissionId", "sourceInterpretationSchemaVersion", "sourceInterpretationTemplateVersion", "generationMode", "customerApproved", "classification", "notice"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "templateVersion": { "const": "1.0.0" },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "sourceSubmissionId": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "sourceInterpretationSchemaVersion": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "sourceInterpretationTemplateVersion": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "generationMode": { "enum": ["model", "deterministic_fallback"] },
+        "customerApproved": { "const": false },
+        "classification": { "const": "INTERNAL - Lang Systems authorised personnel only" },
+        "notice": { "const": "Internal discovery document for manual review; not customer-approved scope, a quote, a contract, or permission to begin development." }
+      }
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projectOverview", "businessProblem", "projectGoals", "nonGoals", "userTypes", "userJourneys",
+        "functionalRequirements", "essentialFirstReleaseRequirements", "laterEnhancements", "explicitExclusions",
+        "proposedDataEntities", "likelyDataRelationships", "existingDataSources", "dataImportRequirements",
+        "integrationRequirements", "fileAndDocumentRequirements", "authenticationConsiderations",
+        "permissionAndRoleConsiderations", "reportingRequirements", "notificationRequirements", "offlineRequirements",
+        "deviceRequirements", "platformConstraints", "securityConsiderations", "privacyConsiderations",
+        "performanceConsiderations", "backupAndRecoveryConsiderations", "deploymentConsiderations",
+        "supportConsiderations", "acceptanceCriteria", "assumptions", "dependencies", "risks",
+        "conflictsAndContradictions", "openTechnicalQuestions", "recommendedInvestigationTasks"
+      ],
+      "properties": {
+        "projectOverview": { "$ref": "#/$defs/entries" },
+        "businessProblem": { "$ref": "#/$defs/entries" },
+        "projectGoals": { "$ref": "#/$defs/entries" },
+        "nonGoals": { "$ref": "#/$defs/entries" },
+        "userTypes": { "$ref": "#/$defs/entries" },
+        "userJourneys": { "$ref": "#/$defs/entries" },
+        "functionalRequirements": { "$ref": "#/$defs/entries" },
+        "essentialFirstReleaseRequirements": { "$ref": "#/$defs/entries" },
+        "laterEnhancements": { "$ref": "#/$defs/entries" },
+        "explicitExclusions": { "$ref": "#/$defs/entries" },
+        "proposedDataEntities": { "$ref": "#/$defs/entries" },
+        "likelyDataRelationships": { "$ref": "#/$defs/entries" },
+        "existingDataSources": { "$ref": "#/$defs/entries" },
+        "dataImportRequirements": { "$ref": "#/$defs/entries" },
+        "integrationRequirements": { "$ref": "#/$defs/entries" },
+        "fileAndDocumentRequirements": { "$ref": "#/$defs/entries" },
+        "authenticationConsiderations": { "$ref": "#/$defs/entries" },
+        "permissionAndRoleConsiderations": { "$ref": "#/$defs/entries" },
+        "reportingRequirements": { "$ref": "#/$defs/entries" },
+        "notificationRequirements": { "$ref": "#/$defs/entries" },
+        "offlineRequirements": { "$ref": "#/$defs/entries" },
+        "deviceRequirements": { "$ref": "#/$defs/entries" },
+        "platformConstraints": { "$ref": "#/$defs/entries" },
+        "securityConsiderations": { "$ref": "#/$defs/entries" },
+        "privacyConsiderations": { "$ref": "#/$defs/entries" },
+        "performanceConsiderations": { "$ref": "#/$defs/entries" },
+        "backupAndRecoveryConsiderations": { "$ref": "#/$defs/entries" },
+        "deploymentConsiderations": { "$ref": "#/$defs/entries" },
+        "supportConsiderations": { "$ref": "#/$defs/entries" },
+        "acceptanceCriteria": { "$ref": "#/$defs/entries" },
+        "assumptions": { "$ref": "#/$defs/entries" },
+        "dependencies": { "$ref": "#/$defs/entries" },
+        "risks": { "$ref": "#/$defs/entries" },
+        "conflictsAndContradictions": { "$ref": "#/$defs/entries" },
+        "openTechnicalQuestions": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/question" } },
+        "recommendedInvestigationTasks": { "$ref": "#/$defs/entries" }
+      }
+    },
+    "renderedText": { "type": "string", "minLength": 1, "maxLength": 200000 }
+  },
+  "$defs": {
+    "entries": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "$ref": "#/$defs/entry" } },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "status", "sourcePaths"],
+      "properties": {
+        "statement": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "status": { "enum": ["confirmed", "assumption", "recommendation", "unknown"] },
+        "sourcePaths": { "type": "array", "uniqueItems": true, "maxItems": 20, "items": { "type": "string", "pattern": "^customerAnswers\\." } }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question", "reason", "blocks"],
+      "properties": {
+        "question": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "blocks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["estimation", "scopeAgreement", "development"],
+          "properties": {
+            "estimation": { "type": "boolean" },
+            "scopeAgreement": { "type": "boolean" },
+            "development": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}
