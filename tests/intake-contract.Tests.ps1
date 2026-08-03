@@ -23,6 +23,9 @@ $internalProjectBrief = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot 
 $internalProjectBriefSchemaPath = Join-Path $projectRoot "server/internal-project-brief.schema.json"
 $questionSetPath = Join-Path $projectRoot "docs/client-discovery-question-set.md"
 $questionSet = Get-Content -Raw -Encoding UTF8 $questionSetPath
+$scopeTemplatePath = Join-Path $projectRoot "docs/project-scope-acceptance-delivery-templates.md"
+$scopeTemplate = Get-Content -Raw -Encoding UTF8 $scopeTemplatePath
+$scopeTemplateNormalised = $scopeTemplate -replace '\s+', ' '
 
 function Assert-True {
   param(
@@ -75,6 +78,33 @@ Assert-True ($index -match 'data-print-confirmation' -and $controller -match 're
 Assert-True ($controller -match 'error\.delivery\?\.customer' -and $controller -match 'cannot show a completed confirmation') "Partial email delivery must remain a clearly explained non-success state."
 Assert-True ($controller -match 'INTERNAL TECHNICAL REQUIREMENTS SPECIFICATION' -and $controller -match 'Essential first-release requirements' -and $controller -match 'Recommended investigation tasks' -and $controller -match '\[\$\{item\.status\.toUpperCase\(\)\}\]') "The internal email must include the complete, status-labelled technical specification."
 Assert-True (Test-Path -LiteralPath $questionSetPath) "The client discovery question set is missing."
+Assert-True (Test-Path -LiteralPath $scopeTemplatePath) "The project scope, acceptance and delivery template pack is missing."
+
+$requiredScopeTemplateSections = @(
+  "Project overview", "Customer problem", "Desired outcome", "Essential first-release requirements",
+  "Useful later requirements", "Future enhancements", "Explicit exclusions", "Assumptions",
+  "Open questions", "Customer responsibilities", "Lang Systems responsibilities", "Milestones",
+  "Payment checkpoints", "Acceptance criteria", "Acceptance process", "Change-request process",
+  "Delivery model", "Ownership and intellectual-property position", "Support boundaries",
+  "Maintenance boundaries", "Handover contents", "Project closure"
+)
+
+foreach ($section in $requiredScopeTemplateSections) {
+  Assert-True ($scopeTemplate -match [regex]::Escape($section)) "Scope template section '$section' is missing."
+}
+
+$requiredScopeTemplateSafeguards = @(
+  "Customer-owned bespoke build", "Lang Systems licensed product", "Co-funded product",
+  "New ideas do not automatically become part of the approved first release",
+  "Additional work may require a revised estimate",
+  "Both parties must understand and manually approve the effect on price and timing before work proceeds",
+  "Completion is measured against the acceptance criteria",
+  "not jurisdiction-specific legal advice", "does not approve scope", "separate, manually reviewed written agreement"
+)
+
+foreach ($phrase in $requiredScopeTemplateSafeguards) {
+  Assert-True ($scopeTemplateNormalised -match [regex]::Escape($phrase)) "Scope template safeguard '$phrase' is missing."
+}
 
 $questionSetSections = @(
   "Contact and business details", "Current situation", "Desired outcome and practical needs",

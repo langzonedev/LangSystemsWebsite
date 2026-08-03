@@ -18,6 +18,7 @@ integration, workflow automation, and future product development.
 - [Internal Project Brief Generator](docs/internal-project-brief.md)
 - [Targeted Project Clarification Question Generator](docs/clarification-question-generator.md)
 - [Secure Submission Storage and Internal Retrieval](docs/secure-submission-storage.md)
+- [Project Scope, Acceptance and Delivery Template Pack](docs/project-scope-acceptance-delivery-templates.md)
 
 ## GitHub Pages
 
