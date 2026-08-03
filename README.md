@@ -6,6 +6,11 @@ Lang Systems is positioned as a technology-focused software company that takes i
 through to production-ready applications, including custom software, system
 integration, workflow automation, and future product development.
 
+## Project documentation
+
+- [Client Project Intake Workflow Project Anchor](docs/project-anchor.md)
+- [Client Project Intake Architecture and Design](docs/project-intake-architecture.md)
+
 ## GitHub Pages
 
 The site is designed to be hosted from the repository root on GitHub Pages.
