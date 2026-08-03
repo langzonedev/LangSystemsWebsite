@@ -3,8 +3,9 @@
   const form = document.querySelector("[data-intake-form]");
   const submissionService = window.LangSystemsIntakeSubmission;
   const intakeModel = window.LangSystemsIntakeModel;
+  const customerSummaryGenerator = window.LangSystemsCustomerSummary;
 
-  if (!dialog || !form || !submissionService || !intakeModel || typeof dialog.showModal !== "function") return;
+  if (!dialog || !form || !submissionService || !intakeModel || !customerSummaryGenerator || typeof dialog.showModal !== "function") return;
 
   const steps = [...form.querySelectorAll("[data-step]")];
   const openButtons = [...document.querySelectorAll("[data-open-intake]")];
@@ -22,6 +23,9 @@
   const reviewSummary = form.querySelector("[data-review-summary]");
   const successPanel = dialog.querySelector("[data-intake-success]");
   const confirmationEmail = dialog.querySelector("[data-confirmation-email]");
+  const summaryActions = dialog.querySelector("[data-summary-actions]");
+  const printSummaryButton = dialog.querySelector("[data-print-summary]");
+  const downloadSummaryButton = dialog.querySelector("[data-download-summary]");
   let currentStep = 0;
   let lastTrigger = null;
   let submissionComplete = false;
@@ -279,6 +283,52 @@
     return `${title}\n${"-".repeat(title.length)}\n${content}`;
   }
 
+  function createStructuredProject(projectReference, submittedAt, clarificationQuestions) {
+    const customerFieldNames = [
+      "contact_name", "email", "phone", "business_name", "business_description", "problem",
+      "current_process", "problem_impact", "desired_outcome", "users", "existing_systems",
+      "data_needs", "first_release", "optional_requirements", "future_ideas",
+      "excluded_functionality", "budget", "timing", "timing_context", "delivery_model",
+      "day_to_day_owner", "ongoing_support", "acceptance_criteria", "constraints", "additional_notes"
+    ];
+    const originalAnswers = {};
+    customerFieldNames.forEach((name) => { originalAnswers[name] = valueOf(name); });
+    originalAnswers.privacy_consent = form.elements.namedItem("privacy_consent")?.checked === true;
+    originalAnswers.submissionMetadata = {
+      submissionId: projectReference,
+      submittedAt,
+      updatedAt: submittedAt,
+      status: "submitted",
+      source: { page: window.location.pathname, campaign: null }
+    };
+    const files = [...(form.elements.namedItem("attachments")?.files || [])];
+    originalAnswers.attachments = files.map((file, index) => {
+      const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, "-").slice(-255) || `attachment-${index + 1}`;
+      return {
+        attachmentId: `${projectReference}-ATT-${index + 1}`,
+        originalFilename: file.name,
+        storedFilename: safeName,
+        mimeType: file.type || attachmentMimeTypes[(file.name.split(".").pop() || "").toLowerCase()],
+        sizeBytes: file.size,
+        storageLocation: "email-delivery-service",
+        validationStatus: "pending"
+      };
+    });
+    originalAnswers.processing = {
+      interpretationStatus: "complete",
+      generatedDocumentReferences: {
+        customerSummary: "email:customer_friendly_project_summary",
+        technicalSpecification: "email:technical_requirements_specification_internal",
+        internalBrief: "email:lang_systems_project_brief_internal"
+      },
+      clarificationQuestions,
+      emailDeliveryStatus: "pending",
+      manualReviewStatus: "not_started",
+      internalNotes: []
+    };
+    return intakeModel.createSubmission(originalAnswers);
+  }
+
   function buildDocuments() {
     const projectReference = intakeModel.newSubmissionId();
     const openQuestions = [];
@@ -292,27 +342,9 @@
     if (valueOf("budget").startsWith("Not sure")) openQuestions.push("What investment range is practical once the first release options are explained?");
     if (!valueOf("optional_requirements")) openQuestions.push("Which useful additions should be recorded for a later release?");
 
-    const customerSummary = [
-      `Project reference: ${projectReference}`,
-      section("Business context", [
-        ["Organisation", valueOf("business_name")],
-        ["Business", valueOf("business_description")],
-        ["People affected", valueOf("users")]
-      ]),
-      section("What needs to change", [
-        ["Current problem", valueOf("problem")],
-        ["Current process", valueOf("current_process")],
-        ["Impact", valueOf("problem_impact")],
-        ["Desired outcome", valueOf("desired_outcome")]
-      ]),
-      section("First release", [
-        ["Essential", valueOf("first_release")],
-        ["Useful later", valueOf("optional_requirements")],
-        ["Future ideas", valueOf("future_ideas")],
-        ["Not included", valueOf("excluded_functionality")],
-        ["Complete when", valueOf("acceptance_criteria")]
-      ])
-    ].join("\n\n");
+    const submittedAt = new Date().toISOString();
+    const structuredProject = createStructuredProject(projectReference, submittedAt, openQuestions);
+    const generatedCustomerSummary = customerSummaryGenerator.generate(structuredProject);
 
     const technicalRequirements = [
       `Project reference: ${projectReference}`,
@@ -367,7 +399,9 @@
 
     return {
       projectReference,
-      customerSummary,
+      customerSummary: generatedCustomerSummary.text,
+      customerSummaryDocument: generatedCustomerSummary,
+      structuredProject,
       technicalRequirements,
       internalBrief,
       clarificationQuestions: openQuestions.length ? openQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n") : "No automatic gaps identified; confirm all assumptions during discovery.",
@@ -376,59 +410,18 @@
   }
 
   function appendGenerated(formData, documents) {
-    const customerFieldNames = [
-      "contact_name", "email", "phone", "business_name", "business_description", "problem",
-      "current_process", "problem_impact", "desired_outcome", "users", "existing_systems",
-      "data_needs", "first_release", "optional_requirements", "future_ideas",
-      "excluded_functionality", "budget", "timing", "timing_context", "delivery_model",
-      "day_to_day_owner", "ongoing_support", "acceptance_criteria", "constraints", "additional_notes"
-    ];
-    const originalAnswers = {};
-    customerFieldNames.forEach((name) => { originalAnswers[name] = valueOf(name); });
-    originalAnswers.privacy_consent = form.elements.namedItem("privacy_consent")?.checked === true;
-    const now = new Date().toISOString();
-    originalAnswers.submissionMetadata = {
-      submissionId: documents.projectReference,
-      submittedAt: now,
-      updatedAt: now,
-      status: "submitted",
-      source: { page: window.location.pathname, campaign: null }
-    };
-    const files = [...(form.elements.namedItem("attachments")?.files || [])];
-    originalAnswers.attachments = files.map((file, index) => {
-      const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, "-").slice(-255) || `attachment-${index + 1}`;
-      return {
-        attachmentId: `${documents.projectReference}-ATT-${index + 1}`,
-        originalFilename: file.name,
-        storedFilename: safeName,
-        mimeType: file.type || attachmentMimeTypes[(file.name.split(".").pop() || "").toLowerCase()],
-        sizeBytes: file.size,
-        storageLocation: "email-delivery-service",
-        validationStatus: "pending"
-      };
-    });
-    originalAnswers.processing = {
-      interpretationStatus: "complete",
-      generatedDocumentReferences: {
-        customerSummary: "email:customer_friendly_project_summary",
-        technicalSpecification: "email:technical_requirements_specification_internal",
-        internalBrief: "email:lang_systems_project_brief_internal"
-      },
-      clarificationQuestions: documents.clarificationQuestionItems,
-      emailDeliveryStatus: "pending",
-      manualReviewStatus: "not_started",
-      internalNotes: []
-    };
-    const structuredProject = intakeModel.createSubmission(originalAnswers);
+    const structuredProject = documents.structuredProject;
     formData.append("project_reference", documents.projectReference);
     formData.append("structured_project_data_json", intakeModel.serialiseSubmission(structuredProject));
     formData.append("customer_friendly_project_summary", documents.customerSummary);
+    formData.append("customer_friendly_project_summary_html", documents.customerSummaryDocument.html);
     formData.append("technical_requirements_specification_internal", documents.technicalRequirements);
     formData.append("lang_systems_project_brief_internal", documents.internalBrief);
     formData.append("clarification_questions_internal", documents.clarificationQuestions);
     formData.append("submission_schema_version", intakeModel.SCHEMA_VERSION);
     formData.append("submission_template_version", intakeModel.TEMPLATE_VERSION);
     formData.append("submitted_at_utc", structuredProject.submissionMetadata.submittedAt);
+    formData.set("_autoresponse", documents.customerSummary);
   }
 
   function isIntakeHistoryEntry() {
@@ -529,6 +522,37 @@
     updateStep();
   });
 
+  printSummaryButton?.addEventListener("click", () => {
+    if (!pendingDocuments?.customerSummaryDocument) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      setMessage("Your browser blocked the print view. Please allow pop-ups for this page and try again.", true);
+      return;
+    }
+    printWindow.opener = null;
+    printWindow.document.open();
+    printWindow.document.write(pendingDocuments.customerSummaryDocument.printableHtml);
+    printWindow.document.close();
+    printWindow.addEventListener("load", () => {
+      printWindow.focus();
+      printWindow.print();
+    }, { once: true });
+  });
+
+  downloadSummaryButton?.addEventListener("click", () => {
+    if (!pendingDocuments?.customerSummaryDocument) return;
+    const documentOutput = pendingDocuments.customerSummaryDocument;
+    const url = URL.createObjectURL(new Blob([documentOutput.printableHtml], { type: "text/html;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = documentOutput.filename;
+    link.hidden = true;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
   form.addEventListener("input", (event) => {
     formDirty = true;
     pendingDocuments = null;
@@ -567,6 +591,7 @@
       form.hidden = true;
       dialog.querySelector(".intake-progress").hidden = true;
       successPanel.hidden = false;
+      summaryActions.hidden = false;
       successPanel.focus();
     } catch (error) {
       if (error?.name === "AbortError") {

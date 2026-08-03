@@ -36,7 +36,9 @@ python -m http.server 4173
 The “Get Started” project discovery wizard submits through FormSubmit to
 `langsystemsdesign@outlook.com`. FormSubmit sends Lang Systems the customer's answers plus a
 generated customer summary, technical requirements specification, internal project brief, and
-clarification questions. Its `_autoresponse` field sends the customer a plain-language receipt.
+clarification questions. Its `_autoresponse` field sends the customer the plain-language project
+understanding summary. After a successful submission, the customer can also print or download the
+same branded summary as a self-contained HTML document.
 
 Before using the form in production, send one test submission and follow the activation email sent
 to `langsystemsdesign@outlook.com`. FormSubmit requires that one-time confirmation for a new form.

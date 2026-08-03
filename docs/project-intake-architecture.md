@@ -98,7 +98,7 @@ Submission success is shown only after the provider returns a successful respons
 
 ### Customer email
 
-The delivery provider sends a plain-language acknowledgement to the submitted work email. It confirms receipt, explains that Lang Systems will review and follow up, and warns the customer not to reply with sensitive information. It must not imply that Lang Systems has accepted the project or agreed price, scope, or timing.
+The delivery provider sends the plain-language project understanding summary to the submitted work email as the acknowledgement. It restates the customer's key answers, distinguishes assumptions and clarification questions, explains that Lang Systems will review and follow up, and warns the customer not to reply with sensitive information. It must not imply that Lang Systems has accepted the project or agreed price, scope, or timing.
 
 ### Lang Systems email
 
@@ -108,6 +108,7 @@ The destination mailbox receives one submission containing the original fields p
 | --- | --- |
 | `project_reference` | Shared email correlation reference |
 | `customer_friendly_project_summary` | Plain-language restatement of business context, change sought, first release, later items, exclusions, and completion measures |
+| `customer_friendly_project_summary_html` | Branded, email-compatible HTML presentation of the same customer summary |
 | `technical_requirements_specification_internal` | Internal requirements grouped by users/workflow, included/optional/future/excluded scope, systems and information, constraints, acceptance, assumptions, and open questions |
 | `lang_systems_project_brief_internal` | Internal lead, commercial fit, discovery assessment, and recommended next action |
 | `clarification_questions_internal` | Questions generated from missing optional detail or uncertain commercial/budget choices |
@@ -116,7 +117,7 @@ The destination mailbox receives one submission containing the original fields p
 | `submission_template_version` | Question and generated-output template version |
 | `submitted_at_utc` | Browser-generated submission timestamp |
 
-These are sections in the delivered email payload, not downloadable files, signed specifications, customer approvals, or permanent system records. The customer summary is sent to Lang Systems as part of the internal submission; the customer receives the acknowledgement, not a copy of every answer. Generated material is a discovery aid and must be reviewed by a person before estimation or contractual scope.
+These are sections in the delivered email payload, not signed specifications, customer approvals, or permanent system records. The customer summary is sent to Lang Systems as part of the internal submission and is also used as the customer's acknowledgement. After successful submission, the customer can print or download the same branded summary as a self-contained HTML document. Generated material is a discovery aid and must be reviewed by a person before estimation or contractual scope.
 
 ## 8. Commercial delivery models
 
@@ -147,7 +148,7 @@ The response records a preference only. Ownership, licensing, support, fees, con
 - Replacing FormSubmit behind a submission-service boundary while retaining or deliberately migrating stable field names and the versioned payload.
 - Server-assigned durable identifiers, reliable retry/deduplication, delivery monitoring, and an auditable record store.
 - Approved import into a customer-management or work-management tool.
-- File uploads, richer document generation, a customer copy of the completed outline, and downloadable documents.
+- Richer office-document generation beyond the printable and downloadable HTML customer summary.
 - Save-and-resume, authenticated status viewing, staff dashboards, automated classification, and scheduling.
 - Stronger spam controls where evidence shows they are needed.
 

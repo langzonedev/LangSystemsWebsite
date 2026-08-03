@@ -5,6 +5,7 @@ $index = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "index.html")
 $controller = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake.js")
 $service = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-service.js")
 $model = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-model.js")
+$customerSummary = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "customer-summary.js")
 $serverValidation = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-validation.js")
 $requirementsInterpreter = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/requirements-interpreter.js")
 $requirementsPromptPath = Join-Path $projectRoot "server/requirements-interpretation-prompt.md"
@@ -34,7 +35,7 @@ Assert-True ($index -match 'role="progressbar"' -and $index -match 'aria-valuete
 Assert-True ($index -match 'data-review-summary' -and $controller -match 'data-edit-step') "The review step must offer direct correction controls."
 Assert-True ($controller -match 'LangSystemsIntakeSubmission' -and $controller -notmatch 'await\s+fetch\s*\(') "Submission transport must stay behind the service boundary."
 Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"') "The submission service must reject insecure endpoints."
-Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model must load before submission transport."
+Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="customer-summary\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model and customer summary generator must load before submission transport."
 Assert-True ($controller -match 'intakeModel\.serialiseSubmission' -and $service -match 'LangSystemsIntakeModel\.parseSubmission') "Frontend generation and transport must enforce the shared model contract."
 Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"3\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
 Assert-True ($serverValidation -match 'IntakeModel\.validateSubmission' -and $serverValidation -notmatch 'console\.') "The server validation boundary must use the shared contract without logging submissions."
@@ -46,6 +47,8 @@ Assert-True ($service -match 'timeoutMs' -and $controller -match 'submissionInPr
 Assert-True ($serverValidation -match 'MAX_REQUEST_BYTES' -and $serverValidation -match 'safeErrorResponse') "The server boundary must limit payloads and provide safe public errors."
 Assert-True ((Test-Path $requirementsPromptPath) -and (Test-Path $requirementsSchemaPath)) "The versioned requirements prompt or schema is missing."
 Assert-True ($requirementsInterpreter -match 'buildModelInput' -and $requirementsInterpreter -match 'deterministic_fallback' -and $requirementsInterpreter -notmatch 'console\.') "The requirements interpreter must minimise model input, recover deterministically, and avoid logging customer content."
+Assert-True ($customerSummary -match 'Scope, price and timing are not final' -and $customerSummary -match 'printableHtml' -and $customerSummary -notmatch 'console\.') "The customer summary must include safeguards, printable output, and no customer logging."
+Assert-True ($controller -match 'customerSummaryGenerator\.generate' -and $controller -match 'formData\.set\("_autoresponse", documents\.customerSummary\)' -and $index -match 'data-print-summary' -and $index -match 'data-download-summary') "The generated summary must feed customer email, print, and download outputs."
 Assert-True (Test-Path -LiteralPath $questionSetPath) "The client discovery question set is missing."
 
 $questionSetSections = @(
@@ -114,6 +117,9 @@ if ($node) {
   $interpreterTestOutput = (& $node.Source (Join-Path $PSScriptRoot "requirements-interpreter.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $interpreterTestOutput -match "Requirements interpretation, privacy minimisation, schema, and fallback checks passed\.") "Requirements interpreter tests failed: $interpreterTestOutput"
   Write-Output $interpreterTestOutput
+  $summaryTestOutput = (& $node.Source (Join-Path $PSScriptRoot "customer-summary.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $summaryTestOutput -match "Customer summary text, HTML, print, privacy, and safeguard checks passed\.") "Customer summary tests failed: $summaryTestOutput"
+  Write-Output $summaryTestOutput
 } else {
   Write-Output "Node.js is unavailable; server and submission-service runtime tests were skipped after static contract checks."
 }
