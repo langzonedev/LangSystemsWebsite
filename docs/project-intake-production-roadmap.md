@@ -55,7 +55,7 @@ Deployment evidence, 3 August 2026: Worker
 both customer and internal Resend deliveries succeeded on their first attempt. The mailbox owner
 confirmed that both Outlook messages arrived.
 
-## Phase 3 — Production cutover (prepared locally; publication pending)
+## Phase 3 — Production cutover (complete)
 
 - Keep GitHub Pages and the existing website DNS unchanged.
 - Put the deployed Worker URL in the `lang-systems-intake-endpoint` meta value.
@@ -68,6 +68,13 @@ confirmed that both Outlook messages arrived.
 Exit criteria: a customer submission is durably stored, reaches `langsystemsdesign@outlook.com`, sends
 the customer acknowledgement, displays only the server-issued reference as confirmed, and survives
 a controlled partial-email failure without duplicate delivery.
+
+Completed on 3 August 2026: pull request 1 was merged to `main`, GitHub Pages deployed commit
+`b15cd64ae13682ec5959d6a64eec1b8f0511ed55`, and the public site returned HTTP 200 with `api` mode
+and the production Worker endpoint. The Worker health check passed, and an `OPTIONS` preflight from
+`https://langsystems.com.au` returned HTTP 204 with that exact allowed origin. The customer
+confirmation was shortened to a friendly project snapshot; the full server reference remains only
+as a quiet receipt for support and audit correlation.
 
 ## Phase 4 — Operate and improve
 
