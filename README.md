@@ -57,4 +57,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tests/intake-contract.Tests.
 ```
 
 The site is static and has no compilation step. A production check consists of running the contract
-checks and serving the repository root with the local preview command above.
+checks and serving the repository root with the local preview command above. When Node.js is
+available, the same command also runs `tests/intake-validation.Tests.js`; otherwise it reports that
+the server runtime portion was skipped. Before launch, manually verify keyboard and screen-reader
+error announcements, an unsupported/oversized file, offline and timeout recovery, and a successful
+activated FormSubmit delivery in a supported browser.

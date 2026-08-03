@@ -1,6 +1,6 @@
 # Structured Project Intake Data Model
 
-Status: Source of truth for schema 2.0.0  
+Status: Source of truth for schema 3.0.0
 Last reviewed: 3 August 2026  
 Owner: Lang Systems
 
@@ -58,14 +58,16 @@ preserved as customer answers and are not converted into assumptions.
 
 ### Attachments
 
-Each attachment has `attachmentId`, `originalFilename`, `storedFilename`, `mimeType`, `sizeBytes`,
-`storageLocation`, and `validationStatus`. Validation status is `pending`, `accepted`, `rejected`,
-`malware_detected`, or `scan_failed`. The model permits at most 10 files and 10 MiB per file.
+Each optional attachment has `attachmentId`, `originalFilename`, `storedFilename`, `mimeType`,
+`sizeBytes`, `storageLocation`, and `validationStatus`. Validation status is `pending`, `accepted`,
+`rejected`, `malware_detected`, or `scan_failed`. The model permits at most 10 files of PDF, Word,
+Excel, CSV, text, PNG, or JPEG type, with a limit of 10 MiB per file.
 
-The first release does not enable upload delivery. When uploads are separately approved, the
-server must allocate the identifier and safe stored filename, keep storage private, verify the
-actual file type and size, scan for malware, and set the safety result. An original filename must
-never be used as a storage path. A storage location must be an internal key, not a public URL.
+The static first release sends approved attachments through the configured email-delivery provider.
+Browser checks are for friendly early feedback only. A replacement server must allocate the identifier
+and safe stored filename, keep storage private, verify actual content and size rather than trusting the
+filename or browser MIME type, scan for malware, and set the safety result before delivery. An original
+filename must never be used as a storage path. A storage location must be an internal key, not a public URL.
 
 ### Processing information
 
@@ -94,15 +96,23 @@ customer answer. The existing flat HTML field names are mapped into the structur
 safe message, never the rejected value. `serialiseSubmission(value)` and
 `parseSubmission(jsonOrObject)` reject invalid records. Validation requires core contact,
 business/process, problem/outcome/users, first-release/completion, budget/timeline, and delivery
-answers. It also checks versions, identifiers, timestamps, email shape, conditional phone,
-required-date format, enum values, attachment fields, counts, and sizes.
+answers and explicit privacy consent. It also checks versions, identifiers, timestamps, email shape,
+maximum lengths and types, conditional phone, required-date format, enum values, and attachment
+fields, approved types, counts, and sizes.
 
 Browser validation is for usability and is not a security boundary. Any server implementation
-must call `validateRequestBody` from `server/intake-validation.js` before side effects, enforce a
-request-size limit, repeat attachment content checks, authenticate internal updates, rate-limit
-abuse, and return a generic 400 response. Do not log request bodies or validation values.
+must call `validateRequestBody` from `server/intake-validation.js` before side effects, use
+`validateUpload` for each received file, and apply `createSubmissionGuard` using a privacy-safe key
+derived from trusted request context. The boundary limits request size, validates file metadata,
+rate-limits rapid attempts, and rejects repeat submission IDs. Production handling must also verify
+attachment content, authenticate internal updates, persist rate/duplicate state across instances,
+and use `safeErrorResponse` without logging request bodies or rejected values.
 
 ## Versioning and compatibility
+
+Schema 3.0.0 adds required `customerAnswers.additionalContext.privacyConsent` and approved attachment
+types. This is intentionally incompatible with 2.0.0 so a server cannot accept an outline whose
+consent state is unknown.
 
 - `schemaVersion` describes the record shape. `templateVersion` independently identifies the
   question/output wording used to collect it.
@@ -111,7 +121,7 @@ abuse, and return a generic 400 response. Do not log request bodies or validatio
   new major schema version and an explicit mapper.
 - Stored submissions remain immutable in their original schema. Upgrade a copy for processing;
   retain the original record and version.
-- `upgradeLegacyV1` maps the previous `schemaVersion: "1.0"` browser payload into 2.0.0 without
+- `upgradeLegacyV1` maps the previous `schemaVersion: "1.0"` browser payload into 3.0.0 without
   rewriting the historical source. Unavailable legacy answers remain `null` or empty arrays.
 - Consumers must route by schema version and reject unsupported versions safely. They must not
   silently reinterpret old fields using current meanings.
@@ -132,7 +142,7 @@ retention and deletion periods, and review provider privacy/security terms befor
     "submittedAt": "2026-08-03T01:02:03.000Z",
     "updatedAt": "2026-08-03T01:02:03.000Z",
     "status": "submitted",
-    "schemaVersion": "2.0.0",
+    "schemaVersion": "3.0.0",
     "templateVersion": "1.0.0",
     "source": { "page": "/", "campaign": null }
   },

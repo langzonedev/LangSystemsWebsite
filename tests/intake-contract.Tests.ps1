@@ -33,9 +33,14 @@ Assert-True ($controller -match 'LangSystemsIntakeSubmission' -and $controller -
 Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"') "The submission service must reject insecure endpoints."
 Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model must load before submission transport."
 Assert-True ($controller -match 'intakeModel\.serialiseSubmission' -and $service -match 'LangSystemsIntakeModel\.parseSubmission') "Frontend generation and transport must enforce the shared model contract."
-Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"2\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
+Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"3\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
 Assert-True ($serverValidation -match 'IntakeModel\.validateSubmission' -and $serverValidation -notmatch 'console\.') "The server validation boundary must use the shared contract without logging submissions."
 Assert-True ($controller -notmatch 'localStorage|sessionStorage|console\.') "Customer answers must not be stored in browser storage or written to the console."
+Assert-True ($index -match 'data-error-summary' -and $controller -match 'showErrorSummary' -and $controller -match 'field-error') "Accessible field errors and an error summary are required."
+Assert-True ($index -match 'name="attachments"[^>]+accept=' -and $controller -match 'maximumAttachmentBytes' -and $model -match 'ALLOWED_ATTACHMENT_EXTENSIONS') "Attachment type and size validation is required at both boundaries."
+Assert-True ($controller -match 'validateAllSteps' -and $model -match 'required_consent' -and $model -match 'too_long') "Required consent, complete-form validation, and maximum lengths must be enforced."
+Assert-True ($service -match 'timeoutMs' -and $controller -match 'submissionInProgress' -and $serverValidation -match 'createSubmissionGuard') "Timeout, rapid-repeat, and duplicate recovery controls are required."
+Assert-True ($serverValidation -match 'MAX_REQUEST_BYTES' -and $serverValidation -match 'safeErrorResponse') "The server boundary must limit payloads and provide safe public errors."
 Assert-True (Test-Path -LiteralPath $questionSetPath) "The client discovery question set is missing."
 
 $questionSetSections = @(
@@ -92,5 +97,17 @@ foreach ($reference in $localReferences) {
 $modelTestOutput = (& cscript //NoLogo //E:JScript (Join-Path $PSScriptRoot "intake-model.Tests.js") 2>&1) -join "`n"
 Assert-True ($LASTEXITCODE -eq 0 -and $modelTestOutput -match "Intake model validation and serialisation checks passed\." -and $modelTestOutput -notmatch "runtime error") "Intake model tests failed: $modelTestOutput"
 Write-Output $modelTestOutput
+
+$node = Get-Command node -ErrorAction SilentlyContinue
+if ($node) {
+  $serverTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-validation.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $serverTestOutput -match "Server intake validation and duplicate-prevention checks passed\.") "Server intake validation tests failed: $serverTestOutput"
+  Write-Output $serverTestOutput
+  $serviceTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-service.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $serviceTestOutput -match "Intake submission success, provider failure, and timeout checks passed\.") "Intake submission service tests failed: $serviceTestOutput"
+  Write-Output $serviceTestOutput
+} else {
+  Write-Output "Node.js is unavailable; server and submission-service runtime tests were skipped after static contract checks."
+}
 
 Write-Output "Intake contract checks passed."

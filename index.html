@@ -333,12 +333,12 @@
               <div><h3>First, who should we speak with?</h3><p>This helps us understand the business context and respond to the right person.</p></div>
             </div>
             <div class="field-grid two-columns">
-              <label><span>Your name</span><input name="contact_name" autocomplete="name" required /><small>Tell us what you would like us to call you.</small></label>
-              <label><span>Work email</span><input type="email" name="email" autocomplete="email" required /><small>We will send your confirmation here.</small></label>
-              <label><span>Phone <em>Optional</em></span><input type="tel" name="phone" autocomplete="tel" /></label>
-              <label><span>Business or organisation</span><input name="business_name" autocomplete="organization" required /></label>
+              <label><span>Your name</span><input name="contact_name" autocomplete="name" maxlength="300" required /><small>Tell us what you would like us to call you.</small></label>
+              <label><span>Work email</span><input type="email" name="email" autocomplete="email" maxlength="320" required /><small>We will send your confirmation here.</small></label>
+              <label><span>Phone <em>Optional</em></span><input type="tel" name="phone" autocomplete="tel" maxlength="50" /></label>
+              <label><span>Business or organisation</span><input name="business_name" autocomplete="organization" maxlength="300" required /></label>
             </div>
-            <label><span>What does your business do?</span><textarea name="business_description" rows="3" required placeholder="A short, plain-English description is perfect."></textarea></label>
+            <label><span>What does your business do?</span><textarea name="business_description" rows="3" maxlength="10000" required placeholder="A short, plain-English description is perfect."></textarea></label>
           </section>
 
           <section class="form-step" data-step data-step-name="The problem" hidden>
@@ -346,9 +346,9 @@
               <span>02</span>
               <div><h3>What is happening today?</h3><p>Describe the situation as you would to a colleague. Technical detail is not expected.</p></div>
             </div>
-            <label><span>What problem or opportunity would you like help with?</span><textarea name="problem" rows="5" required placeholder="For example: Our team copies order details between three systems and mistakes are becoming common."></textarea></label>
-            <label><span>How do you handle this today?</span><textarea name="current_process" rows="4" required placeholder="Walk us through the current process, including manual steps or workarounds."></textarea></label>
-            <label><span>Who is affected, and what impact does it have?</span><textarea name="problem_impact" rows="3" required placeholder="Consider time, cost, customer experience, errors, risk, or missed opportunities."></textarea></label>
+            <label><span>What problem or opportunity would you like help with?</span><textarea name="problem" rows="5" maxlength="10000" required placeholder="For example: Our team copies order details between three systems and mistakes are becoming common."></textarea></label>
+            <label><span>How do you handle this today?</span><textarea name="current_process" rows="4" maxlength="10000" required placeholder="Walk us through the current process, including manual steps or workarounds."></textarea></label>
+            <label><span>Who is affected, and what impact does it have?</span><textarea name="problem_impact" rows="3" maxlength="10000" required placeholder="Consider time, cost, customer experience, errors, risk, or missed opportunities."></textarea></label>
           </section>
 
           <section class="form-step" data-step data-step-name="The outcome" hidden>
@@ -356,11 +356,11 @@
               <span>03</span>
               <div><h3>What would a better result look like?</h3><p>Focus on what people should be able to do, not how the software should be built.</p></div>
             </div>
-            <label><span>What would you like the new solution to achieve?</span><textarea name="desired_outcome" rows="5" required></textarea></label>
-            <label><span>Who will use it?</span><textarea name="users" rows="3" required placeholder="For example: five office staff, field technicians, managers, or customers."></textarea></label>
+            <label><span>What would you like the new solution to achieve?</span><textarea name="desired_outcome" rows="5" maxlength="10000" required></textarea></label>
+            <label><span>Who will use it?</span><textarea name="users" rows="3" maxlength="10000" required placeholder="For example: five office staff, field technicians, managers, or customers."></textarea></label>
             <div class="field-grid two-columns">
-              <label><span>Existing systems it may need to work with <em>Optional</em></span><textarea name="existing_systems" rows="3" placeholder="Accounting, payments, spreadsheets, website, email, or other tools."></textarea></label>
-              <label><span>Information it may need to use <em>Optional</em></span><textarea name="data_needs" rows="3" placeholder="Customer records, orders, documents, reports, or other business information."></textarea></label>
+              <label><span>Existing systems it may need to work with <em>Optional</em></span><textarea name="existing_systems" rows="3" maxlength="10000" placeholder="Accounting, payments, spreadsheets, website, email, or other tools."></textarea></label>
+              <label><span>Information it may need to use <em>Optional</em></span><textarea name="data_needs" rows="3" maxlength="10000" placeholder="Customer records, orders, documents, reports, or other business information."></textarea></label>
             </div>
           </section>
 
@@ -369,12 +369,12 @@
               <span>04</span>
               <div><h3>Shape a practical first release.</h3><p>Separating essentials from later ideas keeps the first delivery clear and achievable.</p></div>
             </div>
-            <label><span>Essential for the first release</span><textarea name="first_release" rows="5" required placeholder="What must people be able to do from day one?"></textarea></label>
+            <label><span>Essential for the first release</span><textarea name="first_release" rows="5" maxlength="10000" required placeholder="What must people be able to do from day one?"></textarea></label>
             <div class="field-grid two-columns">
-              <label><span>Useful, but can be added later <em>Optional</em></span><textarea name="optional_requirements" rows="3"></textarea></label>
-              <label><span>Future ideas <em>Optional</em></span><textarea name="future_ideas" rows="3"></textarea></label>
+              <label><span>Useful, but can be added later <em>Optional</em></span><textarea name="optional_requirements" rows="3" maxlength="10000"></textarea></label>
+              <label><span>Future ideas <em>Optional</em></span><textarea name="future_ideas" rows="3" maxlength="10000"></textarea></label>
             </div>
-            <label><span>Anything specifically not included? <em>Optional</em></span><textarea name="excluded_functionality" rows="3" placeholder="This can include work another supplier or your team will handle."></textarea></label>
+            <label><span>Anything specifically not included? <em>Optional</em></span><textarea name="excluded_functionality" rows="3" maxlength="10000" placeholder="This can include work another supplier or your team will handle."></textarea></label>
           </section>
 
           <section class="form-step" data-step data-step-name="Budget and timing" hidden>
@@ -386,7 +386,7 @@
               <label><span>Expected investment</span><select name="budget" required><option value="">Choose the closest answer</option><option>Under AUD $5,000</option><option>AUD $5,000–$15,000</option><option>AUD $15,000–$40,000</option><option>AUD $40,000–$100,000</option><option>Over AUD $100,000</option><option>Not sure — please advise</option></select></label>
               <label><span>Preferred timing</span><select name="timing" required><option value="">Choose the closest answer</option><option>As soon as practical</option><option>Within 1–2 months</option><option>Within 3–6 months</option><option>More than 6 months away</option><option>Exploring options only</option></select></label>
             </div>
-            <label><span>Is there an important date or reason for the timing? <em>Optional</em></span><textarea name="timing_context" rows="3" placeholder="A launch, contract, busy season, compliance date, or another dependency."></textarea></label>
+            <label><span>Is there an important date or reason for the timing? <em>Optional</em></span><textarea name="timing_context" rows="3" maxlength="10000" placeholder="A launch, contract, busy season, compliance date, or another dependency."></textarea></label>
           </section>
 
           <section class="form-step" data-step data-step-name="Working arrangement" hidden>
@@ -412,9 +412,10 @@
               <span>07</span>
               <div><h3>How will we know the project is complete?</h3><p>Clear completion measures help both teams agree when the first release is ready.</p></div>
             </div>
-            <label><span>What must be working before the project can be considered complete?</span><textarea name="acceptance_criteria" rows="5" required placeholder="Describe the results you need to see or tasks people must be able to complete."></textarea></label>
-            <label><span>Important rules, constraints, or concerns <em>Optional</em></span><textarea name="constraints" rows="3" placeholder="Privacy, approvals, locations, accessibility, industry rules, devices, or business policies."></textarea></label>
-            <label><span>Anything else we should know? <em>Optional</em></span><textarea name="additional_notes" rows="3"></textarea></label>
+            <label><span>What must be working before the project can be considered complete?</span><textarea name="acceptance_criteria" rows="5" maxlength="10000" required placeholder="Describe the results you need to see or tasks people must be able to complete."></textarea></label>
+            <label><span>Important rules, constraints, or concerns <em>Optional</em></span><textarea name="constraints" rows="3" maxlength="10000" placeholder="Privacy, approvals, locations, accessibility, industry rules, devices, or business policies."></textarea></label>
+            <label><span>Anything else we should know? <em>Optional</em></span><textarea name="additional_notes" rows="3" maxlength="10000"></textarea></label>
+            <label><span>Supporting files <em>Optional</em></span><input type="file" name="attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.txt" multiple /><small>Up to 10 files, no more than 10 MB each. Please do not attach passwords or highly sensitive information.</small></label>
           </section>
 
           <section class="form-step review-step" data-step data-step-name="Review" hidden>
@@ -427,7 +428,8 @@
             <p class="submission-note">After you send this, we will review the information, confirm our understanding, and contact you with any questions or recommended next steps.</p>
           </section>
 
-          <div class="form-message" id="intake-form-message" data-form-message role="alert" aria-live="assertive"></div>
+          <div class="error-summary" data-error-summary tabindex="-1" role="alert" aria-live="assertive" aria-atomic="true" hidden></div>
+          <div class="form-message" id="intake-form-message" data-form-message role="status" aria-live="polite" aria-atomic="true"></div>
           <footer class="form-actions">
             <button class="button secondary" type="button" data-form-back hidden>Back</button>
             <button class="button primary" type="button" data-form-next>Continue</button>

@@ -44,7 +44,7 @@ Closing a partly completed form warns that unsent answers will not be saved. The
 
 ## 4. Wizard and information model
 
-The complete approved customer-facing content, including proposed additions to the current form-template contract, is defined in the [Plain-English Client Discovery Question Set](client-discovery-question-set.md). The running form keeps its stable version 1.0 field names while its generated structured record uses schema 2.0.0. Future question changes must deliberately update the independent template version and, when the record shape changes incompatibly, the schema version.
+The complete approved customer-facing content, including proposed additions to the current form-template contract, is defined in the [Plain-English Client Discovery Question Set](client-discovery-question-set.md). The running form keeps its stable version 1.0 field names while its generated structured record uses schema 3.0.0. Future question changes must deliberately update the independent template version and, when the record shape changes incompatibly, the schema version.
 
 The first-release wizard has eight steps. “Required” means submission cannot proceed without a valid answer. Optional blanks remain visibly identified as not provided in generated outputs; they are not silently invented.
 
@@ -63,12 +63,12 @@ The stable field names and structured payload are an integration contract. Chang
 
 ## 5. Validation and error handling
 
-- Validate the current step before progression and validate review/consent before submission.
-- Use browser constraints where suitable: required fields, email format, radio selection, and select choice.
-- Mark the specific invalid control with `aria-invalid`, focus it, and show a plain-language error in an announced message region.
+- Validate the current step before progression and revalidate every step, attachment, and consent before submission.
+- Use browser constraints where suitable: required fields, email format, maximum lengths, radio selection, select choice, file type, file count, and file size.
+- Mark every invalid control with `aria-invalid`, associate a plain-language message using `aria-describedby`, show a linked error summary, and move focus to the summary.
 - Never discard valid answers because another answer is invalid or a network request fails.
-- Disable Send while a request is in progress to reduce duplicates; restore it on failure.
-- Treat a non-success response, explicit provider rejection, unreadable response, or network exception as failure.
+- Disable Send while a request is in progress, reuse the same reference on a retry, and apply client and server repeat controls to reduce duplicates.
+- Treat a non-success response, explicit provider rejection, unreadable response, timeout, or network exception as failure.
 - Do not log form contents or expose them in URLs or analytics.
 - Use a visually hidden honeypot as a low-friction spam control. Stronger protection is a later decision and must remain accessible.
 - Provider/server validation and abuse limits remain necessary. Browser validation is not a security boundary.
@@ -85,14 +85,14 @@ Immediately before sending, the browser:
 2. preserves the original named form answers;
 3. adds generated document text;
 4. adds `structured_project_data_json` using the [Structured Project Intake Data Model](project-intake-data-model.md);
-5. adds `submission_schema_version: "2.0.0"` and the independent template version; and
+5. adds `submission_schema_version: "3.0.0"` and the independent template version; and
 6. adds the UTC submission time.
 
 The generated reference is for email correlation, not a guaranteed unique or sequential record identifier. Lang Systems must verify receipt rather than relying only on the browser success screen.
 
 ### Failure behavior
 
-Submission success is shown only after the provider returns a successful response. On failure the dialog stays open, the customer’s inputs remain intact, and the message offers retry or direct email to `langsystemsdesign@outlook.com`. Direct email is a fallback contact route; it does not reproduce the structured intake automatically.
+Submission success is shown only after the provider returns a successful response. On validation, offline, lost-connection, timeout, temporary server, storage, email-delivery, rate-limit, or duplicate failure, the dialog stays open and the customer’s inputs remain intact. The focused message explains whether to correct an answer, reconnect, wait, retry, or contact `langsystemsdesign@outlook.com`. A timeout or lost connection never claims failure or success when delivery cannot be confirmed. Direct email is a fallback contact route; it does not reproduce the structured intake automatically.
 
 ## 7. Email and generated document outputs
 
@@ -159,7 +159,7 @@ These are design directions, not commitments. Each requires approval, security/p
 - Payment collection, invoices, subscriptions, contracts, or electronic signatures.
 - Autonomous Kanban card creation, project acceptance, quoting, estimation, prioritisation, or customer qualification.
 - Automated commercial, legal, or delivery decisions.
-- Attachments or collection of passwords, payment details, health records, government identifiers, or other highly sensitive information.
+- Collection of passwords, payment details, health records, government identifiers, or other highly sensitive information. Optional supporting files are limited to approved business-document and image formats.
 - Background prompts, automatic pop-ups, advertising, and unrelated overlays.
 - Guaranteed permanent storage, email delivery, or recovery of an unfinished form.
 
@@ -223,7 +223,7 @@ A successful browser request alone does not satisfy email acceptance; both deliv
 - One internal email plus one customer acknowledgement is adequate first-release tracking.
 - The browser-generated reference and time are sufficient for correlation, not authoritative audit.
 - Lang Systems staff manually review outputs and clarify them with the customer before estimating or agreeing scope.
-- No attachments or highly sensitive information are required during initial discovery.
+- Supporting files are optional; highly sensitive information is neither required nor permitted during initial discovery.
 
 ### Open decisions before public production use
 

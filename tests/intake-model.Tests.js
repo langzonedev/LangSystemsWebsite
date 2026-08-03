@@ -64,7 +64,8 @@ var raw = {
   ongoing_support: "Occasional support when needed",
   acceptance_criteria: "Staff can complete a job without the spreadsheet",
   constraints: "Managers approve account access",
-  additional_notes: "Keep the existing job numbering"
+  additional_notes: "Keep the existing job numbering",
+  privacy_consent: "Agreed"
 };
 
 var submission = LangSystemsIntakeModel.createSubmission(raw, {
@@ -74,7 +75,7 @@ var submission = LangSystemsIntakeModel.createSubmission(raw, {
   campaign: "winter-2026"
 });
 
-assertTrue(submission.submissionMetadata.schemaVersion === "2.0.0", "Schema version was not retained.");
+assertTrue(submission.submissionMetadata.schemaVersion === "3.0.0", "Schema version was not retained.");
 assertTrue(submission.submissionMetadata.templateVersion === "1.0.0", "Template version was not retained.");
 assertTrue(submission.submissionMetadata.source.page === "/get-started", "Source page was not safely normalised.");
 assertTrue(submission.customerAnswers.customer.name === "Alex Example", "Short text was not trimmed.");
@@ -97,6 +98,21 @@ validation = LangSystemsIntakeModel.validateSubmission(invalidEmail);
 assertTrue(!validation.valid, "An invalid email address passed validation.");
 assertTrue(validation.errors.some(function (error) { return error.code === "invalid_email"; }), "The invalid email error was not descriptive.");
 
+var missingConsent = LangSystemsIntakeModel.createSubmission(raw, { submissionId: "LS-TEST-CONSENT" });
+missingConsent.customerAnswers.additionalContext.privacyConsent = false;
+validation = LangSystemsIntakeModel.validateSubmission(missingConsent);
+assertTrue(!validation.valid && validation.errors.some(function (error) { return error.code === "required_consent"; }), "Missing privacy consent passed validation.");
+
+var overlong = LangSystemsIntakeModel.createSubmission(raw, { submissionId: "LS-TEST-LENGTH" });
+overlong.customerAnswers.customer.name = new Array(302).join("x");
+validation = LangSystemsIntakeModel.validateSubmission(overlong);
+assertTrue(!validation.valid && validation.errors.some(function (error) { return error.code === "too_long"; }), "An overlong answer passed validation.");
+
+var unexpectedField = LangSystemsIntakeModel.createSubmission(raw, { submissionId: "LS-TEST-FORMAT" });
+unexpectedField.customerAnswers.customer.unexpected = "must not be forwarded";
+validation = LangSystemsIntakeModel.validateSubmission(unexpectedField);
+assertTrue(!validation.valid && validation.errors.some(function (error) { return error.code === "unexpected_field"; }), "An unsupported payload field passed validation.");
+
 var phoneRequired = LangSystemsIntakeModel.createSubmission(raw, { submissionId: "LS-TEST-003" });
 phoneRequired.customerAnswers.customer.preferredContactMethod = "phone";
 validation = LangSystemsIntakeModel.validateSubmission(phoneRequired);
@@ -115,6 +131,19 @@ unsafeAttachment.attachments.push({
 validation = LangSystemsIntakeModel.validateSubmission(unsafeAttachment);
 assertTrue(!validation.valid, "An oversized attachment passed validation.");
 
+var unsupportedAttachment = LangSystemsIntakeModel.createSubmission(raw, { submissionId: "LS-TEST-005" });
+unsupportedAttachment.attachments.push({
+  attachmentId: "ATT-2",
+  originalFilename: "program.exe",
+  storedFilename: "program.exe",
+  mimeType: "application/x-msdownload",
+  sizeBytes: 100,
+  storageLocation: "private/intake/ATT-2",
+  validationStatus: "pending"
+});
+validation = LangSystemsIntakeModel.validateSubmission(unsupportedAttachment);
+assertTrue(!validation.valid && validation.errors.some(function (error) { return error.code === "unsupported_type"; }), "An unsupported attachment passed validation.");
+
 var legacy = {
   schemaVersion: "1.0",
   projectReference: "LS-LEGACY-001",
@@ -131,7 +160,7 @@ var legacy = {
   commercial: { deliveryModel: "Recommendation required", budget: "Not sure", timing: "Flexible" }
 };
 var upgraded = LangSystemsIntakeModel.upgradeLegacyV1(legacy, { submittedAt: "2026-08-01T00:00:00.000Z" });
-assertTrue(upgraded.submissionMetadata.schemaVersion === "2.0.0", "Legacy submission was not upgraded.");
+assertTrue(upgraded.submissionMetadata.schemaVersion === "3.0.0", "Legacy submission was not upgraded.");
 assertTrue(upgraded.customerAnswers.desiredOutcome.problemStatement === "Jobs are difficult to track", "Legacy customer content was not preserved.");
 assertTrue(LangSystemsIntakeModel.validateSubmission(upgraded).valid, "Representative legacy submission did not validate after upgrade.");
 

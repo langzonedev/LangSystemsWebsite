@@ -7,7 +7,7 @@
 }(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var SCHEMA_VERSION = "2.0.0";
+  var SCHEMA_VERSION = "3.0.0";
   var TEMPLATE_VERSION = "1.0.0";
   var SUBMISSION_STATUSES = ["draft", "submitted", "received", "under_review", "awaiting_clarification", "qualified", "declined", "archived"];
   var INTERPRETATION_STATUSES = ["not_started", "pending", "in_progress", "complete", "needs_clarification", "failed"];
@@ -19,6 +19,12 @@
   var MAX_SHORT_TEXT = 300;
   var MAX_ATTACHMENTS = 10;
   var MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+  var ALLOWED_ATTACHMENT_EXTENSIONS = ["pdf", "doc", "docx", "xls", "xlsx", "csv", "png", "jpg", "jpeg", "txt"];
+  var ALLOWED_ATTACHMENT_TYPES = [
+    "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv", "text/plain", "image/png", "image/jpeg"
+  ];
 
   function own(object, key) {
     return Object.prototype.hasOwnProperty.call(object || {}, key);
@@ -162,7 +168,8 @@
       },
       additionalContext: {
         constraints: raw.constraints,
-        additionalNotes: raw.additional_notes
+        additionalNotes: raw.additional_notes,
+        privacyConsent: raw.privacy_consent === true || raw.privacy_consent === "Agreed"
       }
     };
   }
@@ -227,7 +234,8 @@
       },
       additionalContext: {
         constraints: text(additional.constraints),
-        additionalNotes: text(additional.additionalNotes)
+        additionalNotes: text(additional.additionalNotes),
+        privacyConsent: source.additionalContext ? additional.privacyConsent === true : raw.privacy_consent === true || raw.privacy_consent === "Agreed"
       }
     };
   }
@@ -274,6 +282,39 @@
     errors.push({ path: path, code: code, message: message });
   }
 
+  function plainObject(value) {
+    if (!value || Object.prototype.toString.call(value) !== "[object Object]") return false;
+    var prototype = Object.getPrototypeOf ? Object.getPrototypeOf(value) : Object.prototype;
+    return prototype === Object.prototype || prototype === null;
+  }
+
+  function checkText(errors, object, key, path, maximum, allowNull) {
+    var value = object && object[key];
+    if (value === null && allowNull) return;
+    if (value !== null && value !== undefined && typeof value !== "string") {
+      addError(errors, path, "invalid_type", "This answer must be text.");
+    } else if (typeof value === "string" && value.length > maximum) {
+      addError(errors, path, "too_long", "This answer is longer than the allowed limit.");
+    }
+  }
+
+  function checkKeys(errors, object, path, allowed) {
+    var key;
+    if (!plainObject(object)) return;
+    for (key in object) if (own(object, key) && allowed.indexOf(key) === -1) {
+      addError(errors, path + "." + key, "unexpected_field", "This field is not part of the supported submission format.");
+    }
+  }
+
+  function checkList(errors, value, path, maximumItems) {
+    if (!Array.isArray(value)) return;
+    if (value.length > maximumItems) addError(errors, path, "too_many", "This list contains too many items.");
+    value.forEach(function (item, index) {
+      if (typeof item !== "string") addError(errors, path + "[" + index + "]", "invalid_type", "Each list item must be text.");
+      else if (item.length > MAX_SHORT_TEXT) addError(errors, path + "[" + index + "]", "too_long", "This list item is longer than the allowed limit.");
+    });
+  }
+
   function validDate(value) {
     var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
     var date;
@@ -284,6 +325,7 @@
 
   function validateSubmission(value) {
     var errors = [];
+    if (!plainObject(value)) return { valid: false, errors: [{ path: "$", code: "invalid_type", message: "The submission must be an object." }] };
     var metadata = value && value.submissionMetadata;
     var answers = value && value.customerAnswers;
     var customer = answers && answers.customer;
@@ -292,6 +334,64 @@
     var scope = answers && answers.scope;
     var commercial = answers && answers.commercial;
     var processing = value && value.processing;
+    [
+      [customer, "name", "customerAnswers.customer.name", MAX_SHORT_TEXT, false],
+      [customer, "businessName", "customerAnswers.customer.businessName", MAX_SHORT_TEXT, false],
+      [customer, "emailAddress", "customerAnswers.customer.emailAddress", 320, false],
+      [customer, "phoneNumber", "customerAnswers.customer.phoneNumber", 50, true],
+      [current, "businessDescription", "customerAnswers.currentProcess.businessDescription", MAX_TEXT, false],
+      [current, "description", "customerAnswers.currentProcess.description", MAX_TEXT, false],
+      [current, "frustrations", "customerAnswers.currentProcess.frustrations", MAX_TEXT, false],
+      [desired, "problemStatement", "customerAnswers.desiredOutcome.problemStatement", MAX_TEXT, false],
+      [desired, "outcome", "customerAnswers.desiredOutcome.outcome", MAX_TEXT, false],
+      [desired, "intendedUsers", "customerAnswers.desiredOutcome.intendedUsers", MAX_TEXT, false],
+      [scope, "essentialFirstRelease", "customerAnswers.scope.essentialFirstRelease", MAX_TEXT, false],
+      [scope, "completionCriteria", "customerAnswers.scope.completionCriteria", MAX_TEXT, false],
+      [commercial, "deliveryModelPreference", "customerAnswers.commercial.deliveryModelPreference", MAX_SHORT_TEXT, false],
+      [commercial, "approximateBudgetRange", "customerAnswers.commercial.approximateBudgetRange", MAX_SHORT_TEXT, false],
+      [commercial, "timelineFlexibility", "customerAnswers.commercial.timelineFlexibility", MAX_SHORT_TEXT, false],
+      [customer, "industry", "customerAnswers.customer.industry", MAX_SHORT_TEXT, true],
+      [customer, "businessLocation", "customerAnswers.customer.businessLocation", MAX_SHORT_TEXT, true],
+      [current, "currentUsers", "customerAnswers.currentProcess.currentUsers", MAX_TEXT, true],
+      [current, "frequency", "customerAnswers.currentProcess.frequency", MAX_SHORT_TEXT, true],
+      [current, "strengthsToPreserve", "customerAnswers.currentProcess.strengthsToPreserve", MAX_TEXT, true],
+      [desired, "approximateUserCount", "customerAnswers.desiredOutcome.approximateUserCount", MAX_SHORT_TEXT, true],
+      [desired, "offlineRequirements", "customerAnswers.desiredOutcome.offlineRequirements", MAX_SHORT_TEXT, true],
+      [desired, "existingSystemConnections", "customerAnswers.desiredOutcome.existingSystemConnections", MAX_TEXT, true],
+      [desired, "existingDataSources", "customerAnswers.desiredOutcome.existingDataSources", MAX_TEXT, true],
+      [desired, "privacySecurityConsiderations", "customerAnswers.desiredOutcome.privacySecurityConsiderations", MAX_TEXT, true],
+      [scope, "usefulLater", "customerAnswers.scope.usefulLater", MAX_TEXT, true],
+      [scope, "futureIdeas", "customerAnswers.scope.futureIdeas", MAX_TEXT, true],
+      [scope, "explicitExclusions", "customerAnswers.scope.explicitExclusions", MAX_TEXT, true],
+      [commercial, "ownershipPreference", "customerAnswers.commercial.ownershipPreference", MAX_SHORT_TEXT, true],
+      [commercial, "broaderMarketUsefulness", "customerAnswers.commercial.broaderMarketUsefulness", MAX_SHORT_TEXT, true],
+      [commercial, "timelineContext", "customerAnswers.commercial.timelineContext", MAX_TEXT, true],
+      [commercial, "dayToDayOwner", "customerAnswers.commercial.dayToDayOwner", MAX_SHORT_TEXT, true],
+      [commercial, "ongoingSupportPreference", "customerAnswers.commercial.ongoingSupportPreference", MAX_SHORT_TEXT, true],
+      [commercial, "successMeasures", "customerAnswers.commercial.successMeasures", MAX_TEXT, true],
+      [answers && answers.additionalContext, "constraints", "customerAnswers.additionalContext.constraints", MAX_TEXT, true],
+      [answers && answers.additionalContext, "additionalNotes", "customerAnswers.additionalContext.additionalNotes", MAX_TEXT, true]
+    ].forEach(function (entry) { checkText(errors, entry[0], entry[1], entry[2], entry[3], entry[4]); });
+    [
+      [metadata, "submissionMetadata"], [answers, "customerAnswers"], [customer, "customerAnswers.customer"],
+      [current, "customerAnswers.currentProcess"], [desired, "customerAnswers.desiredOutcome"],
+      [scope, "customerAnswers.scope"], [commercial, "customerAnswers.commercial"],
+      [answers && answers.additionalContext, "customerAnswers.additionalContext"], [processing, "processing"]
+    ].forEach(function (entry) {
+      if (entry[0] !== undefined && entry[0] !== null && !plainObject(entry[0])) addError(errors, entry[1], "invalid_type", "This part of the submission must be an object.");
+    });
+    checkKeys(errors, value, "$", ["submissionMetadata", "customerAnswers", "attachments", "processing"]);
+    checkKeys(errors, metadata, "submissionMetadata", ["submissionId", "submittedAt", "updatedAt", "status", "schemaVersion", "templateVersion", "source"]);
+    checkKeys(errors, metadata && metadata.source, "submissionMetadata.source", ["page", "campaign"]);
+    checkKeys(errors, answers, "customerAnswers", ["customer", "currentProcess", "desiredOutcome", "scope", "commercial", "additionalContext"]);
+    checkKeys(errors, customer, "customerAnswers.customer", ["name", "businessName", "emailAddress", "phoneNumber", "preferredContactMethod", "industry", "businessLocation"]);
+    checkKeys(errors, current, "customerAnswers.currentProcess", ["businessDescription", "description", "currentTools", "currentUsers", "frequency", "frustrations", "strengthsToPreserve"]);
+    checkKeys(errors, desired, "customerAnswers.desiredOutcome", ["problemStatement", "outcome", "intendedUsers", "approximateUserCount", "deviceRequirements", "locationRequirements", "offlineRequirements", "existingSystemConnections", "existingDataSources", "privacySecurityConsiderations"]);
+    checkKeys(errors, scope, "customerAnswers.scope", ["essentialFirstRelease", "usefulLater", "futureIdeas", "explicitExclusions", "completionCriteria"]);
+    checkKeys(errors, commercial, "customerAnswers.commercial", ["deliveryModelPreference", "ownershipPreference", "broaderMarketUsefulness", "approximateBudgetRange", "requiredDate", "timelineFlexibility", "timelineContext", "dayToDayOwner", "ongoingSupportPreference", "successMeasures"]);
+    checkKeys(errors, answers && answers.additionalContext, "customerAnswers.additionalContext", ["constraints", "additionalNotes", "privacyConsent"]);
+    checkKeys(errors, processing, "processing", ["interpretationStatus", "generatedDocumentReferences", "clarificationQuestions", "emailDeliveryStatus", "manualReviewStatus", "internalNotes"]);
+    checkKeys(errors, processing && processing.generatedDocumentReferences, "processing.generatedDocumentReferences", ["customerSummary", "technicalSpecification", "internalBrief"]);
     var required = [
       [customer, "name", "customerAnswers.customer.name"],
       [customer, "businessName", "customerAnswers.customer.businessName"],
@@ -328,21 +428,30 @@
       }
     }
     if (customer && customer.emailAddress && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.emailAddress)) addError(errors, "customerAnswers.customer.emailAddress", "invalid_email", "The email address is invalid.");
+    if (!answers || !answers.additionalContext || answers.additionalContext.privacyConsent !== true) addError(errors, "customerAnswers.additionalContext.privacyConsent", "required_consent", "Privacy consent is required.");
     if (customer && customer.preferredContactMethod !== null && CONTACT_METHODS.indexOf(customer.preferredContactMethod) === -1) addError(errors, "customerAnswers.customer.preferredContactMethod", "invalid_choice", "The preferred contact method is invalid.");
     if (customer && customer.preferredContactMethod === "phone" && !customer.phoneNumber) addError(errors, "customerAnswers.customer.phoneNumber", "required", "A phone number is required when phone is preferred.");
     if (commercial && commercial.requiredDate && !validDate(commercial.requiredDate)) addError(errors, "customerAnswers.commercial.requiredDate", "invalid_date", "The required date must be a real date using YYYY-MM-DD.");
     [[current, "currentTools", "customerAnswers.currentProcess.currentTools"], [desired, "deviceRequirements", "customerAnswers.desiredOutcome.deviceRequirements"], [desired, "locationRequirements", "customerAnswers.desiredOutcome.locationRequirements"]].forEach(function (entry) {
       if (!entry[0] || !Array.isArray(entry[0][entry[1]])) addError(errors, entry[2], "invalid_type", "This answer must be an array.");
+      else checkList(errors, entry[0][entry[1]], entry[2], 50);
     });
     if (!Array.isArray(value && value.attachments)) addError(errors, "attachments", "invalid_type", "Attachments must be an array.");
     else value.attachments.forEach(function (attachment, index) {
       var prefix = "attachments[" + index + "]";
-      if (!attachment.attachmentId) addError(errors, prefix + ".attachmentId", "required", "An attachment identifier is required.");
-      if (!attachment.originalFilename) addError(errors, prefix + ".originalFilename", "required", "The original filename is required.");
-      if (!attachment.storedFilename) addError(errors, prefix + ".storedFilename", "required", "A safe stored filename is required.");
-      if (!attachment.mimeType) addError(errors, prefix + ".mimeType", "required", "The file type is required.");
-      if (attachment.sizeBytes === null || attachment.sizeBytes < 1 || attachment.sizeBytes > MAX_ATTACHMENT_BYTES) addError(errors, prefix + ".sizeBytes", "invalid_size", "The attachment size is outside the allowed range.");
-      if (!attachment.storageLocation) addError(errors, prefix + ".storageLocation", "required", "The storage location is required.");
+      if (!plainObject(attachment)) {
+        addError(errors, prefix, "invalid_type", "Each attachment must be an object.");
+        return;
+      }
+      checkKeys(errors, attachment, prefix, ["attachmentId", "originalFilename", "storedFilename", "mimeType", "sizeBytes", "storageLocation", "validationStatus"]);
+      if (!identifier(attachment.attachmentId, null)) addError(errors, prefix + ".attachmentId", "invalid", "A valid attachment identifier is required.");
+      if (typeof attachment.originalFilename !== "string" || !attachment.originalFilename || attachment.originalFilename.length > 255) addError(errors, prefix + ".originalFilename", "invalid", "A valid original filename is required.");
+      if (!identifier(attachment.storedFilename, null)) addError(errors, prefix + ".storedFilename", "invalid", "A valid safe stored filename is required.");
+      if (typeof attachment.mimeType !== "string" || !attachment.mimeType || attachment.mimeType.length > 150) addError(errors, prefix + ".mimeType", "required", "A valid file type is required.");
+      else if (ALLOWED_ATTACHMENT_TYPES.indexOf(String(attachment.mimeType).toLowerCase()) === -1) addError(errors, prefix + ".mimeType", "unsupported_type", "The attachment type is not supported.");
+      if (typeof attachment.originalFilename === "string" && attachment.originalFilename && ALLOWED_ATTACHMENT_EXTENSIONS.indexOf(attachment.originalFilename.split(".").pop().toLowerCase()) === -1) addError(errors, prefix + ".originalFilename", "unsupported_type", "The attachment type is not supported.");
+      if (typeof attachment.sizeBytes !== "number" || !isFinite(attachment.sizeBytes) || Math.floor(attachment.sizeBytes) !== attachment.sizeBytes || attachment.sizeBytes < 1 || attachment.sizeBytes > MAX_ATTACHMENT_BYTES) addError(errors, prefix + ".sizeBytes", "invalid_size", "The attachment size is outside the allowed range.");
+      if (typeof attachment.storageLocation !== "string" || !attachment.storageLocation || attachment.storageLocation.length > 500) addError(errors, prefix + ".storageLocation", "required", "A valid storage location is required.");
       else if (/^https?:\/\//i.test(attachment.storageLocation)) addError(errors, prefix + ".storageLocation", "public_location", "The storage location must not be a public URL.");
       if (ATTACHMENT_STATUSES.indexOf(attachment.validationStatus) === -1) addError(errors, prefix + ".validationStatus", "invalid_choice", "The attachment validation status is invalid.");
     });
@@ -353,8 +462,13 @@
       if (DELIVERY_STATUSES.indexOf(processing.emailDeliveryStatus) === -1) addError(errors, "processing.emailDeliveryStatus", "invalid_choice", "The email delivery status is invalid.");
       if (REVIEW_STATUSES.indexOf(processing.manualReviewStatus) === -1) addError(errors, "processing.manualReviewStatus", "invalid_choice", "The manual review status is invalid.");
       if (!Array.isArray(processing.clarificationQuestions)) addError(errors, "processing.clarificationQuestions", "invalid_type", "Clarification questions must be an array.");
+      else checkList(errors, processing.clarificationQuestions, "processing.clarificationQuestions", 50);
       if (!Array.isArray(processing.internalNotes)) addError(errors, "processing.internalNotes", "invalid_type", "Internal notes must be an array.");
+      else checkList(errors, processing.internalNotes, "processing.internalNotes", 50);
       if (!processing.generatedDocumentReferences || typeof processing.generatedDocumentReferences !== "object") addError(errors, "processing.generatedDocumentReferences", "invalid_type", "Generated document references must be an object.");
+      else ["customerSummary", "technicalSpecification", "internalBrief"].forEach(function (key) {
+        if (processing.generatedDocumentReferences[key] !== null && !identifier(processing.generatedDocumentReferences[key], null)) addError(errors, "processing.generatedDocumentReferences." + key, "invalid", "The document reference is invalid.");
+      });
     }
     return { valid: errors.length === 0, errors: errors };
   }
@@ -430,7 +544,8 @@
         },
         additionalContext: {
           constraints: legacy.constraints,
-          additionalNotes: legacy.additionalNotes
+          additionalNotes: legacy.additionalNotes,
+          privacyConsent: true
         }
       }
     }, options);
@@ -439,7 +554,7 @@
   return Object.freeze({
     SCHEMA_VERSION: SCHEMA_VERSION,
     TEMPLATE_VERSION: TEMPLATE_VERSION,
-    limits: Object.freeze({ maximumAttachments: MAX_ATTACHMENTS, maximumAttachmentBytes: MAX_ATTACHMENT_BYTES }),
+    limits: Object.freeze({ maximumAttachments: MAX_ATTACHMENTS, maximumAttachmentBytes: MAX_ATTACHMENT_BYTES, allowedAttachmentExtensions: ALLOWED_ATTACHMENT_EXTENSIONS.slice(0), allowedAttachmentTypes: ALLOWED_ATTACHMENT_TYPES.slice(0) }),
     newSubmissionId: function () { return generatedId(new Date().toISOString()); },
     createSubmission: createSubmission,
     validateSubmission: validateSubmission,

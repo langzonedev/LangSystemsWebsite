@@ -13,6 +13,7 @@
   const nextButton = form.querySelector("[data-form-next]");
   const submitButton = form.querySelector("[data-form-submit]");
   const message = form.querySelector("[data-form-message]");
+  const errorSummary = form.querySelector("[data-error-summary]");
   const progressBar = dialog.querySelector("[data-progress-bar]");
   const progressTrack = dialog.querySelector("[data-progress-track]");
   const stepLabel = dialog.querySelector("[data-step-label]");
@@ -26,6 +27,9 @@
   let submissionComplete = false;
   let formDirty = false;
   let submissionController = null;
+  let submissionInProgress = false;
+  let pendingDocuments = null;
+  let lastAttemptAt = 0;
   const historyStateKey = "langSystemsIntakeOpen";
   const intakeHash = "#project-discovery";
 
@@ -56,7 +60,17 @@
     acceptance_criteria: "Completion and acceptance criteria",
     privacy_consent: "Privacy agreement",
     constraints: "Rules, constraints, or concerns",
-    additional_notes: "Additional notes"
+    additional_notes: "Additional notes",
+    attachments: "Supporting files"
+  };
+
+  const allowedFileExtensions = new Set(["pdf", "doc", "docx", "xls", "xlsx", "csv", "png", "jpg", "jpeg", "txt"]);
+  const maximumAttachmentBytes = intakeModel.limits.maximumAttachmentBytes;
+  const maximumAttachments = intakeModel.limits.maximumAttachments;
+  const attachmentMimeTypes = {
+    pdf: "application/pdf", doc: "application/msword", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    csv: "text/csv", txt: "text/plain", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg"
   };
 
   function valueOf(name) {
@@ -68,6 +82,91 @@
   function setMessage(text = "", isError = false) {
     message.textContent = text;
     message.classList.toggle("error", isError);
+  }
+
+  function errorId(field) {
+    return `intake-error-${field.name.replace(/[^a-z0-9_-]/gi, "-")}`;
+  }
+
+  function clearFieldError(field) {
+    field.removeAttribute("aria-invalid");
+    updateDescription(field, errorId(field), false);
+    form.querySelector(`#${errorId(field)}`)?.remove();
+  }
+
+  function fieldError(field) {
+    const label = fieldLabels[field.name] || "This question";
+    if (field.name === "attachments") return field.validationMessage;
+    if (field.validity.typeMismatch) return "Please enter an email address in the usual format, such as name@example.com.";
+    if (field.validity.tooLong) return `${label} is a little too long. Please shorten it to ${field.maxLength.toLocaleString()} characters or fewer.`;
+    if (field.name === "privacy_consent") return "Please confirm the privacy agreement before sending your project outline.";
+    if (field.name === "problem") return "Please tell us a little about the problem you would like to solve.";
+    return `Please complete ${label.toLowerCase()} before continuing.`;
+  }
+
+  function setFieldError(field, text) {
+    clearFieldError(field);
+    field.setAttribute("aria-invalid", "true");
+    const error = document.createElement("span");
+    error.className = "field-error";
+    error.id = errorId(field);
+    error.textContent = text;
+    const container = field.type === "radio" ? field.closest("fieldset") : field.closest("label, fieldset") || field.parentElement;
+    container.append(error);
+    updateDescription(field, error.id, true);
+  }
+
+  function validateAttachments(field) {
+    if (!field) return;
+    field.setCustomValidity("");
+    const files = [...field.files];
+    if (files.length > maximumAttachments) {
+      field.setCustomValidity(`Please choose no more than ${maximumAttachments} supporting files.`);
+      return;
+    }
+    const longName = files.find((file) => file.name.length > 255);
+    if (longName) {
+      field.setCustomValidity("One supporting file has a name longer than 255 characters. Please shorten the file name and choose it again.");
+      return;
+    }
+    const unsupported = files.find((file) => !allowedFileExtensions.has((file.name.split(".").pop() || "").toLowerCase()));
+    if (unsupported) {
+      field.setCustomValidity(`“${unsupported.name}” is not a supported file type. Please choose a PDF, Word, Excel, CSV, text, PNG, or JPG file.`);
+      return;
+    }
+    const oversized = files.find((file) => file.size > maximumAttachmentBytes);
+    if (oversized) {
+      field.setCustomValidity(`“${oversized.name}” is larger than 10 MB. Please choose a smaller file.`);
+      return;
+    }
+    const empty = files.find((file) => file.size < 1);
+    if (empty) field.setCustomValidity(`“${empty.name}” is empty. Please choose a file that contains information.`);
+  }
+
+  function showErrorSummary(errors) {
+    if (!errors.length) {
+      errorSummary.replaceChildren();
+      errorSummary.hidden = true;
+      return;
+    }
+    const heading = document.createElement("h4");
+    const list = document.createElement("ul");
+    heading.textContent = errors.length === 1 ? "Please check this answer" : `Please check these ${errors.length} answers`;
+    errors.forEach(({ field, text }) => {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      field.id ||= `intake-field-${field.name}`;
+      link.href = `#${field.id}`;
+      link.textContent = text;
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        field.focus();
+      });
+      item.append(link);
+      list.append(item);
+    });
+    errorSummary.replaceChildren(heading, list);
+    errorSummary.hidden = false;
   }
 
   function describedByTokens(field) {
@@ -109,25 +208,36 @@
     steps[currentStep].querySelector("h3")?.focus({ preventScroll: true });
   }
 
-  function validateStep() {
-    const fields = [...steps[currentStep].querySelectorAll("input, textarea, select")];
-    fields.forEach((field) => {
-      field.removeAttribute("aria-invalid");
-      updateDescription(field, message.id, false);
+  function validateStep(step = steps[currentStep], focusErrors = true) {
+    const fields = [...step.querySelectorAll("input, textarea, select")];
+    validateAttachments(fields.find((field) => field.name === "attachments"));
+    fields.forEach(clearFieldError);
+    const errors = fields.filter((field, index) => !field.checkValidity() &&
+      (field.type !== "radio" || fields.findIndex((candidate) => candidate.name === field.name) === index)).map((field) => {
+      const text = fieldError(field);
+      setFieldError(field, text);
+      return { field, text };
     });
-    const invalid = fields.find((field) => !field.checkValidity());
 
-    if (!invalid) return true;
-
-    invalid.setAttribute("aria-invalid", "true");
-    updateDescription(invalid, message.id, true);
-    const label = fieldLabels[invalid.name] || "This question";
-    const text = invalid.validity.typeMismatch
-      ? `Please enter a valid email address for “${label}”.`
-      : `Please complete “${label}” before continuing.`;
-    setMessage(text, true);
-    invalid.focus();
+    showErrorSummary(errors);
+    setMessage();
+    if (!errors.length) return true;
+    if (focusErrors) {
+      errorSummary.focus();
+      errorSummary.scrollIntoView({ block: "nearest", behavior: reducedMotion.matches ? "auto" : "smooth" });
+    }
     return false;
+  }
+
+  function validateAllSteps() {
+    for (let index = 0; index < steps.length; index += 1) {
+      if (validateStep(steps[index], false)) continue;
+      currentStep = index;
+      updateStep();
+      validateStep(steps[index]);
+      return false;
+    }
+    return true;
   }
 
   function addReviewItem(title, value, editStep, wide = false) {
@@ -275,6 +385,7 @@
     ];
     const originalAnswers = {};
     customerFieldNames.forEach((name) => { originalAnswers[name] = valueOf(name); });
+    originalAnswers.privacy_consent = form.elements.namedItem("privacy_consent")?.checked === true;
     const now = new Date().toISOString();
     originalAnswers.submissionMetadata = {
       submissionId: documents.projectReference,
@@ -283,7 +394,19 @@
       status: "submitted",
       source: { page: window.location.pathname, campaign: null }
     };
-    originalAnswers.attachments = [];
+    const files = [...(form.elements.namedItem("attachments")?.files || [])];
+    originalAnswers.attachments = files.map((file, index) => {
+      const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, "-").slice(-255) || `attachment-${index + 1}`;
+      return {
+        attachmentId: `${documents.projectReference}-ATT-${index + 1}`,
+        originalFilename: file.name,
+        storedFilename: safeName,
+        mimeType: file.type || attachmentMimeTypes[(file.name.split(".").pop() || "").toLowerCase()],
+        sizeBytes: file.size,
+        storageLocation: "email-delivery-service",
+        validationStatus: "pending"
+      };
+    });
     originalAnswers.processing = {
       interpretationStatus: "complete",
       generatedDocumentReferences: {
@@ -337,6 +460,30 @@
     if (syncHistory && isIntakeHistoryEntry()) window.history.back();
   }
 
+  function submissionFailureMessage(error) {
+    if (!navigator.onLine) return "Your connection appears to be offline. Your answers are still here. Reconnect, then choose Send project outline again.";
+    if (error?.code === "timeout") return "Sending took longer than expected, so we could not confirm whether your outline arrived. Your answers are still here. Please wait a moment before trying again, or contact us by email.";
+    if (error?.code === "rate_limited") return "There have been several recent attempts. Your answers are still here. Please wait a minute, then try again.";
+    if (error?.code === "duplicate_submission") return "This project outline may already have been received. We have not sent it again. Please contact us by email if you would like us to confirm.";
+    if (error?.code === "payload") return "We could not prepare the outline for sending. Your answers are still here. Please review the highlighted information and try again.";
+    if (["storage", "email_delivery", "temporary_server"].includes(error?.code)) return "Our submission service is temporarily unavailable. Your answers are still here. Please try again in a few minutes, or contact us by email.";
+    if (error?.code === "network") return "The connection was lost before we could confirm delivery. Your answers are still here. Please wait a moment before trying again, or contact us by email.";
+    return "We could not send your project outline just now. Your answers are still here. Please try again, or contact us by email.";
+  }
+
+  function showSubmissionFailure(text) {
+    const heading = document.createElement("h4");
+    const copy = document.createElement("p");
+    const email = document.createElement("a");
+    heading.textContent = "Your project outline has not been confirmed";
+    copy.textContent = text;
+    email.href = "mailto:langsystemsdesign@outlook.com";
+    email.textContent = "Email Lang Systems";
+    errorSummary.replaceChildren(heading, copy, email);
+    errorSummary.hidden = false;
+    errorSummary.focus();
+  }
+
   wireFieldDescriptions();
 
   openButtons.forEach((button) => {
@@ -384,14 +531,22 @@
 
   form.addEventListener("input", (event) => {
     formDirty = true;
-    event.target.removeAttribute("aria-invalid");
-    updateDescription(event.target, message.id, false);
+    pendingDocuments = null;
+    clearFieldError(event.target);
+    errorSummary.hidden = true;
     setMessage();
   });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!validateStep()) return;
+    if (submissionComplete || submissionInProgress || !validateAllSteps()) return;
+    const now = Date.now();
+    if (now - lastAttemptAt < 2000) {
+      showSubmissionFailure("Please wait a moment before trying again. Your answers are still here.");
+      return;
+    }
+    lastAttemptAt = now;
+    submissionInProgress = true;
 
     submitButton.disabled = true;
     submitButton.textContent = "Sending…";
@@ -400,7 +555,8 @@
     setMessage("Sending your project outline securely…");
 
     const formData = new FormData(form);
-    appendGenerated(formData, buildDocuments());
+    pendingDocuments ||= buildDocuments();
+    appendGenerated(formData, pendingDocuments);
     submissionController = new AbortController();
 
     try {
@@ -418,10 +574,11 @@
         submitButton.textContent = "Send project outline";
         return;
       }
-      setMessage("We could not send your project outline just now. Please try again, or email langs​ystemsdesign@outlook.com if the problem continues.".replace("​", ""), true);
+      showSubmissionFailure(submissionFailureMessage(error));
       submitButton.disabled = false;
       submitButton.textContent = "Send project outline";
     } finally {
+      submissionInProgress = false;
       backButton.disabled = false;
       form.removeAttribute("aria-busy");
       submissionController = null;
