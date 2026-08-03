@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://langsystems.com.au/schemas/requirements-interpretation-1.0.0.json",
+  "title": "Lang Systems requirements interpretation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["metadata", "sections"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "templateVersion", "modelVersion", "generationMode", "generatedAt", "customerApproved", "notice"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "templateVersion": { "const": "1.0.0" },
+        "modelVersion": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "generationMode": { "enum": ["model", "deterministic_fallback"] },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "customerApproved": { "const": false },
+        "notice": { "const": "Discovery interpretation for manual Lang Systems review; not customer-approved scope, a quote, or a delivery commitment." }
+      }
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["businessContext", "problemStatement", "currentProcess", "currentDifficulties", "desiredOutcome", "intendedUsers", "essentialFirstReleaseRequirements", "usefulLaterRequirements", "futureIdeas", "explicitExclusions", "dataRequirements", "existingDataSources", "integrationRequirements", "deviceAndPlatformConsiderations", "offlineRequirements", "securityAndPrivacyConsiderations", "assumptions", "constraints", "risks", "openQuestions", "proposedAcceptanceCriteria", "recommendedCommercialModel", "recommendedNextStep"],
+      "properties": {
+        "businessContext": { "$ref": "#/$defs/entries" },
+        "problemStatement": { "$ref": "#/$defs/entries" },
+        "currentProcess": { "$ref": "#/$defs/entries" },
+        "currentDifficulties": { "$ref": "#/$defs/entries" },
+        "desiredOutcome": { "$ref": "#/$defs/entries" },
+        "intendedUsers": { "$ref": "#/$defs/entries" },
+        "essentialFirstReleaseRequirements": { "$ref": "#/$defs/entries" },
+        "usefulLaterRequirements": { "$ref": "#/$defs/entries" },
+        "futureIdeas": { "$ref": "#/$defs/entries" },
+        "explicitExclusions": { "$ref": "#/$defs/entries" },
+        "dataRequirements": { "$ref": "#/$defs/entries" },
+        "existingDataSources": { "$ref": "#/$defs/entries" },
+        "integrationRequirements": { "$ref": "#/$defs/entries" },
+        "deviceAndPlatformConsiderations": { "$ref": "#/$defs/entries" },
+        "offlineRequirements": { "$ref": "#/$defs/entries" },
+        "securityAndPrivacyConsiderations": { "$ref": "#/$defs/entries" },
+        "assumptions": { "$ref": "#/$defs/entries" },
+        "constraints": { "$ref": "#/$defs/entries" },
+        "risks": { "$ref": "#/$defs/entries" },
+        "openQuestions": { "type": "array", "items": { "$ref": "#/$defs/question" }, "maxItems": 50 },
+        "proposedAcceptanceCriteria": { "$ref": "#/$defs/entries" },
+        "recommendedCommercialModel": { "$ref": "#/$defs/entries" },
+        "recommendedNextStep": { "$ref": "#/$defs/entries" }
+      }
+    }
+  },
+  "$defs": {
+    "entries": { "type": "array", "minItems": 1, "maxItems": 50, "items": { "$ref": "#/$defs/entry" } },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "status", "sourcePaths"],
+      "properties": {
+        "statement": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "status": { "enum": ["confirmed", "assumption", "recommendation", "unknown"] },
+        "sourcePaths": { "type": "array", "uniqueItems": true, "maxItems": 20, "items": { "type": "string", "pattern": "^customerAnswers\\." } }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question", "reason", "blocks"],
+      "properties": {
+        "question": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "blocks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["estimation", "scopeAgreement", "development"],
+          "properties": {
+            "estimation": { "type": "boolean" },
+            "scopeAgreement": { "type": "boolean" },
+            "development": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

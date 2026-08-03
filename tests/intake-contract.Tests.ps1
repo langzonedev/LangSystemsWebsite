@@ -6,6 +6,9 @@ $controller = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake.js
 $service = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-service.js")
 $model = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "intake-model.js")
 $serverValidation = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-validation.js")
+$requirementsInterpreter = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/requirements-interpreter.js")
+$requirementsPromptPath = Join-Path $projectRoot "server/requirements-interpretation-prompt.md"
+$requirementsSchemaPath = Join-Path $projectRoot "server/requirements-interpretation.schema.json"
 $questionSetPath = Join-Path $projectRoot "docs/client-discovery-question-set.md"
 $questionSet = Get-Content -Raw -Encoding UTF8 $questionSetPath
 
@@ -41,6 +44,8 @@ Assert-True ($index -match 'name="attachments"[^>]+accept=' -and $controller -ma
 Assert-True ($controller -match 'validateAllSteps' -and $model -match 'required_consent' -and $model -match 'too_long') "Required consent, complete-form validation, and maximum lengths must be enforced."
 Assert-True ($service -match 'timeoutMs' -and $controller -match 'submissionInProgress' -and $serverValidation -match 'createSubmissionGuard') "Timeout, rapid-repeat, and duplicate recovery controls are required."
 Assert-True ($serverValidation -match 'MAX_REQUEST_BYTES' -and $serverValidation -match 'safeErrorResponse') "The server boundary must limit payloads and provide safe public errors."
+Assert-True ((Test-Path $requirementsPromptPath) -and (Test-Path $requirementsSchemaPath)) "The versioned requirements prompt or schema is missing."
+Assert-True ($requirementsInterpreter -match 'buildModelInput' -and $requirementsInterpreter -match 'deterministic_fallback' -and $requirementsInterpreter -notmatch 'console\.') "The requirements interpreter must minimise model input, recover deterministically, and avoid logging customer content."
 Assert-True (Test-Path -LiteralPath $questionSetPath) "The client discovery question set is missing."
 
 $questionSetSections = @(
@@ -106,6 +111,9 @@ if ($node) {
   $serviceTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-service.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $serviceTestOutput -match "Intake submission success, provider failure, and timeout checks passed\.") "Intake submission service tests failed: $serviceTestOutput"
   Write-Output $serviceTestOutput
+  $interpreterTestOutput = (& $node.Source (Join-Path $PSScriptRoot "requirements-interpreter.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $interpreterTestOutput -match "Requirements interpretation, privacy minimisation, schema, and fallback checks passed\.") "Requirements interpreter tests failed: $interpreterTestOutput"
+  Write-Output $interpreterTestOutput
 } else {
   Write-Output "Node.js is unavailable; server and submission-service runtime tests were skipped after static contract checks."
 }
