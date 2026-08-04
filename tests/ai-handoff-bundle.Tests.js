@@ -24,6 +24,7 @@ const submission = model.createSubmission({
   offline_access: "Yes, sometimes",
   existing_systems: "Accounting system sends customer details in; completed job status returns",
   data_needs: "Active customer and job records; some commercially sensitive notes",
+  data_storage_preference: "Securely online so authorised people can access it from anywhere (cloud)",
   privacy_security_approvals: "Managers approve exports; changes need an audit trail",
   first_release: "Create, assign and close jobs",
   acceptance_criteria: "Staff can complete the agreed job journey",
@@ -51,6 +52,7 @@ assert.strictEqual(parsed.metadata.humanReviewRequired, true);
 assert.strictEqual(parsed.metadata.reviewStatus, "unreviewed");
 assert.strictEqual(parsed.sourceFacts.currentProcess.frequency, "Many times a day");
 assert.deepStrictEqual(parsed.sourceFacts.desiredOutcome.deviceRequirements, ["Windows laptops", "iPhones"]);
+assert.strictEqual(parsed.sourceFacts.desiredOutcome.dataStoragePreference, "Securely online so authorised people can access it from anywhere (cloud)");
 assert.ok(parsed.agentTask.requestedArtifacts.some((item) => /UML/.test(item)));
 assert.ok(parsed.agentTask.requestedArtifacts.some((item) => /Codex/.test(item)));
 assert.ok(parsed.agentTask.constraints.some((item) => /Do not invent/.test(item)));

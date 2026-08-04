@@ -76,6 +76,7 @@ function buildDeterministicSections(submission) {
   askWhenMissing(desired.deviceRequirements, "Which devices or platforms must people use for the first release?", "Supported devices must be agreed before interface and testing work begins.", true, true, true);
   askWhenMissing(desired.locationRequirements, "Where will people use the solution?", "Usage locations can affect access, connectivity, and security requirements.", false, true, true);
   askWhenMissing(desired.offlineRequirements, "Must any part work when internet access is unavailable?", "Offline operation changes data handling and delivery scope.", true, true, true);
+  askWhenMissing(desired.dataStoragePreference, "Would you prefer business information to stay on your own devices or network, be stored securely online, use a mix, or should we recommend?", "Storage location affects access, offline operation, backup, security, support, and cost.", false, true, true);
   askWhenMissing(desired.privacySecurityConsiderations, "Are there privacy, access, approval, retention, or security requirements we should know about?", "These controls must be understood before handling real customer or business data.", true, true, true);
   askWhenMissing(additional.constraints, "Are there legal, operational, budget, timing, or organisational constraints beyond those already supplied?", "Known constraints may change scope or delivery planning.", false, true, true);
 
@@ -94,7 +95,10 @@ function buildDeterministicSections(submission) {
     usefulLaterRequirements: fromText(scope.usefulLater, "customerAnswers.scope.usefulLater", "Useful later requirements have not been provided."),
     futureIdeas: fromText(scope.futureIdeas, "customerAnswers.scope.futureIdeas", "Future ideas have not been provided."),
     explicitExclusions: fromText(scope.explicitExclusions, "customerAnswers.scope.explicitExclusions", "Explicit exclusions have not been confirmed."),
-    dataRequirements: fromText(desired.existingDataSources, "customerAnswers.desiredOutcome.existingDataSources", "Data requirements are unknown."),
+    dataRequirements: [
+      ...fromText(desired.existingDataSources, "customerAnswers.desiredOutcome.existingDataSources", "Data requirements are unknown."),
+      ...fromText(desired.dataStoragePreference, "customerAnswers.desiredOutcome.dataStoragePreference", "Preferred information storage location is unknown.")
+    ],
     existingDataSources: fromText(desired.existingDataSources, "customerAnswers.desiredOutcome.existingDataSources", "Existing data sources are unknown."),
     integrationRequirements: fromText(desired.existingSystemConnections, "customerAnswers.desiredOutcome.existingSystemConnections", "Integration requirements are unknown."),
     deviceAndPlatformConsiderations: [

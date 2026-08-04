@@ -91,6 +91,7 @@
     users: "People who will use it",
     existing_systems: "Existing systems",
     data_needs: "Information used",
+    data_storage_preference: "Preferred information storage",
     first_release: "Essential for the first release",
     optional_requirements: "Useful additions for later",
     future_ideas: "Future ideas",
@@ -391,7 +392,7 @@
       "contact_name", "email", "phone", "business_name", "business_description", "problem",
       "current_process", "current_methods", "process_frequency", "problem_impact", "current_process_strengths",
       "desired_outcome", "users", "user_count", "devices", "usage_locations", "offline_access", "existing_systems",
-      "data_needs", "privacy_security_approvals", "first_release", "optional_requirements", "future_ideas",
+      "data_needs", "data_storage_preference", "privacy_security_approvals", "first_release", "optional_requirements", "future_ideas",
       "excluded_functionality", "budget", "timing", "timing_context", "delivery_model",
       "day_to_day_owner", "ongoing_support", "acceptance_criteria", "success_measure", "constraints", "additional_notes"
     ];
@@ -459,6 +460,7 @@
     const future = technicalAnswer("future_ideas", "Future ideas have not been provided.");
     const exclusions = technicalAnswer("excluded_functionality", "Explicit exclusions have not been confirmed.");
     const data = technicalAnswer("data_needs", "Existing data sources and data requirements are unknown.");
+    const storagePreference = technicalAnswer("data_storage_preference", "Preferred information storage location is unknown.");
     const integrations = technicalAnswer("existing_systems", "Integration requirements are unknown.");
     const constraints = technicalAnswer("constraints", "Additional platform or operational constraints are unknown.");
     const acceptance = technicalAnswer("acceptance_criteria", "Acceptance criteria are unknown.");
@@ -497,7 +499,7 @@
       technicalSection("Privacy considerations", [unknown("Data classification, residency, consent, access, retention, deletion, and privacy obligations need customer confirmation.")]),
       technicalSection("Performance considerations", [unknown("Usage volumes, concurrency, response-time targets, availability, and capacity limits have not been confirmed.")]),
       technicalSection("Backup and recovery considerations", [unknown("Backup scope, recovery point, recovery time, restore testing, and continuity requirements have not been confirmed.")]),
-      technicalSection("Deployment considerations", [technicalRecommendation("Select hosting, environments, release controls, monitoring, and rollback arrangements after constraints are confirmed; no technology stack is selected here.")]),
+      technicalSection("Deployment considerations", [storagePreference, technicalRecommendation("Select hosting, environments, release controls, monitoring, and rollback arrangements after constraints are confirmed; no technology stack is selected here.")]),
       technicalSection("Support considerations", [technicalAnswer("ongoing_support", "Support hours, service targets, maintenance ownership, escalation, training, and handover requirements have not been confirmed.")]),
       technicalSection("Acceptance criteria", [acceptance, technicalRecommendation("Rewrite agreed criteria as observable pass/fail checks during manual review without changing the customer's intended outcome.")]),
       technicalSection("Assumptions", [

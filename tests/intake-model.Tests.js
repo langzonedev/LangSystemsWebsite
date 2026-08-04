@@ -52,6 +52,7 @@ var raw = {
   users: "Office and field staff",
   existing_systems: "Accounting package",
   data_needs: "Customer and job records",
+  data_storage_preference: "A mix of local and cloud",
   first_release: "Create, assign, and close jobs",
   optional_requirements: "Customer notifications",
   future_ideas: "Route planning",
@@ -76,11 +77,12 @@ var submission = LangSystemsIntakeModel.createSubmission(raw, {
 });
 
 assertTrue(submission.submissionMetadata.schemaVersion === "3.0.0", "Schema version was not retained.");
-assertTrue(submission.submissionMetadata.templateVersion === "1.1.0", "Template version was not retained.");
+assertTrue(submission.submissionMetadata.templateVersion === "1.2.0", "Template version was not retained.");
 assertTrue(submission.submissionMetadata.source.page === "/get-started", "Source page was not safely normalised.");
 assertTrue(submission.customerAnswers.customer.name === "Alex Example", "Short text was not trimmed.");
 assertTrue(submission.customerAnswers.customer.phoneNumber === null, "An optional blank was not normalised to null.");
 assertTrue(submission.customerAnswers.commercial.timelineContext === "Before the summer peak", "An original commercial answer was lost.");
+assertTrue(submission.customerAnswers.desiredOutcome.dataStoragePreference === "A mix of local and cloud", "The data storage preference was lost.");
 assertTrue(submission.customerAnswers.additionalContext.additionalNotes === "Keep the existing job numbering", "Additional customer context was lost.");
 assertTrue(submission.processing.clarificationQuestions.length === 0, "Generated content leaked into customer answers.");
 

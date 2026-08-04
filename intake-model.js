@@ -8,7 +8,7 @@
   "use strict";
 
   var SCHEMA_VERSION = "3.0.0";
-  var TEMPLATE_VERSION = "1.1.0";
+  var TEMPLATE_VERSION = "1.2.0";
   var SUBMISSION_STATUSES = ["draft", "submitted", "received", "under_review", "awaiting_clarification", "qualified", "declined", "archived"];
   var INTERPRETATION_STATUSES = ["not_started", "pending", "in_progress", "complete", "needs_clarification", "failed"];
   var DELIVERY_STATUSES = ["not_sent", "pending", "sent", "delivered", "failed"];
@@ -145,6 +145,7 @@
         offlineRequirements: raw.offline_access,
         existingSystemConnections: raw.existing_systems,
         existingDataSources: raw.data_needs,
+        dataStoragePreference: raw.data_storage_preference,
         privacySecurityConsiderations: raw.privacy_security_approvals
       },
       scope: {
@@ -211,6 +212,7 @@
         offlineRequirements: text(desired.offlineRequirements, MAX_SHORT_TEXT),
         existingSystemConnections: text(desired.existingSystemConnections),
         existingDataSources: text(desired.existingDataSources),
+        dataStoragePreference: text(desired.dataStoragePreference, MAX_SHORT_TEXT),
         privacySecurityConsiderations: text(desired.privacySecurityConsiderations)
       },
       scope: {
@@ -359,6 +361,7 @@
       [desired, "offlineRequirements", "customerAnswers.desiredOutcome.offlineRequirements", MAX_SHORT_TEXT, true],
       [desired, "existingSystemConnections", "customerAnswers.desiredOutcome.existingSystemConnections", MAX_TEXT, true],
       [desired, "existingDataSources", "customerAnswers.desiredOutcome.existingDataSources", MAX_TEXT, true],
+      [desired, "dataStoragePreference", "customerAnswers.desiredOutcome.dataStoragePreference", MAX_SHORT_TEXT, true],
       [desired, "privacySecurityConsiderations", "customerAnswers.desiredOutcome.privacySecurityConsiderations", MAX_TEXT, true],
       [scope, "usefulLater", "customerAnswers.scope.usefulLater", MAX_TEXT, true],
       [scope, "futureIdeas", "customerAnswers.scope.futureIdeas", MAX_TEXT, true],
@@ -386,7 +389,7 @@
     checkKeys(errors, answers, "customerAnswers", ["customer", "currentProcess", "desiredOutcome", "scope", "commercial", "additionalContext"]);
     checkKeys(errors, customer, "customerAnswers.customer", ["name", "businessName", "emailAddress", "phoneNumber", "preferredContactMethod", "industry", "businessLocation"]);
     checkKeys(errors, current, "customerAnswers.currentProcess", ["businessDescription", "description", "currentTools", "currentUsers", "frequency", "frustrations", "strengthsToPreserve"]);
-    checkKeys(errors, desired, "customerAnswers.desiredOutcome", ["problemStatement", "outcome", "intendedUsers", "approximateUserCount", "deviceRequirements", "locationRequirements", "offlineRequirements", "existingSystemConnections", "existingDataSources", "privacySecurityConsiderations"]);
+    checkKeys(errors, desired, "customerAnswers.desiredOutcome", ["problemStatement", "outcome", "intendedUsers", "approximateUserCount", "deviceRequirements", "locationRequirements", "offlineRequirements", "existingSystemConnections", "existingDataSources", "dataStoragePreference", "privacySecurityConsiderations"]);
     checkKeys(errors, scope, "customerAnswers.scope", ["essentialFirstRelease", "usefulLater", "futureIdeas", "explicitExclusions", "completionCriteria"]);
     checkKeys(errors, commercial, "customerAnswers.commercial", ["deliveryModelPreference", "ownershipPreference", "broaderMarketUsefulness", "approximateBudgetRange", "requiredDate", "timelineFlexibility", "timelineContext", "dayToDayOwner", "ongoingSupportPreference", "successMeasures"]);
     checkKeys(errors, answers && answers.additionalContext, "customerAnswers.additionalContext", ["constraints", "additionalNotes", "privacyConsent"]);

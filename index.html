@@ -381,7 +381,10 @@
               <label><span>Existing systems it may need to work with <em>Optional</em></span><textarea name="existing_systems" rows="3" maxlength="10000" placeholder="Name each system and, if known, what information should come in or go out."></textarea></label>
               <label><span>Information it may need to use <em>Optional</em></span><textarea name="data_needs" rows="3" maxlength="10000" placeholder="What information, where it lives now, roughly how much there is, and whether any of it is sensitive."></textarea></label>
             </div>
-            <label><span>Privacy, security, or approval needs <em>Optional</em></span><textarea name="privacy_security_approvals" rows="3" maxlength="10000" placeholder="For example: who may see or change information, records that need an audit trail, industry rules, or approvals before release."></textarea></label>
+            <div class="field-grid two-columns">
+              <label><span>Where would you prefer your business information to be kept? <em>Optional</em></span><select name="data_storage_preference"><option value="">Choose the closest answer</option><option>Not sure — please recommend</option><option>On our own devices or business network (local)</option><option>Securely online so authorised people can access it from anywhere (cloud)</option><option>A mix of local and cloud</option><option>It needs to stay in an existing system</option></select><small>This is only a preference. We will confirm the safest practical approach with you.</small></label>
+              <label><span>Privacy, security, or approval needs <em>Optional</em></span><textarea name="privacy_security_approvals" rows="3" maxlength="10000" placeholder="For example: who may see or change information, records that need an audit trail, industry rules, or approvals before release."></textarea></label>
+            </div>
           </section>
 
           <section class="form-step" data-step data-step-name="First release" hidden>

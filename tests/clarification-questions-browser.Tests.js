@@ -57,6 +57,7 @@ submission.customerAnswers.desiredOutcome.existingSystemConnections = "None";
 submission.customerAnswers.desiredOutcome.approximateUserCount = "12";
 submission.customerAnswers.desiredOutcome.deviceRequirements = ["Office computers", "Work phones"];
 submission.customerAnswers.desiredOutcome.offlineRequirements = "Offline use is not required.";
+submission.customerAnswers.desiredOutcome.dataStoragePreference = "Securely online so authorised people can access it from anywhere (cloud)";
 submission.customerAnswers.currentProcess.currentUsers = "Office coordinators and supervisors";
 var answered = LangSystemsClarificationQuestions.generate(submission);
 assertTrue(!hasId(answered, "existing-data") && !hasId(answered, "integrations") && !hasId(answered, "users-and-permissions") && !hasId(answered, "devices-and-offline"), "Answered topics were asked again.");
