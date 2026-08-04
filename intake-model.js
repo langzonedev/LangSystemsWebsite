@@ -8,7 +8,7 @@
   "use strict";
 
   var SCHEMA_VERSION = "3.0.0";
-  var TEMPLATE_VERSION = "1.0.0";
+  var TEMPLATE_VERSION = "1.1.0";
   var SUBMISSION_STATUSES = ["draft", "submitted", "received", "under_review", "awaiting_clarification", "qualified", "declined", "archived"];
   var INTERPRETATION_STATUSES = ["not_started", "pending", "in_progress", "complete", "needs_clarification", "failed"];
   var DELIVERY_STATUSES = ["not_sent", "pending", "sent", "delivered", "failed"];

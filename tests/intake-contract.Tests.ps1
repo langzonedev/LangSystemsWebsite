@@ -14,6 +14,8 @@ $submissionPackagePath = Join-Path $projectRoot "project-submission-package.js"
 $submissionPackage = Get-Content -Raw -Encoding UTF8 $submissionPackagePath
 $serverValidation = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-validation.js")
 $emailDelivery = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/email-delivery.js")
+$aiHandoffPath = Join-Path $projectRoot "server/ai-handoff-bundle.js"
+$aiHandoff = Get-Content -Raw -Encoding UTF8 $aiHandoffPath
 $intakeEndpoint = Get-Content -Raw -Encoding UTF8 (Join-Path $projectRoot "server/intake-endpoint.js")
 $submissionStorePath = Join-Path $projectRoot "server/submission-store.js"
 $internalEndpointPath = Join-Path $projectRoot "server/internal-submissions-endpoint.js"
@@ -152,16 +154,18 @@ foreach ($phrase in $requiredQuestionSetPhrases) {
 
 $allFields = @(
   "contact_name", "email", "phone", "business_name", "business_description", "problem",
-  "current_process", "problem_impact", "desired_outcome", "users", "existing_systems",
-  "data_needs", "first_release", "optional_requirements", "future_ideas",
+  "current_process", "current_methods", "process_frequency", "problem_impact", "current_process_strengths",
+  "desired_outcome", "users", "user_count", "devices", "usage_locations", "offline_access", "existing_systems",
+  "data_needs", "privacy_security_approvals", "first_release", "optional_requirements", "future_ideas",
   "excluded_functionality", "budget", "timing", "timing_context", "delivery_model",
-  "day_to_day_owner", "ongoing_support", "acceptance_criteria", "constraints",
+  "day_to_day_owner", "ongoing_support", "acceptance_criteria", "success_measure", "constraints",
   "additional_notes", "privacy_consent"
 )
 
 $optionalFields = @(
-  "phone", "existing_systems", "data_needs", "optional_requirements", "future_ideas",
-  "excluded_functionality", "timing_context", "constraints", "additional_notes"
+  "phone", "current_methods", "process_frequency", "current_process_strengths", "user_count", "devices",
+  "usage_locations", "offline_access", "existing_systems", "data_needs", "privacy_security_approvals",
+  "optional_requirements", "future_ideas", "excluded_functionality", "timing_context", "constraints", "additional_notes"
 )
 
 foreach ($field in $allFields) {
@@ -171,6 +175,10 @@ foreach ($field in $allFields) {
     Assert-True ($index -match ('name="' + [regex]::Escape($field) + '"[^>]*\brequired\b')) "Required field '$field' is no longer required."
   }
 }
+
+Assert-True ($aiHandoff -match 'humanReviewRequired:\s*true' -and $aiHandoff -match 'reviewStatus:\s*"unreviewed"') "The AI handoff must remain explicitly gated by human review."
+Assert-True ($aiHandoff -match 'requestedArtifacts' -and $aiHandoff -match 'UML' -and $aiHandoff -match 'Codex') "The handoff must request architecture, UML, and Codex-ready artifacts."
+Assert-True ($emailDelivery -match 'attachments:\s*handoff\s*\?\s*handoff\.attachments' -and $emailDelivery -match 'privacy-minimised') "The internal email must attach the privacy-minimised AI bundle."
 
 $localReferences = [regex]::Matches($index, '(?:href|src)="([^"#:?]+)"') |
   ForEach-Object { $_.Groups[1].Value } |
@@ -210,8 +218,11 @@ if ($node) {
   Assert-True ($LASTEXITCODE -eq 0 -and $draftTestOutput -match "Intake draft local save, restore, validation, file exclusion, error safety, and cleanup checks passed\.") "Intake draft tests failed: $draftTestOutput"
   Write-Output $draftTestOutput
   $emailTestOutput = (& $node.Source (Join-Path $PSScriptRoot "email-delivery.Tests.js") 2>&1) -join "`n"
-  Assert-True ($LASTEXITCODE -eq 0 -and $emailTestOutput -match "Email branding, sanitisation, partial failure, status, retry, and duplicate-prevention checks passed\.") "Email delivery tests failed: $emailTestOutput"
+  Assert-True ($LASTEXITCODE -eq 0 -and $emailTestOutput -match "Email branding, sanitisation, AI attachments, partial failure, status, retry, and duplicate-prevention checks passed\.") "Email delivery tests failed: $emailTestOutput"
   Write-Output $emailTestOutput
+  $aiHandoffTestOutput = (& $node.Source (Join-Path $PSScriptRoot "ai-handoff-bundle.Tests.js") 2>&1) -join "`n"
+  Assert-True ($LASTEXITCODE -eq 0 -and $aiHandoffTestOutput -match "AI handoff structure, prompt readiness, privacy minimisation, review gate, and attachments passed\.") "AI handoff tests failed: $aiHandoffTestOutput"
+  Write-Output $aiHandoffTestOutput
   $endpointTestOutput = (& $node.Source (Join-Path $PSScriptRoot "intake-endpoint.Tests.js") 2>&1) -join "`n"
   Assert-True ($LASTEXITCODE -eq 0 -and $endpointTestOutput -match "Intake endpoint storage-first, reference, validation, partial-email, and safe-response checks passed\.") "Intake endpoint tests failed: $endpointTestOutput"
   Write-Output $endpointTestOutput

@@ -389,10 +389,11 @@
   function createStructuredProject(projectReference, submittedAt, clarificationQuestions) {
     const customerFieldNames = [
       "contact_name", "email", "phone", "business_name", "business_description", "problem",
-      "current_process", "problem_impact", "desired_outcome", "users", "existing_systems",
-      "data_needs", "first_release", "optional_requirements", "future_ideas",
+      "current_process", "current_methods", "process_frequency", "problem_impact", "current_process_strengths",
+      "desired_outcome", "users", "user_count", "devices", "usage_locations", "offline_access", "existing_systems",
+      "data_needs", "privacy_security_approvals", "first_release", "optional_requirements", "future_ideas",
       "excluded_functionality", "budget", "timing", "timing_context", "delivery_model",
-      "day_to_day_owner", "ongoing_support", "acceptance_criteria", "constraints", "additional_notes"
+      "day_to_day_owner", "ongoing_support", "acceptance_criteria", "success_measure", "constraints", "additional_notes"
     ];
     const originalAnswers = {};
     customerFieldNames.forEach((name) => { originalAnswers[name] = valueOf(name); });

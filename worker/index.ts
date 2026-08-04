@@ -1,7 +1,9 @@
 import IntakeModel from "../intake-model.js";
 import EmailDelivery from "../server/email-delivery.js";
+import AiHandoff from "../server/ai-handoff-bundle.js";
 
 const { createEmailDeliveryService } = EmailDelivery;
+const { createAiHandoffBundle } = AiHandoff;
 
 const MAX_HTTP_BODY_BYTES = 768 * 1024;
 const MAX_SUBMISSION_BYTES = 256 * 1024;
@@ -357,6 +359,7 @@ async function handleSubmission(request: Request, env: Env, origin: string): Pro
     const deliveryService = createEmailDeliveryService({
       environment: emailEnvironment(env),
       statusStore: createD1DeliveryStatusStore(env.INTAKE_DB),
+      handoffBuilder: createAiHandoffBundle,
       fetch
     });
     const delivery = await deliveryService.deliver(submission, documents);

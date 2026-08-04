@@ -76,7 +76,7 @@ var submission = LangSystemsIntakeModel.createSubmission(raw, {
 });
 
 assertTrue(submission.submissionMetadata.schemaVersion === "3.0.0", "Schema version was not retained.");
-assertTrue(submission.submissionMetadata.templateVersion === "1.0.0", "Template version was not retained.");
+assertTrue(submission.submissionMetadata.templateVersion === "1.1.0", "Template version was not retained.");
 assertTrue(submission.submissionMetadata.source.page === "/get-started", "Source page was not safely normalised.");
 assertTrue(submission.customerAnswers.customer.name === "Alex Example", "Short text was not trimmed.");
 assertTrue(submission.customerAnswers.customer.phoneNumber === null, "An optional blank was not normalised to null.");
