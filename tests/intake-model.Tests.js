@@ -64,6 +64,8 @@ var raw = {
   day_to_day_owner: "Our team",
   ongoing_support: "Occasional support when needed",
   acceptance_criteria: "Staff can complete a job without the spreadsheet",
+  visual_design_preference: "Use our existing company branding",
+  visual_style_notes: "Use the approved navy and gold palette; formal and calm.",
   constraints: "Managers approve account access",
   additional_notes: "Keep the existing job numbering",
   privacy_consent: "Agreed"
@@ -76,14 +78,16 @@ var submission = LangSystemsIntakeModel.createSubmission(raw, {
   campaign: "winter-2026"
 });
 
-assertTrue(submission.submissionMetadata.schemaVersion === "3.0.0", "Schema version was not retained.");
-assertTrue(submission.submissionMetadata.templateVersion === "1.2.0", "Template version was not retained.");
+assertTrue(submission.submissionMetadata.schemaVersion === "3.1.0", "Schema version was not retained.");
+assertTrue(submission.submissionMetadata.templateVersion === "1.3.0", "Template version was not retained.");
 assertTrue(submission.submissionMetadata.source.page === "/get-started", "Source page was not safely normalised.");
 assertTrue(submission.customerAnswers.customer.name === "Alex Example", "Short text was not trimmed.");
 assertTrue(submission.customerAnswers.customer.phoneNumber === null, "An optional blank was not normalised to null.");
 assertTrue(submission.customerAnswers.commercial.timelineContext === "Before the summer peak", "An original commercial answer was lost.");
 assertTrue(submission.customerAnswers.desiredOutcome.dataStoragePreference === "A mix of local and cloud", "The data storage preference was lost.");
 assertTrue(submission.customerAnswers.additionalContext.additionalNotes === "Keep the existing job numbering", "Additional customer context was lost.");
+assertTrue(submission.customerAnswers.additionalContext.visualDesignPreference === "Use our existing company branding", "The visual design preference was lost.");
+assertTrue(submission.customerAnswers.additionalContext.visualStyleNotes === "Use the approved navy and gold palette; formal and calm.", "The visual style notes were lost.");
 assertTrue(submission.processing.clarificationQuestions.length === 0, "Generated content leaked into customer answers.");
 
 var validation = LangSystemsIntakeModel.validateSubmission(submission);
@@ -93,6 +97,12 @@ var json = LangSystemsIntakeModel.serialiseSubmission(submission);
 var restored = LangSystemsIntakeModel.parseSubmission(json);
 assertTrue(restored.submissionMetadata.submissionId === "LS-TEST-001", "Serialisation did not preserve the identifier.");
 assertTrue(restored.customerAnswers.scope.explicitExclusions === "Payments", "Serialisation did not preserve an original answer.");
+
+var compatibleV3 = JSON.parse(json);
+compatibleV3.submissionMetadata.schemaVersion = "3.0.0";
+delete compatibleV3.customerAnswers.additionalContext.visualDesignPreference;
+delete compatibleV3.customerAnswers.additionalContext.visualStyleNotes;
+assertTrue(LangSystemsIntakeModel.validateSubmission(compatibleV3).valid, "A stored schema 3.0.0 submission was not accepted compatibly.");
 
 var invalidEmail = LangSystemsIntakeModel.createSubmission(raw, { submissionId: "LS-TEST-002" });
 invalidEmail.customerAnswers.customer.emailAddress = "not-an-email";
@@ -162,7 +172,7 @@ var legacy = {
   commercial: { deliveryModel: "Recommendation required", budget: "Not sure", timing: "Flexible" }
 };
 var upgraded = LangSystemsIntakeModel.upgradeLegacyV1(legacy, { submittedAt: "2026-08-01T00:00:00.000Z" });
-assertTrue(upgraded.submissionMetadata.schemaVersion === "3.0.0", "Legacy submission was not upgraded.");
+assertTrue(upgraded.submissionMetadata.schemaVersion === "3.1.0", "Legacy submission was not upgraded.");
 assertTrue(upgraded.customerAnswers.desiredOutcome.problemStatement === "Jobs are difficult to track", "Legacy customer content was not preserved.");
 assertTrue(LangSystemsIntakeModel.validateSubmission(upgraded).valid, "Representative legacy submission did not validate after upgrade.");
 

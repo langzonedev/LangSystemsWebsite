@@ -6,7 +6,7 @@ Instruction template version: 1.0.0
 
 ## Purpose and boundary
 
-`server/requirements-interpreter.js` converts a validated schema 3.0.0 intake submission into a
+`server/requirements-interpreter.js` converts a validated schema 3.0.0 or 3.1.0 intake submission into a
 consistent requirements interpretation for Lang Systems staff. It is a discovery aid only. Its
 output is never customer-approved scope, a quote, a technology decision, a delivery commitment, or
 permission to begin work. A Lang Systems reviewer must confirm facts, resolve questions, and agree

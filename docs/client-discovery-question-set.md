@@ -120,6 +120,8 @@ Helper text should remain visible, concise, and connected to its question for as
 | Field | Customer-facing question | Format | Required | Options or helper text |
 | --- | --- | --- | --- | --- |
 | `success_measure` | How would you know this project had been successful six months after launch? | Long text | Yes | “Think about time saved, fewer mistakes, better service, increased capacity, clearer reporting, or another observable improvement.” |
+| `visual_design_preference` | How should the first version look and feel? | Single choice | No | Use our existing company branding; Create a clean, neutral design for the first version; Help us develop a visual direction; Match another product or system we already use; Not sure — please recommend. Helper: “This guides the first version only. Lang Systems will still design a clear, accessible experience.” |
+| `visual_style_notes` | Anything we should know about the preferred style? | Long text; conditional | No | Reveal only for existing branding, help developing a direction, or matching another product. Helper: “Mention colours, brand guidelines, or examples you like or dislike. We will request approved brand files later if the project proceeds.” |
 | `supporting_files` | Would you like to provide any supporting files? | Multiple file upload | No | Accept screenshots, example spreadsheets, existing forms, reports, process documents, diagrams, and example outputs. Helper: “Examples help us understand the current process. Remove information that identifies customers or staff, and do not upload passwords, payment details, health records, government identifiers, or other highly sensitive information.” |
 | `supporting_files_description` | Is there anything we should know about the files? | Long text; conditional when files are selected | No | “Briefly explain what each example shows and which parts matter.” |
 | `constraints` | Are there any other rules, concerns, or limits we should consider? | Long text | No | “For example: accessibility needs, business policies, approvals, locations, or industry obligations.” |
@@ -150,6 +152,9 @@ The primary action is **Send project outline**.
 - If a required question is unanswered, name that question in plain language, focus it, and keep every completed answer.
 - Keep **Not sure**, **Not sure yet**, and **Please help us understand what is realistic** as valid answers. Never replace them with a forced technical choice.
 - Reveal follow-up fields only when relevant. A revealed optional field remains optional.
+- A visual-design choice records direction only. Do not infer permission to use a logo, font, image,
+  guideline, or referenced product. Collect authorised assets and restrictions later through the
+  [Brand and Design Discovery Workflow](brand-and-design-discovery.md).
 - When **Other** is selected, offer a short free-text field; do not require it to continue.
 - Do not infer unselected capabilities, ownership terms, budgets, deadlines, privacy needs, or technical requirements.
 - Do not send answers to analytics, place them in URLs, or save them in browser storage.

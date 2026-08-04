@@ -1,6 +1,6 @@
 # Structured Project Intake Data Model
 
-Status: Source of truth for schema 3.0.0
+Status: Source of truth for schema 3.1.0
 Last reviewed: 3 August 2026  
 Owner: Lang Systems
 
@@ -52,7 +52,8 @@ All original answers are under `customerAnswers`:
 - `commercial`: `deliveryModelPreference`, `ownershipPreference`, `broaderMarketUsefulness`,
   `approximateBudgetRange`, `requiredDate`, `timelineFlexibility`, `timelineContext`,
   `dayToDayOwner`, `ongoingSupportPreference`, and `successMeasures`.
-- `additionalContext`: `constraints` and `additionalNotes`.
+- `additionalContext`: `constraints`, `additionalNotes`, `visualDesignPreference`,
+  `visualStyleNotes`, and `privacyConsent`.
 
 Optional unanswered text is `null`; multi-value answers are arrays. Values such as “Not sure” are
 preserved as customer answers and are not converted into assumptions.
@@ -111,9 +112,11 @@ and use `safeErrorResponse` without logging request bodies or rejected values.
 
 ## Versioning and compatibility
 
-Schema 3.0.0 adds required `customerAnswers.additionalContext.privacyConsent` and approved attachment
-types. This is intentionally incompatible with 2.0.0 so a server cannot accept an outline whose
-consent state is unknown.
+Schema 3.1.0 adds optional `visualDesignPreference` and `visualStyleNotes` fields. It remains
+compatible with stored 3.0.0 submissions, which may omit both fields. Schema 3.0.0 added required
+`customerAnswers.additionalContext.privacyConsent` and approved attachment types; that change was
+intentionally incompatible with 2.0.0 so a server cannot accept an outline whose consent state is
+unknown.
 
 - `schemaVersion` describes the record shape. `templateVersion` independently identifies the
   question/output wording used to collect it.
@@ -122,7 +125,7 @@ consent state is unknown.
   new major schema version and an explicit mapper.
 - Stored submissions remain immutable in their original schema. Upgrade a copy for processing;
   retain the original record and version.
-- `upgradeLegacyV1` maps the previous `schemaVersion: "1.0"` browser payload into 3.0.0 without
+- `upgradeLegacyV1` maps the previous `schemaVersion: "1.0"` browser payload into 3.1.0 without
   rewriting the historical source. Unavailable legacy answers remain `null` or empty arrays.
 - Consumers must route by schema version and reject unsupported versions safely. They must not
   silently reinterpret old fields using current meanings.
@@ -143,8 +146,8 @@ retention and deletion periods, and review provider privacy/security terms befor
     "submittedAt": "2026-08-03T01:02:03.000Z",
     "updatedAt": "2026-08-03T01:02:03.000Z",
     "status": "submitted",
-    "schemaVersion": "3.0.0",
-    "templateVersion": "1.2.0",
+    "schemaVersion": "3.1.0",
+    "templateVersion": "1.3.0",
     "source": { "page": "/", "campaign": null }
   },
   "attachments": [],

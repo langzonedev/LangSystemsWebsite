@@ -126,6 +126,7 @@
         section("The current process", answers.currentProcess.description),
         section("The desired outcome", answers.desiredOutcome.outcome),
         section("Expected users", answers.desiredOutcome.intendedUsers),
+        section("First-version look and feel", answers.additionalContext.visualDesignPreference),
         section("Essential for the first release", scope.essentialFirstRelease),
         section("Useful, but can be added later", scope.usefulLater),
         section("Future ideas", scope.futureIdeas)

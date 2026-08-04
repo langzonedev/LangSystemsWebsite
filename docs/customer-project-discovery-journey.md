@@ -214,6 +214,9 @@ Before Send, state that Lang Systems will review the information, confirm its un
 - Use a centred modal that keeps some homepage context without cramping the form.
 - Keep header/progress above and actions consistently below a scrollable question region on short viewports.
 - Use two columns only for short related fields, such as name/email or budget/timing. Long answers span the width.
+- Keep visual design progressive: ask one preference in Step 7 and reveal the short style note only
+  for existing branding, help developing a direction, or another product to match. Asset collection
+  and permission checks occur after human review, not in the initial wizard.
 - Review may use two columns only when DOM and visual reading order remain the same. Guidance and actions cannot rely on hover.
 
 ### Mobile

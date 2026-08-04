@@ -120,6 +120,9 @@ The customer will:
 - provide the agreed information, content, access, decisions and feedback by the stated dates;
 - nominate people authorised to give instructions and approve milestones;
 - confirm that materials and access supplied for the project may be used for the agreed purpose;
+- identify the source of supplied branding and third-party design material, confirm their authority
+  to permit the agreed use, and disclose licence, attribution, confidentiality, expiry, or portfolio
+  restrictions before that material is incorporated;
 - review deliverables against the acceptance criteria within `[number]` business days; and
 - promptly tell Lang Systems about constraints, risks or changes that may affect delivery.
 

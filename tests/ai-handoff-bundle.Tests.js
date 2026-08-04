@@ -29,6 +29,8 @@ const submission = model.createSubmission({
   first_release: "Create, assign and close jobs",
   acceptance_criteria: "Staff can complete the agreed job journey",
   success_measure: "Reduce missed updates by half within six months",
+  visual_design_preference: "Use our existing company branding",
+  visual_style_notes: "Use the approved navy and gold palette; formal and calm.",
   delivery_model: "Recommendation required",
   budget: "Not sure - please advise",
   timing: "Exploring options only",
@@ -53,8 +55,12 @@ assert.strictEqual(parsed.metadata.reviewStatus, "unreviewed");
 assert.strictEqual(parsed.sourceFacts.currentProcess.frequency, "Many times a day");
 assert.deepStrictEqual(parsed.sourceFacts.desiredOutcome.deviceRequirements, ["Windows laptops", "iPhones"]);
 assert.strictEqual(parsed.sourceFacts.desiredOutcome.dataStoragePreference, "Securely online so authorised people can access it from anywhere (cloud)");
+assert.strictEqual(parsed.sourceFacts.additionalContext.visualDesignPreference, "Use our existing company branding");
+assert.strictEqual(parsed.sourceFacts.additionalContext.visualStyleNotes, "Use the approved navy and gold palette; formal and calm.");
 assert.ok(parsed.agentTask.requestedArtifacts.some((item) => /UML/.test(item)));
 assert.ok(parsed.agentTask.requestedArtifacts.some((item) => /Codex/.test(item)));
+assert.ok(parsed.agentTask.requestedArtifacts.some((item) => /theming tokens/.test(item)));
+assert.ok(parsed.agentTask.constraints.some((item) => /Do not assume logos/.test(item)));
 assert.ok(parsed.agentTask.constraints.some((item) => /Do not invent/.test(item)));
 assert.ok(result.markdown.includes("Before using this bundle"));
 assert.ok(result.markdown.includes("Human review record"));

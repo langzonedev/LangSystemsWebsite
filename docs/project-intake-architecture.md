@@ -1,7 +1,7 @@
 # Project Intake Architecture and Design
 
 Status: Source of truth for the first release  
-Last reviewed: 3 August 2026  
+Last reviewed: 4 August 2026
 Owner: Lang Systems
 
 ## 1. Purpose and governing context
@@ -44,7 +44,7 @@ Closing a partly completed form warns that unsent answers will not be saved. The
 
 ## 4. Wizard and information model
 
-The complete approved customer-facing content, including proposed additions to the current form-template contract, is defined in the [Plain-English Client Discovery Question Set](client-discovery-question-set.md). The running form keeps its stable version 1.0 field names while its generated structured record uses schema 3.0.0. Future question changes must deliberately update the independent template version and, when the record shape changes incompatibly, the schema version.
+The complete approved customer-facing content, including proposed additions to the current form-template contract, is defined in the [Plain-English Client Discovery Question Set](client-discovery-question-set.md). The generated structured record uses schema 3.1.0 and accepts stored 3.0.0 submissions for compatibility. Future question changes must deliberately update the independent template version and, when the record shape changes, the compatible schema version or an explicit migration.
 
 The first-release wizard has eight steps. “Required” means submission cannot proceed without a valid answer. Optional blanks remain visibly identified as not provided in generated outputs; they are not silently invented.
 
@@ -56,7 +56,7 @@ The first-release wizard has eight steps. “Required” means submission cannot
 | 4. First release | Separate immediate scope from later work | Essential first-release capabilities | Useful later additions, future ideas, explicit exclusions |
 | 5. Budget and timing | Support a realistic response | Expected investment range, preferred timing | Timing driver or important date |
 | 6. Working arrangement | Understand commercial and operating preferences | Commercial arrangement, day-to-day owner, support expectation | None; “Please recommend” and “Not sure” are valid answers |
-| 7. Success | Define completion and constraints | Completion and acceptance criteria | Rules/constraints/concerns, additional notes |
+| 7. Success | Define completion, visual direction, and constraints | Completion and acceptance criteria | First-version look and feel, conditional style notes, rules/constraints/concerns, additional notes |
 | 8. Review | Confirm the outline and consent | Privacy consent | None |
 
 The stable field names and structured payload are an integration contract. Changes must either preserve them or deliberately increment `submission_schema_version` and document migration or mapping requirements.
@@ -85,7 +85,7 @@ Immediately before sending, the browser:
 2. preserves the original named form answers;
 3. adds generated document text;
 4. adds `structured_project_data_json` using the [Structured Project Intake Data Model](project-intake-data-model.md);
-5. adds `submission_schema_version: "3.0.0"` and the independent template version; and
+5. adds `submission_schema_version: "3.1.0"` and the independent template version; and
 6. adds the UTC submission time.
 
 The generated reference is used for correlation and lookup, not as an access credential. The intake service stores the validated structured submission and generated documents under a one-way-derived storage key before email delivery. Authorised retrieval still requires server-side authentication; Lang Systems must verify receipt rather than relying only on the browser success screen.
@@ -271,11 +271,18 @@ The following names are the submitted-field contract. All fields are plain text 
 | Working arrangement | `day_to_day_owner` | Yes | Our team; Lang Systems; shared responsibility; not sure yet |
 | Working arrangement | `ongoing_support` | Yes | Ongoing support; occasional support; handover and documentation only; not sure yet |
 | Success | `acceptance_criteria` | Yes | Long text |
+| Success | `visual_design_preference` | No | Existing branding; clean neutral design; help develop a direction; match another product; not sure — recommend |
+| Success | `visual_style_notes` | No | Conditional long text |
 | Success | `constraints` | No | Long text |
 | Success | `additional_notes` | No | Long text |
 | Review | `privacy_consent` | Yes | Checkbox submitted as `Agreed` |
 
 The `_honey` honeypot is a transport control, not customer project data. Provider addresses, credentials, allowed origin, review URL, mode, and durable status location are environment configuration. The browser sends generated documents under the stable API document keys described above.
+
+Branding follows the separate [Brand and Design Discovery Workflow](brand-and-design-discovery.md):
+the enquiry captures direction only, while authorised assets, usage permissions, third-party
+restrictions, accessibility checks, and representative-screen approval are handled during human-led
+discovery.
 
 The review screen shows every customer-provided answer, grouped in step order. Optional blanks are identified as not provided. Internal generated documents, assumptions, and clarification questions are not presented as customer answers. Detailed interaction, responsive, accessibility, browser, and recovery behaviour is defined in [Customer Project Discovery Journey](customer-project-discovery-journey.md).
 

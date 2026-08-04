@@ -21,6 +21,7 @@ const raw = {
   constraints: "Use on office computers and field phones.", delivery_model: "Customer-owned bespoke build",
   budget: "AUD $15,000–$40,000", timing: "Within 3–6 months", timing_context: "Before summer peak",
   day_to_day_owner: "Our team", ongoing_support: "Occasional support when needed",
+  visual_design_preference: "Use our existing company branding", visual_style_notes: "Use the approved navy and gold palette.",
   privacy_consent: "Agreed"
 };
 
@@ -44,6 +45,7 @@ assert(brief.renderedText.includes("READINESS FOR DEVELOPMENT"));
 assert(brief.renderedText.includes("[CUSTOMER EVIDENCE]"));
 assert(brief.renderedText.includes("[INFERENCE]"));
 assert(brief.renderedText.includes("[RECOMMENDATION]"));
+assert(brief.intellectualPropertyConsiderations.some((item) => /customer branding/i.test(item.value) && item.sourcePaths.includes("customerAnswers.additionalContext.visualDesignPreference")));
 
 const noBudgetRaw = { ...raw, budget: "Not sure — please advise", delivery_model: "Recommendation required", existing_systems: "", data_needs: "", excluded_functionality: "", constraints: "", timing_context: "" };
 const noBudgetSubmission = model.createSubmission(noBudgetRaw, { submissionId: "LS-BRIEF-NO-BUDGET" });

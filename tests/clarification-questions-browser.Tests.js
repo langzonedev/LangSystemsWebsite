@@ -59,8 +59,9 @@ submission.customerAnswers.desiredOutcome.deviceRequirements = ["Office computer
 submission.customerAnswers.desiredOutcome.offlineRequirements = "Offline use is not required.";
 submission.customerAnswers.desiredOutcome.dataStoragePreference = "Securely online so authorised people can access it from anywhere (cloud)";
 submission.customerAnswers.currentProcess.currentUsers = "Office coordinators and supervisors";
+submission.customerAnswers.additionalContext.visualDesignPreference = "Create a clean, neutral design for the first version";
 var answered = LangSystemsClarificationQuestions.generate(submission);
-assertTrue(!hasId(answered, "existing-data") && !hasId(answered, "integrations") && !hasId(answered, "users-and-permissions") && !hasId(answered, "devices-and-offline"), "Answered topics were asked again.");
+assertTrue(!hasId(answered, "existing-data") && !hasId(answered, "integrations") && !hasId(answered, "users-and-permissions") && !hasId(answered, "devices-and-offline") && !hasId(answered, "visual-design-direction"), "Answered topics were asked again.");
 
 submission.customerAnswers.scope.essentialFirstRelease = "Synchronise completed jobs with the accounting system.";
 var conflict = LangSystemsClarificationQuestions.generate(submission);

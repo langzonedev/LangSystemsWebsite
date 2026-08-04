@@ -79,6 +79,10 @@ function buildDeterministicSections(submission) {
   askWhenMissing(desired.dataStoragePreference, "Would you prefer business information to stay on your own devices or network, be stored securely online, use a mix, or should we recommend?", "Storage location affects access, offline operation, backup, security, support, and cost.", false, true, true);
   askWhenMissing(desired.privacySecurityConsiderations, "Are there privacy, access, approval, retention, or security requirements we should know about?", "These controls must be understood before handling real customer or business data.", true, true, true);
   askWhenMissing(additional.constraints, "Are there legal, operational, budget, timing, or organisational constraints beyond those already supplied?", "Known constraints may change scope or delivery planning.", false, true, true);
+  askWhenMissing(additional.visualDesignPreference, "For the first version, should we use existing company branding, create a clean neutral style, help develop a visual direction, match another product, or recommend an approach?", "A lightweight visual direction helps shape a coherent, accessible interface without requiring a full design brief at enquiry stage.", false, false, false);
+  if (hasText(additional.visualDesignPreference) && /existing company branding|develop a visual direction|match another product/i.test(additional.visualDesignPreference) && !hasText(additional.visualStyleNotes)) {
+    questions.push(question("After project fit is confirmed, what approved brand guidance or product examples should inform the design, and who can confirm permission to use any supplied logos, fonts, images, or other assets?", "Brand assets and third-party material must not be treated as authorised merely because a visual preference was selected.", false, false, true));
+  }
 
   const commercialStatement = hasText(commercial.deliveryModelPreference)
     ? `Review the customer's stated preference (${commercial.deliveryModelPreference}) with them and recommend a commercial model only after Lang Systems assesses the requirements.`
@@ -108,7 +112,11 @@ function buildDeterministicSections(submission) {
     offlineRequirements: fromText(desired.offlineRequirements, "customerAnswers.desiredOutcome.offlineRequirements", "Offline requirements are unknown."),
     securityAndPrivacyConsiderations: fromText(desired.privacySecurityConsiderations, "customerAnswers.desiredOutcome.privacySecurityConsiderations", "Security and privacy requirements are unknown."),
     assumptions: [{ statement: "The interpretation requires Lang Systems and customer review; no inferred item is approved scope.", status: "assumption", sourcePaths: [] }],
-    constraints: fromText(additional.constraints, "customerAnswers.additionalContext.constraints", "Additional project constraints are unknown."),
+    constraints: [
+      ...fromText(additional.constraints, "customerAnswers.additionalContext.constraints", "Additional project constraints are unknown."),
+      ...fromText(additional.visualDesignPreference, "customerAnswers.additionalContext.visualDesignPreference", "The preferred visual direction is unknown."),
+      ...(hasText(additional.visualStyleNotes) ? confirmed(additional.visualStyleNotes, "customerAnswers.additionalContext.visualStyleNotes") : [])
+    ],
     risks: [{ statement: "Unconfirmed requirements may change scope, estimation, acceptance criteria, or delivery planning.", status: "assumption", sourcePaths: [] }],
     openQuestions: questions,
     proposedAcceptanceCriteria: fromText(scope.completionCriteria, "customerAnswers.scope.completionCriteria", "Proposed acceptance criteria are unknown."),
@@ -127,7 +135,9 @@ function buildModelInput(submission) {
       commercial: answers.commercial,
       additionalContext: {
         constraints: answers.additionalContext.constraints,
-        additionalNotes: answers.additionalContext.additionalNotes
+        additionalNotes: answers.additionalContext.additionalNotes,
+        visualDesignPreference: answers.additionalContext.visualDesignPreference,
+        visualStyleNotes: answers.additionalContext.visualStyleNotes
       }
     }
   };
