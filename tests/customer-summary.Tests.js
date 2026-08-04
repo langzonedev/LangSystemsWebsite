@@ -11,6 +11,7 @@ const submission = model.createSubmission({
   desired_outcome: "One clear view of each job.", users: "Office coordinators and field staff.",
   first_release: "Create, assign, update and close jobs.", optional_requirements: "Customer notifications.",
   acceptance_criteria: "Authorised staff can close a job.", delivery_model: "Recommendation required",
+  visual_design_preference: "Create a clean, neutral design for the first version",
   budget: "Not sure - please advise", timing: "Exploring options only", privacy_consent: "Agreed"
 }, {
   submissionId: "LS-SUMMARY-TEST",
@@ -27,6 +28,8 @@ assert(result.text.includes("THE PROBLEM AS WE UNDERSTAND IT"));
 assert(result.text.includes("THE CURRENT PROCESS"));
 assert(result.text.includes("THE DESIRED OUTCOME"));
 assert(result.text.includes("EXPECTED USERS"));
+assert(result.text.includes("FIRST-VERSION LOOK AND FEEL"));
+assert(result.text.includes("Create a clean, neutral design for the first version"));
 assert(result.text.includes("ESSENTIAL FOR THE FIRST RELEASE"));
 assert(result.text.includes("USEFUL, BUT CAN BE ADDED LATER"));
 assert(result.text.includes("FUTURE IDEAS"));

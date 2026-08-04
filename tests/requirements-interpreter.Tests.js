@@ -16,6 +16,8 @@ const raw = {
   desired_outcome: "One clear view of each job.",
   users: "Office coordinators and field staff.",
   data_storage_preference: "A mix of local and cloud",
+  visual_design_preference: "Use our existing company branding",
+  visual_style_notes: "Use the approved navy and gold palette; formal and calm.",
   first_release: "Create, assign, update, and close jobs.",
   acceptance_criteria: "Authorised staff can close a job and see its history.",
   delivery_model: "Recommendation required",
@@ -34,6 +36,8 @@ module.exports = (async () => {
   assert.strictEqual(fallback.sections.problemStatement[0].status, "confirmed");
   assert.strictEqual(fallback.sections.integrationRequirements[0].status, "unknown");
   assert(fallback.sections.dataRequirements.some((item) => item.statement === "A mix of local and cloud" && item.status === "confirmed"));
+  assert(fallback.sections.constraints.some((item) => item.statement === raw.visual_design_preference && item.status === "confirmed"));
+  assert(fallback.sections.constraints.some((item) => item.statement === raw.visual_style_notes && item.status === "confirmed"));
   assert(fallback.sections.openQuestions.some((item) => item.blocks.estimation && item.blocks.scopeAgreement && item.blocks.development));
   assert(!JSON.stringify(fallback).includes(raw.email));
   assert(!JSON.stringify(fallback).includes(raw.phone));

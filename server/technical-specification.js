@@ -97,7 +97,8 @@ function deriveSections(interpretation) {
     openTechnicalQuestions: source.openQuestions.map((item) => ({ question: item.question, reason: item.reason, blocks: { ...item.blocks } })),
     recommendedInvestigationTasks: combine(
       recommendation("Validate first-release workflow boundaries and testable acceptance criteria with the customer before estimation."),
-      recommendation("Investigate data, integration, identity, permissions, security, privacy, performance, recovery, deployment, and support gaps recorded in this specification."),
+      recommendation("Investigate data, integration, identity, permissions, security, privacy, performance, recovery, deployment, support, user-experience, and visual-design gaps recorded in this specification."),
+      recommendation("Create an accessible, themeable component direction early, but use placeholders for brand assets until a human verifies the customer's authority and any third-party licence restrictions."),
       source.recommendedNextStep
     )
   };

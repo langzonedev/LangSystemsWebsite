@@ -13,6 +13,7 @@ integration, workflow automation, and future product development.
 - [Customer Project Discovery Journey](docs/customer-project-discovery-journey.md)
 - [Plain-English Client Discovery Question Set](docs/client-discovery-question-set.md)
 - [Structured Project Intake Data Model](docs/project-intake-data-model.md)
+- [Brand and Design Discovery Workflow](docs/brand-and-design-discovery.md)
 - [Plain-English Requirements Interpretation Service](docs/requirements-interpretation-service.md)
 - [Internal Technical Requirements Specification Generator](docs/internal-technical-requirements-specification.md)
 - [Internal Project Brief Generator](docs/internal-project-brief.md)

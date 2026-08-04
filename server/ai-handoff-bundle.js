@@ -7,6 +7,7 @@ const REQUESTED_ARTIFACTS = Object.freeze([
   "Business requirements and a traceability matrix",
   "Functional and non-functional requirements",
   "User roles, journeys, use cases, and acceptance scenarios",
+  "UX/UI direction, accessible design system, theming tokens, and provisional brand application plan",
   "Domain model, data model, retention, migration, and data-quality requirements",
   "System context, container, and component architecture",
   "UML diagrams in Mermaid or PlantUML source form",
@@ -32,7 +33,9 @@ function withoutPrivateFields(submission) {
     commercial: clone(answers.commercial || {}),
     additionalContext: {
       constraints: additional.constraints || null,
-      additionalNotes: additional.additionalNotes || null
+      additionalNotes: additional.additionalNotes || null,
+      visualDesignPreference: additional.visualDesignPreference || null,
+      visualStyleNotes: additional.visualStyleNotes || null
     }
   };
 }
@@ -153,6 +156,7 @@ function createAiHandoffBundle(submission, documents, options = {}) {
         "Turn material unknowns into concise clarification questions and state which artifact they block.",
         "Keep first-release scope separate from later and future ideas.",
         "Prefer secure, maintainable, accessible, observable, and cost-conscious designs.",
+        "Treat branding preferences as design direction only. Do not assume logos, fonts, images, colours, or other supplied materials are authorised or licensed; use placeholders until a human verifies authority and restrictions.",
         "Do not start implementation, make commitments, or communicate externally without human approval."
       ],
       requestedArtifacts: REQUESTED_ARTIFACTS.slice(),
@@ -185,6 +189,7 @@ function createAiHandoffBundle(submission, documents, options = {}) {
         "First-release scope, exclusions, success measures, budget, and timing were checked.",
         "Sensitive or unnecessary personal information was removed from AI input.",
         "Material unknowns and contradictions were resolved or explicitly retained.",
+        "Any proposed branding or third-party design assets were checked for customer authority, usage permission, licence restrictions, and accessibility before use.",
         "The selected AI tool and account are approved for this project information."
       ],
       reviewer: null,

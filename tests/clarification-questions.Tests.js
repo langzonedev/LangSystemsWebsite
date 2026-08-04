@@ -49,9 +49,10 @@ const answered = generator.generate(submission((value) => {
   commercial.dayToDayOwner = "Operations manager";
   commercial.ownershipPreference = "Customer-owned solution";
   commercial.ongoingSupportPreference = "Please explain both options";
+  value.customerAnswers.additionalContext.visualDesignPreference = "Create a clean, neutral design for the first version";
 }));
 const answeredIds = Object.values(answered.groups).flat().map((item) => item.id);
-assert.ok(!answeredIds.includes("existing-data") && !answeredIds.includes("integrations") && !answeredIds.includes("users-and-permissions") && !answeredIds.includes("devices-and-offline"), "Answered topics must not be asked again.");
+assert.ok(!answeredIds.includes("existing-data") && !answeredIds.includes("integrations") && !answeredIds.includes("users-and-permissions") && !answeredIds.includes("devices-and-offline") && !answeredIds.includes("visual-design-direction"), "Answered topics must not be asked again.");
 
 const contradictory = generator.generate(submission((value) => {
   value.customerAnswers.desiredOutcome.existingSystemConnections = "None";

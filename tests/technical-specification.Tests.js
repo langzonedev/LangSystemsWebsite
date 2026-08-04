@@ -16,6 +16,7 @@ const raw = {
   future_ideas: "Route optimisation.", excluded_functionality: "Payments.",
   acceptance_criteria: "Authorised staff can close a job and see its history.",
   constraints: "Use on office computers and field phones.", delivery_model: "Recommendation required",
+  visual_design_preference: "Use our existing company branding", visual_style_notes: "Use the approved navy and gold palette.",
   budget: "Not sure - please advise", timing: "Exploring options only", privacy_consent: "Agreed"
 };
 
@@ -33,6 +34,8 @@ module.exports = (async () => {
   assert.deepStrictEqual(specification.sections.functionalRequirements[0].sourcePaths, ["customerAnswers.scope.essentialFirstRelease"]);
   assert.strictEqual(specification.sections.authenticationConsiderations[0].status, "unknown");
   assert.strictEqual(specification.sections.proposedDataEntities[0].status, "recommendation");
+  assert(specification.sections.platformConstraints.some((item) => item.statement === raw.visual_design_preference && item.status === "confirmed"));
+  assert(specification.sections.recommendedInvestigationTasks.some((item) => /themeable component direction/i.test(item.statement)));
   assert(specification.renderedText.includes("ESSENTIAL FIRST-RELEASE REQUIREMENTS"));
   assert(specification.renderedText.includes("RECOMMENDED INVESTIGATION TASKS"));
   assert(specification.renderedText.includes("[CONFIRMED]"));

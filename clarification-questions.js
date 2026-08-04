@@ -132,6 +132,14 @@
       "After launch, would you prefer Lang Systems to provide ongoing support, hand the solution over, or explain both options?",
       "Support preference informs handover and commercial planning but can be decided later.",
       ["customerAnswers.commercial.ongoingSupportPreference"]);
+    if (uncertain(additional.visualDesignPreference)) add(candidates, "visual-design-direction", "helpfulButNonBlocking",
+      "For the first version, should we use your existing company branding, create a clean neutral style, help develop a visual direction, match another product, or recommend an approach?",
+      "A lightweight visual direction helps produce a coherent interface without requiring a full design brief now.",
+      ["customerAnswers.additionalContext.visualDesignPreference"]);
+    else if (/existing company branding|develop a visual direction|match another product/i.test(additional.visualDesignPreference || "") && uncertain(additional.visualStyleNotes)) add(candidates, "visual-design-direction", "helpfulButNonBlocking",
+      "After project fit is confirmed, what approved brand guidance or product examples should inform the design, and who can confirm permission to use any supplied logos, fonts, images, or other assets?",
+      "Branding preferences guide design, but assets and third-party material require human verification of authority and usage restrictions before use.",
+      ["customerAnswers.additionalContext.visualDesignPreference", "customerAnswers.additionalContext.visualStyleNotes"]);
     if (!hasText(scope.usefulLater) && !hasText(scope.futureIdeas)) add(candidates, "later-ideas", "helpfulButNonBlocking",
       "Are there useful ideas we should record for a later release, without including them in the first estimate?",
       "Recording later ideas protects the first-release boundary while preserving useful context.",

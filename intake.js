@@ -63,6 +63,14 @@
   let retryingSubmission = false;
   const historyStateKey = "langSystemsIntakeOpen";
   const intakeHash = "#project-discovery";
+  const visualStyleFollowup = form.querySelector("[data-visual-style-followup]");
+  const visualDesignPreference = form.elements.namedItem("visual_design_preference");
+  const visualStyleNotes = form.elements.namedItem("visual_style_notes");
+  const visualStyleFollowupChoices = new Set([
+    "Use our existing company branding",
+    "Help us develop a visual direction",
+    "Match another product or system we already use"
+  ]);
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -92,6 +100,8 @@
     existing_systems: "Existing systems",
     data_needs: "Information used",
     data_storage_preference: "Preferred information storage",
+    visual_design_preference: "First-version look and feel",
+    visual_style_notes: "Preferred style notes",
     first_release: "Essential for the first release",
     optional_requirements: "Useful additions for later",
     future_ideas: "Future ideas",
@@ -120,8 +130,16 @@
 
   function valueOf(name) {
     const field = form.elements.namedItem(name);
-    if (!field) return "";
+    if (!field || field.disabled) return "";
     return String(field.value || "").trim();
+  }
+
+  function syncVisualStyleFollowup() {
+    if (!visualStyleFollowup || !visualDesignPreference || !visualStyleNotes) return;
+    const reveal = visualStyleFollowupChoices.has(String(visualDesignPreference.value || ""));
+    visualStyleFollowup.hidden = !reveal;
+    visualStyleNotes.disabled = !reveal;
+    visualDesignPreference.setAttribute("aria-expanded", String(reveal));
   }
 
   function setMessage(text = "", isError = false, isLoading = false) {
@@ -366,6 +384,7 @@
     addReviewItem("Preferred timing", valueOf("timing"), 4);
     addReviewItem("Working arrangement", valueOf("delivery_model"), 5, true);
     addReviewItem("Complete when", valueOf("acceptance_criteria"), 6, true);
+    addReviewItem("First-version look and feel", valueOf("visual_design_preference"), 6, true);
   }
 
   function technicalSection(title, items) {
@@ -394,7 +413,8 @@
       "desired_outcome", "users", "user_count", "devices", "usage_locations", "offline_access", "existing_systems",
       "data_needs", "data_storage_preference", "privacy_security_approvals", "first_release", "optional_requirements", "future_ideas",
       "excluded_functionality", "budget", "timing", "timing_context", "delivery_model",
-      "day_to_day_owner", "ongoing_support", "acceptance_criteria", "success_measure", "constraints", "additional_notes"
+      "day_to_day_owner", "ongoing_support", "acceptance_criteria", "success_measure", "visual_design_preference",
+      "visual_style_notes", "constraints", "additional_notes"
     ];
     const originalAnswers = {};
     customerFieldNames.forEach((name) => { originalAnswers[name] = valueOf(name); });
@@ -463,6 +483,8 @@
     const storagePreference = technicalAnswer("data_storage_preference", "Preferred information storage location is unknown.");
     const integrations = technicalAnswer("existing_systems", "Integration requirements are unknown.");
     const constraints = technicalAnswer("constraints", "Additional platform or operational constraints are unknown.");
+    const visualDesign = technicalAnswer("visual_design_preference", "The preferred visual direction is unknown.");
+    const visualStyle = technicalAnswer("visual_style_notes", "Detailed visual style guidance has not been supplied; gather it after project fit is confirmed if needed.");
     const acceptance = technicalAnswer("acceptance_criteria", "Acceptance criteria are unknown.");
     const technicalRequirements = [
       "INTERNAL TECHNICAL REQUIREMENTS SPECIFICATION",
@@ -495,6 +517,7 @@
       technicalSection("Offline requirements", [unknown("Offline operation and synchronisation requirements have not been confirmed.")]),
       technicalSection("Device requirements", [unknown("Required device types, screen sizes, assistive technologies, and managed-device constraints have not been confirmed.")]),
       technicalSection("Platform constraints", [constraints]),
+      technicalSection("User experience and visual design considerations", [visualDesign, visualStyle, technicalRecommendation("Build a clear, accessible, themeable component system from the beginning. Treat branding as provisional until a human verifies approved assets, customer authority, and any third-party licence restrictions.")]),
       technicalSection("Security considerations", [unknown("Security controls, threat assumptions, audit needs, and incident requirements need customer confirmation.")]),
       technicalSection("Privacy considerations", [unknown("Data classification, residency, consent, access, retention, deletion, and privacy obligations need customer confirmation.")]),
       technicalSection("Performance considerations", [unknown("Usage volumes, concurrency, response-time targets, availability, and capacity limits have not been confirmed.")]),
@@ -615,6 +638,7 @@
   wireFieldDescriptions();
   renderSubmissionState();
   const restoredDraft = intakeDraft.restore(window, form, finalStepIndex);
+  syncVisualStyleFollowup();
   if (restoredDraft) {
     currentStep = restoredDraft.currentStep;
     formDirty = true;
@@ -770,6 +794,7 @@
       rememberedFileCount = 0;
       draftFileNote.hidden = true;
     }
+    if (event.target.name === "visual_design_preference") syncVisualStyleFollowup();
     scheduleDraftSave();
   });
 
@@ -779,6 +804,7 @@
     draftSaveTimer = null;
     intakeDraft.clear(window);
     form.reset();
+    syncVisualStyleFollowup();
     [...form.elements].forEach((field) => {
       if (field instanceof HTMLElement && field.name) clearFieldError(field);
     });

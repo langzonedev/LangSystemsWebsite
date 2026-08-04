@@ -149,6 +149,7 @@
       reusePotential: assessment(reuseValue, hasText(commercial.broaderMarketUsefulness) ? "customer_evidence" : "inference", [hasText(commercial.broaderMarketUsefulness) ? "The customer supplied this view; Lang Systems must verify market potential." : "No market evidence was supplied, so reuse potential cannot be determined from this enquiry."], hasText(commercial.broaderMarketUsefulness) ? ["customerAnswers.commercial.broaderMarketUsefulness"] : []),
       intellectualPropertyConsiderations: [
         assessment("Confirm ownership of customer data, existing materials and third-party components.", "recommendation", ["The submission does not establish intellectual-property ownership or licence rights."], []),
+        assessment("Treat the stated visual direction as provisional and verify authority to use any customer branding, logos, fonts, images, guidelines or referenced product designs before incorporating them.", "recommendation", ["A branding preference does not establish ownership, permission, or third-party licence rights."], ["customerAnswers.additionalContext.visualDesignPreference", "customerAnswers.additionalContext.visualStyleNotes"]),
         assessment("Agree source-code, reusable-component, product and licensing rights in writing before work begins.", "recommendation", ["The recommended delivery model is non-binding and may affect ownership terms."], delivery.sourcePaths)
       ],
       majorTechnicalRisks: [

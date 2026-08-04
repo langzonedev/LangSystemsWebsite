@@ -7,8 +7,9 @@
 }(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict";
 
-  var SCHEMA_VERSION = "3.0.0";
-  var TEMPLATE_VERSION = "1.2.0";
+  var SCHEMA_VERSION = "3.1.0";
+  var TEMPLATE_VERSION = "1.3.0";
+  var SUPPORTED_SCHEMA_VERSIONS = ["3.0.0", SCHEMA_VERSION];
   var SUBMISSION_STATUSES = ["draft", "submitted", "received", "under_review", "awaiting_clarification", "qualified", "declined", "archived"];
   var INTERPRETATION_STATUSES = ["not_started", "pending", "in_progress", "complete", "needs_clarification", "failed"];
   var DELIVERY_STATUSES = ["not_sent", "pending", "sent", "delivered", "failed"];
@@ -170,6 +171,8 @@
       additionalContext: {
         constraints: raw.constraints,
         additionalNotes: raw.additional_notes,
+        visualDesignPreference: raw.visual_design_preference,
+        visualStyleNotes: raw.visual_style_notes,
         privacyConsent: raw.privacy_consent === true || raw.privacy_consent === "Agreed"
       }
     };
@@ -237,6 +240,8 @@
       additionalContext: {
         constraints: text(additional.constraints),
         additionalNotes: text(additional.additionalNotes),
+        visualDesignPreference: text(additional.visualDesignPreference, MAX_SHORT_TEXT),
+        visualStyleNotes: text(additional.visualStyleNotes),
         privacyConsent: source.additionalContext ? additional.privacyConsent === true : raw.privacy_consent === true || raw.privacy_consent === "Agreed"
       }
     };
@@ -373,7 +378,9 @@
       [commercial, "ongoingSupportPreference", "customerAnswers.commercial.ongoingSupportPreference", MAX_SHORT_TEXT, true],
       [commercial, "successMeasures", "customerAnswers.commercial.successMeasures", MAX_TEXT, true],
       [answers && answers.additionalContext, "constraints", "customerAnswers.additionalContext.constraints", MAX_TEXT, true],
-      [answers && answers.additionalContext, "additionalNotes", "customerAnswers.additionalContext.additionalNotes", MAX_TEXT, true]
+      [answers && answers.additionalContext, "additionalNotes", "customerAnswers.additionalContext.additionalNotes", MAX_TEXT, true],
+      [answers && answers.additionalContext, "visualDesignPreference", "customerAnswers.additionalContext.visualDesignPreference", MAX_SHORT_TEXT, true],
+      [answers && answers.additionalContext, "visualStyleNotes", "customerAnswers.additionalContext.visualStyleNotes", MAX_TEXT, true]
     ].forEach(function (entry) { checkText(errors, entry[0], entry[1], entry[2], entry[3], entry[4]); });
     [
       [metadata, "submissionMetadata"], [answers, "customerAnswers"], [customer, "customerAnswers.customer"],
@@ -392,7 +399,7 @@
     checkKeys(errors, desired, "customerAnswers.desiredOutcome", ["problemStatement", "outcome", "intendedUsers", "approximateUserCount", "deviceRequirements", "locationRequirements", "offlineRequirements", "existingSystemConnections", "existingDataSources", "dataStoragePreference", "privacySecurityConsiderations"]);
     checkKeys(errors, scope, "customerAnswers.scope", ["essentialFirstRelease", "usefulLater", "futureIdeas", "explicitExclusions", "completionCriteria"]);
     checkKeys(errors, commercial, "customerAnswers.commercial", ["deliveryModelPreference", "ownershipPreference", "broaderMarketUsefulness", "approximateBudgetRange", "requiredDate", "timelineFlexibility", "timelineContext", "dayToDayOwner", "ongoingSupportPreference", "successMeasures"]);
-    checkKeys(errors, answers && answers.additionalContext, "customerAnswers.additionalContext", ["constraints", "additionalNotes", "privacyConsent"]);
+    checkKeys(errors, answers && answers.additionalContext, "customerAnswers.additionalContext", ["constraints", "additionalNotes", "visualDesignPreference", "visualStyleNotes", "privacyConsent"]);
     checkKeys(errors, processing, "processing", ["interpretationStatus", "generatedDocumentReferences", "clarificationQuestions", "emailDeliveryStatus", "manualReviewStatus", "internalNotes"]);
     checkKeys(errors, processing && processing.generatedDocumentReferences, "processing.generatedDocumentReferences", ["customerSummary", "technicalSpecification", "internalBrief"]);
     var required = [
@@ -417,7 +424,7 @@
       if (!entry[0] || !text(entry[0][entry[1]])) addError(errors, entry[2], "required", "A required customer answer is missing.");
     });
     if (metadata) {
-      if (metadata.schemaVersion !== SCHEMA_VERSION) addError(errors, "submissionMetadata.schemaVersion", "unsupported_version", "The submission schema version is not supported.");
+      if (SUPPORTED_SCHEMA_VERSIONS.indexOf(metadata.schemaVersion) === -1) addError(errors, "submissionMetadata.schemaVersion", "unsupported_version", "The submission schema version is not supported.");
       if (!identifier(metadata.submissionId, null)) addError(errors, "submissionMetadata.submissionId", "invalid", "The submission identifier is invalid.");
       if (!isoDateTime(metadata.submittedAt, null)) addError(errors, "submissionMetadata.submittedAt", "invalid", "The submission date is invalid.");
       if (!isoDateTime(metadata.updatedAt, null)) addError(errors, "submissionMetadata.updatedAt", "invalid", "The updated date is invalid.");

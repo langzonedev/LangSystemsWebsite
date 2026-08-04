@@ -65,7 +65,7 @@ Assert-True ($controller -match 'LangSystemsIntakeSubmission' -and $controller -
 Assert-True ($service -match 'url\.protocol\s*!==\s*"https:"' -and $service -match 'isLocalDevelopment') "The submission service must reject insecure non-local endpoints."
 Assert-True ($index -match '<script src="intake-model\.js"></script>\s*<script src="clarification-questions\.js"></script>\s*<script src="internal-project-brief\.js"></script>\s*<script src="customer-summary\.js"></script>\s*<script src="project-submission-package\.js"></script>\s*<script src="intake-service\.js"></script>') "The shared intake model and internal/customer document generators must load before package generation and submission transport."
 Assert-True ($controller -match 'intakeModel\.serialiseSubmission' -and $service -match 'LangSystemsIntakeModel\.parseSubmission') "Frontend generation and transport must enforce the shared model contract."
-Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"3\.0\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
+Assert-True ($model -match 'SCHEMA_VERSION\s*=\s*"3\.1\.0"' -and $model -match 'customerAnswers' -and $model -match 'processing') "The versioned model must separate customer answers from processing data."
 Assert-True ($serverValidation -match 'IntakeModel\.validateSubmission' -and $serverValidation -notmatch 'console\.') "The server validation boundary must use the shared contract without logging submissions."
 Assert-True ($controller -notmatch 'localStorage|console\.' -and $draft -match 'localStorage' -and $draft -notmatch 'sessionStorage|console\.' -and $draft -match 'SCHEMA_VERSION' -and $draft -match 'savedAt' -and $draft -match 'EXCLUDED_FIELDS.*attachments') "Draft recovery must use versioned device storage with a timestamp, exclude attachment contents, and avoid customer logging."
 Assert-True ($controller -match 'wizardSteps = Object\.freeze\(\[\.\.\.form\.querySelectorAll\("\[data-step\]"\)\]\)' -and $controller -match 'totalSteps = wizardSteps\.length' -and $controller -match 'finalStepIndex = totalSteps - 1') "The ordered configured steps must be the single source of truth for wizard totals and the final step."
@@ -145,6 +145,7 @@ $requiredQuestionSetPhrases = @(
   "Preferred contact method", "What works well today", "work when internet access is unavailable",
   "Artificial intelligence", "completely bespoke system", "Please help us understand what is realistic",
   "How would you know this project had been successful six months after launch",
+  "How should the first version look and feel", "Brand and Design Discovery Workflow",
   "screenshots, example spreadsheets, existing forms, reports, process documents, diagrams, and example outputs"
 )
 
@@ -158,14 +159,14 @@ $allFields = @(
   "desired_outcome", "users", "user_count", "devices", "usage_locations", "offline_access", "existing_systems",
   "data_needs", "data_storage_preference", "privacy_security_approvals", "first_release", "optional_requirements", "future_ideas",
   "excluded_functionality", "budget", "timing", "timing_context", "delivery_model",
-  "day_to_day_owner", "ongoing_support", "acceptance_criteria", "success_measure", "constraints",
+  "day_to_day_owner", "ongoing_support", "acceptance_criteria", "success_measure", "visual_design_preference", "visual_style_notes", "constraints",
   "additional_notes", "privacy_consent"
 )
 
 $optionalFields = @(
   "phone", "current_methods", "process_frequency", "current_process_strengths", "user_count", "devices",
   "usage_locations", "offline_access", "existing_systems", "data_needs", "data_storage_preference", "privacy_security_approvals",
-  "optional_requirements", "future_ideas", "excluded_functionality", "timing_context", "constraints", "additional_notes"
+  "optional_requirements", "future_ideas", "excluded_functionality", "timing_context", "visual_design_preference", "visual_style_notes", "constraints", "additional_notes"
 )
 
 foreach ($field in $allFields) {
@@ -179,9 +180,14 @@ foreach ($field in $allFields) {
 Assert-True ($index -match [regex]::Escape('On our own devices or business network (local)')) "The local-storage option is missing."
 Assert-True ($index -match [regex]::Escape('Securely online so authorised people can access it from anywhere (cloud)')) "The cloud-storage option is missing."
 Assert-True ($index -match [regex]::Escape('A mix of local and cloud')) "The mixed-storage option is missing."
+Assert-True ($index -match [regex]::Escape('Use our existing company branding')) "The existing-branding option is missing."
+Assert-True ($index -match [regex]::Escape('Create a clean, neutral design for the first version')) "The neutral-design option is missing."
+Assert-True ($index -match 'data-visual-style-followup\s+hidden' -and $index -match 'name="visual_style_notes"[^>]*\bdisabled\b') "The progressive visual-style follow-up is not safely hidden by default."
+Assert-True ($controller -match 'syncVisualStyleFollowup' -and $controller -match 'visualStyleFollowupChoices') "The visual-style progressive disclosure controller is missing."
 
 Assert-True ($aiHandoff -match 'humanReviewRequired:\s*true' -and $aiHandoff -match 'reviewStatus:\s*"unreviewed"') "The AI handoff must remain explicitly gated by human review."
 Assert-True ($aiHandoff -match 'requestedArtifacts' -and $aiHandoff -match 'UML' -and $aiHandoff -match 'Codex') "The handoff must request architecture, UML, and Codex-ready artifacts."
+Assert-True ($aiHandoff -match 'theming tokens' -and $aiHandoff -match 'Do not assume logos') "The AI handoff must retain accessible design direction and brand-authority safeguards."
 Assert-True ($emailDelivery -match 'attachments:\s*handoff\s*\?\s*handoff\.attachments' -and $emailDelivery -match 'privacy-minimised') "The internal email must attach the privacy-minimised AI bundle."
 
 $localReferences = [regex]::Matches($index, '(?:href|src)="([^"#:?]+)"') |
