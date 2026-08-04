@@ -110,18 +110,17 @@ function attachmentList(items) {
   return items.map((item) => `- ${item.name} (${item.sizeBytes} bytes; ${item.status || "pending review"})`).join("\n");
 }
 
-function internalMessage(data, config, customerStatus) {
+function internalMessage(data, config, customerStatus, handoff) {
   const subject = cleanLine(`New project submission ${data.reference} — ${data.business || data.name}`, 200);
   const review = data.reviewUrl || "No secure review link is configured. Recover using the submission reference and delivery-status record.";
   const sections = [
     `SUBMISSION REFERENCE\n${data.reference}`,
     `CUSTOMER CONTACT\nName: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone || "Not supplied"}`,
     `BUSINESS DETAILS\nBusiness: ${data.business || "Not supplied"}\n${data.businessDescription}`,
-    `INTERNAL PROJECT BRIEF\n${data.brief || "Not generated"}`,
-    `CUSTOMER-FRIENDLY SUMMARY\n${data.summary || "Not generated"}`,
-    `TECHNICAL SPECIFICATION\n${data.technical || "Not generated"}`,
-    `CLARIFICATION QUESTIONS\n${data.questions || "None generated"}`,
-    `ATTACHMENT REFERENCES\n${attachmentList(data.attachments)}\nFiles are not attached to email. Request a secure transfer if required.`,
+    `HUMAN REVIEW REQUIRED\nDo not send this bundle directly to an AI tool yet. First verify the customer need, service fit, supplied facts, scope boundaries and material unknowns. The attached Markdown file contains a review checklist and prompt-ready instructions.`,
+    `AI HANDOFF BUNDLE\nTwo privacy-minimised files are attached: readable Markdown and structured JSON. They exclude the customer's contact details, business name, consent record and supporting-file names. After review, use both files together in the approved GPT project or other analysis tool.`,
+    `KEY CLARIFICATION QUESTIONS\n${data.questions || "None generated"}`,
+    `CUSTOMER SUPPORTING-FILE REFERENCES\n${attachmentList(data.attachments)}\nCustomer-supplied file contents are not attached or stored. Request a secure transfer if required.`,
     `SECURE REVIEW\n${review}`,
     `PROCESSING OR GENERATION WARNINGS\n${data.warnings}`,
     `EMAIL DELIVERY STATUS\nCustomer confirmation: ${customerStatus}\nInternal notification: pending (this message)`
@@ -131,7 +130,14 @@ function internalMessage(data, config, customerStatus) {
     const split = section.indexOf("\n");
     return `<h2 style="font-size:17px;margin-top:26px">${escapeHtml(section.slice(0, split))}</h2><div>${textBlock(section.slice(split + 1))}</div>`;
   }).join("");
-  return { to: config.internalEmail, subject, text, html: brandedHtml("New project submission", `Reference ${data.reference}`, htmlSections), idempotencyKey: cleanLine(`project-internal/${data.reference}`, 256) };
+  return {
+    to: config.internalEmail,
+    subject,
+    text,
+    html: brandedHtml("New project submission", `Reference ${data.reference}`, htmlSections),
+    attachments: handoff ? handoff.attachments : [],
+    idempotencyKey: cleanLine(`project-internal/${data.reference}`, 256)
+  };
 }
 
 function readConfig(environment = process.env) {
@@ -174,7 +180,14 @@ function createProvider(config, options = {}) {
       const response = await fetchImplementation(config.providerUrl, {
         method: "POST",
         headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json", "Idempotency-Key": message.idempotencyKey },
-        body: JSON.stringify({ from: config.from, to: [message.to], subject: message.subject, text: message.text, html: message.html })
+        body: JSON.stringify({
+          from: config.from,
+          to: [message.to],
+          subject: message.subject,
+          text: message.text,
+          html: message.html,
+          ...(Array.isArray(message.attachments) && message.attachments.length ? { attachments: message.attachments } : {})
+        })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.id) throw new Error(`Email provider rejected the request (${response.status}).`);
@@ -192,10 +205,13 @@ function createEmailDeliveryService(options = {}) {
   const provider = options.provider || createProvider(config, options);
   const store = options.statusStore || createMemoryStatusStore();
   const now = options.now || (() => new Date().toISOString());
+  const handoffBuilder = options.handoffBuilder;
+  if (typeof handoffBuilder !== "function") throw new EmailConfigurationError("An AI handoff bundle builder is required.");
 
   return Object.freeze({
     async deliver(submission, documents) {
       const data = details(submission, documents || {}, config);
+      const handoff = handoffBuilder(submission, documents || {}, { generatedAt: now() });
       let record = await store.get(data.reference) || {
         reference: data.reference, customer: { status: "pending", attempts: 0 }, internal: { status: "pending", attempts: 0 }, updatedAt: now()
       };
@@ -216,7 +232,7 @@ function createEmailDeliveryService(options = {}) {
       if (record.internal.status !== "sent") {
         record.internal.attempts += 1;
         try {
-          const sent = await provider.send(internalMessage(data, config, record.customer.status));
+          const sent = await provider.send(internalMessage(data, config, record.customer.status, handoff));
           record.internal = { ...record.internal, status: "sent", providerId: sent.id, sentAt: now(), lastError: null };
         } catch (_error) {
           record.internal = { ...record.internal, status: "failed", lastError: "provider_failure" };

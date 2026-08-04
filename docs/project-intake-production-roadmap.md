@@ -1,6 +1,6 @@
 # Project intake production roadmap
 
-Status date: 3 August 2026
+Status date: 4 August 2026
 
 ## Current production operation
 
@@ -78,6 +78,11 @@ as a quiet receipt for support and audit correlation.
 
 ## Phase 4 — Operate and improve
 
+The first human-reviewed AI handoff increment is implemented: the internal email carries matching
+Markdown and JSON bundles that are ready for review and later manual use in an approved GPT project.
+The customer acknowledgement remains separate and attachment-free. Bundle generation is local to
+the existing Worker and does not call a model or add a paid service.
+
 - Monitor Worker health, D1 usage, provider failures, delivery status, and mailbox coverage.
 - Add scheduled retention cleanup, encrypted exports/backups, an authenticated internal review
   surface, and the deletion register before storing material enquiry volume.
@@ -85,6 +90,32 @@ as a quiet receipt for support and audit correlation.
   tests at least annually and after material changes.
 - Add Cloudflare Turnstile if real traffic or logs show automated form abuse beyond the current
   honeypot and D1 rate limit.
+
+## Phase 5 — Assisted artifact workflow (future)
+
+- Evaluate the reviewed bundle against representative enquiries and define quality checks for
+  requirements, traceability, architecture, UML, security, testing, and Codex handoff artifacts.
+- Add an authenticated internal review surface with approve, return-for-clarification, redact, and
+  export controls. Keep the stored submission and versioned bundle as source evidence.
+- Optionally use LangFlow or a Kanban-style workflow for orchestration and visibility after the
+  human approval gate; do not make it the system of record.
+- Introduce model API calls only after privacy terms, access control, audit, data retention, failure
+  recovery, model evaluation, and explicit spend limits are approved.
+
+Exit criteria: a reviewer can approve a privacy-checked bundle, deliberately invoke artifact
+generation, inspect traceability and unknowns, and reject or correct the result before Codex use.
+
+## Phase 6 — Controlled end-to-end automation (long-term option)
+
+- Consider customer-to-artifact and artifact-to-Codex automation only after the assisted workflow
+  has reliable quality evidence.
+- Require human approval at commercial scope, architecture, implementation, security, acceptance,
+  and release gates until separately authorised and demonstrably safe to reduce them.
+- Add per-project budgets, rate and usage caps, kill switches, audit trails, rollback, isolated build
+  environments, automated tests, security review, and release controls.
+
+This phase is not current behaviour and is not promised to customers. Its exit criteria and costs
+must be approved before implementation.
 
 ## Rollback
 

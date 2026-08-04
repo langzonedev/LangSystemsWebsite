@@ -20,14 +20,17 @@ integration, workflow automation, and future product development.
 - [Secure Submission Storage and Internal Retrieval](docs/secure-submission-storage.md)
 - [Project Intake Submission Workflow Audit](docs/project-intake-submission-audit.md)
 - [Project Intake Production Roadmap](docs/project-intake-production-roadmap.md)
+- [Human-reviewed AI Handoff](docs/human-reviewed-ai-handoff.md)
 - [Project Scope, Acceptance and Delivery Template Pack](docs/project-scope-acceptance-delivery-templates.md)
 
 ## Current hosting and production intake delivery
 
 The public site remains on GitHub Pages and the questionnaire uses `api` mode to submit securely to
 the production Cloudflare Worker. The Worker stores the validated submission and generated documents
-in D1 before Resend sends the customer confirmation and the internal copy to
-`langsystemsdesign@outlook.com`. The email-client package generator remains in the codebase as a
+in D1 before Resend sends the customer confirmation and an internal review message to
+`langsystemsdesign@outlook.com`. The internal message includes privacy-minimised Markdown and JSON
+attachments that a human can verify before supplying them to an approved GPT project or other
+analysis tool. No model API is called by the website. The email-client package generator remains in the codebase as a
 controlled rollback option; it is not shown as the primary production action.
 
 See the [Project Intake Production Roadmap](docs/project-intake-production-roadmap.md) for deployment
@@ -52,11 +55,14 @@ python -m http.server 4173
 ## Target production project intake email
 
 The discovery wizard posts JSON to `/api/project-submissions`. The intake API validates the shared
-submission model, sends a branded customer confirmation and a detailed internal email, and records
+submission model, sends a branded customer confirmation and a detailed internal review email with a
+versioned AI handoff bundle, and records
 metadata-only status for each recipient. If one email fails, a repeat request with the same project
 reference retries only the failed recipient. Provider idempotency keys also protect live retries
 from duplicate sends within the provider's supported window. Supporting file names and sizes are included as
-references; file contents are not emailed or retained by this service.
+references; file contents are not emailed or retained by this service. Customer contact details,
+business name, consent, and supporting-file names are excluded from the AI attachments. See
+[Human-reviewed AI Handoff](docs/human-reviewed-ai-handoff.md) for the mandatory review boundary.
 
 Development defaults to safe mock delivery and makes no provider requests:
 

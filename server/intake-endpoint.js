@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const IntakeModel = require("../intake-model.js");
 const { validateRequestBody, validateUpload, createSubmissionGuard, safeErrorResponse } = require("./intake-validation.js");
 const { createEmailDeliveryService } = require("./email-delivery.js");
+const { createAiHandoffBundle } = require("./ai-handoff-bundle.js");
 const { createFileDeliveryStatusStore } = require("./file-delivery-status-store.js");
 const { createFileSubmissionStore } = require("./submission-store.js");
 
@@ -87,7 +88,7 @@ function createIntakeEndpoint(options = {}) {
   const guard = options.guard || createSubmissionGuard();
   const statusStore = options.statusStore || (environment.INTAKE_STATUS_FILE ? createFileDeliveryStatusStore(environment.INTAKE_STATUS_FILE) : undefined);
   const submissionStore = options.submissionStore || (environment.INTAKE_STORAGE_DIR ? createFileSubmissionStore(environment.INTAKE_STORAGE_DIR) : undefined);
-  const delivery = options.deliveryService || createEmailDeliveryService({ environment, statusStore, fetch: options.fetch });
+  const delivery = options.deliveryService || createEmailDeliveryService({ environment, statusStore, fetch: options.fetch, handoffBuilder: createAiHandoffBundle });
   const allowedOrigin = configuredOrigin(environment.INTAKE_ALLOWED_ORIGIN);
   const referenceSecret = environment.INTAKE_REFERENCE_SECRET || options.referenceSecret || crypto.randomBytes(32).toString("hex");
   const inFlight = new Map();

@@ -3,6 +3,7 @@
 const assert = require("assert");
 const model = require("../intake-model.js");
 const { createEmailDeliveryService, createMemoryStatusStore, createProvider, escapeHtml, readConfig } = require("../server/email-delivery.js");
+const { createAiHandoffBundle } = require("../server/ai-handoff-bundle.js");
 
 function submission() {
   return model.createSubmission({
@@ -31,8 +32,9 @@ module.exports = (async () => {
   const liveProvider = createProvider(readConfig({ INTAKE_EMAIL_MODE: "live", RESEND_API_KEY: "test-key", INTAKE_INTERNAL_EMAIL: "internal@example.com" }), {
     fetch: async (_url, options) => { providerRequest = options; return { ok: true, json: async () => ({ id: "email-id" }) }; }
   });
-  await liveProvider.send({ to: "alex@example.com", subject: "Subject", text: "Text", html: "<p>Text</p>", idempotencyKey: "project-confirmation/LS-TEST" });
+  await liveProvider.send({ to: "alex@example.com", subject: "Subject", text: "Text", html: "<p>Text</p>", attachments: [{ filename: "bundle.json", content: "e30=" }], idempotencyKey: "project-confirmation/LS-TEST" });
   assert.strictEqual(providerRequest.headers["Idempotency-Key"], "project-confirmation/LS-TEST");
+  assert.deepStrictEqual(JSON.parse(providerRequest.body).attachments, [{ filename: "bundle.json", content: "e30=" }]);
 
   const sent = [];
   let failInternalOnce = true;
@@ -47,7 +49,7 @@ module.exports = (async () => {
   const store = createMemoryStatusStore();
   const service = createEmailDeliveryService({
     config: readConfig({ INTAKE_EMAIL_MODE: "mock", INTAKE_INTERNAL_EMAIL: "internal@example.com", LANG_SYSTEMS_CONTACT_EMAIL: "hello@example.com" }),
-    provider, statusStore: store
+    provider, statusStore: store, handoffBuilder: createAiHandoffBundle
   });
 
   const partial = await service.deliver(submission(), documents);
@@ -61,8 +63,16 @@ module.exports = (async () => {
   assert.ok(sent[0].text.includes("Nothing starts, and there is no commitment"));
   assert.ok(sent[0].text.endsWith("For your records: LS-EMAIL-TEST"));
   assert.ok(!sent[0].text.includes(documents.customerSummary), "The customer email should not paste the full generated document.");
+  assert.ok(!sent[0].attachments, "The customer confirmation must not carry the internal bundle.");
   assert.ok(sent[1].text.includes("Customer confirmation: sent"));
-  assert.ok(sent[1].text.includes("Files are not attached to email"));
+  assert.ok(sent[1].text.includes("HUMAN REVIEW REQUIRED"));
+  assert.ok(sent[1].text.includes("Two privacy-minimised files are attached"));
+  assert.strictEqual(sent[1].attachments.length, 2);
+  const bundleMaterial = sent[1].attachments.map((item) => Buffer.from(item.content, "base64").toString("utf8")).join("\n");
+  assert.ok(bundleMaterial.includes("Lang Systems AI handoff bundle"));
+  assert.ok(!bundleMaterial.includes("Alex <Example>"));
+  assert.ok(!bundleMaterial.includes("alex@example.com"));
+  assert.ok(!bundleMaterial.includes("0400 000 000"));
 
   const recovered = await service.deliver(submission(), documents);
   assert.strictEqual(recovered.complete, true);
@@ -76,5 +86,5 @@ module.exports = (async () => {
   assert.strictEqual(record.internal.attempts, 2);
   assert.ok(!JSON.stringify(record).includes("concise"), "Delivery records must not contain customer content.");
 
-  console.log("Email branding, sanitisation, partial failure, status, retry, and duplicate-prevention checks passed.");
+  console.log("Email branding, sanitisation, AI attachments, partial failure, status, retry, and duplicate-prevention checks passed.");
 })();

@@ -350,8 +350,13 @@
               <div><h3>What is happening today?</h3><p>Describe the situation as you would to a colleague. Technical detail is not expected.</p></div>
             </div>
             <label><span>What problem or opportunity would you like help with?</span><textarea name="problem" rows="5" maxlength="10000" required placeholder="For example: Our team copies order details between three systems and mistakes are becoming common."></textarea></label>
-            <label><span>How do you handle this today?</span><textarea name="current_process" rows="4" maxlength="10000" required placeholder="Walk us through the current process, including manual steps or workarounds."></textarea></label>
+            <label><span>How do you handle this today?</span><textarea name="current_process" rows="4" maxlength="10000" required placeholder="Start with what triggers the work, then describe the main steps, hand-offs and how everyone knows it is finished."></textarea></label>
+            <div class="field-grid two-columns">
+              <label><span>Tools or systems used today <em>Optional</em></span><textarea name="current_methods" rows="3" maxlength="10000" placeholder="For example: Outlook, Excel, paper forms, Xero. Separate several items with commas."></textarea></label>
+              <label><span>How often does this happen? <em>Optional</em></span><select name="process_frequency"><option value="">Choose the closest answer</option><option>Many times a day</option><option>About once a day</option><option>Several times a week</option><option>About once a week</option><option>Several times a month</option><option>Occasionally</option><option>It varies</option><option>Not sure</option></select></label>
+            </div>
             <label><span>Who is affected, and what impact does it have?</span><textarea name="problem_impact" rows="3" maxlength="10000" required placeholder="Consider time, cost, customer experience, errors, risk, or missed opportunities."></textarea></label>
+            <label><span>What already works well and should be kept? <em>Optional</em></span><textarea name="current_process_strengths" rows="3" maxlength="10000" placeholder="People, checks, reports, customer touchpoints, or other parts of the current process worth preserving."></textarea></label>
           </section>
 
           <section class="form-step" data-step data-step-name="The outcome" hidden>
@@ -360,11 +365,18 @@
               <div><h3>What would a better result look like?</h3><p>Focus on what people should be able to do, not how the software should be built.</p></div>
             </div>
             <label><span>What would you like the new solution to achieve?</span><textarea name="desired_outcome" rows="5" maxlength="10000" required></textarea></label>
-            <label><span>Who will use it?</span><textarea name="users" rows="3" maxlength="10000" required placeholder="For example: five office staff, field technicians, managers, or customers."></textarea></label>
+            <label><span>Who will use it?</span><textarea name="users" rows="3" maxlength="10000" required placeholder="List the different types of people and what each needs to do, such as office staff, field technicians, managers, customers or administrators."></textarea></label>
             <div class="field-grid two-columns">
-              <label><span>Existing systems it may need to work with <em>Optional</em></span><textarea name="existing_systems" rows="3" maxlength="10000" placeholder="Accounting, payments, spreadsheets, website, email, or other tools."></textarea></label>
-              <label><span>Information it may need to use <em>Optional</em></span><textarea name="data_needs" rows="3" maxlength="10000" placeholder="Customer records, orders, documents, reports, or other business information."></textarea></label>
+              <label><span>About how many people may use it? <em>Optional</em></span><input name="user_count" maxlength="300" placeholder="For example: 8 staff now, up to 25 later" /></label>
+              <label><span>Devices people will use <em>Optional</em></span><input name="devices" maxlength="300" placeholder="Windows computers, iPhones, tablets; separate with commas" /></label>
+              <label><span>Where will people use it? <em>Optional</em></span><input name="usage_locations" maxlength="300" placeholder="Office, home, customer sites, vehicles; separate with commas" /></label>
+              <label><span>Does it need to work without internet? <em>Optional</em></span><select name="offline_access"><option value="">Choose an answer</option><option>No</option><option>Yes, sometimes</option><option>Yes, often</option><option>Not sure</option></select></label>
             </div>
+            <div class="field-grid two-columns">
+              <label><span>Existing systems it may need to work with <em>Optional</em></span><textarea name="existing_systems" rows="3" maxlength="10000" placeholder="Name each system and, if known, what information should come in or go out."></textarea></label>
+              <label><span>Information it may need to use <em>Optional</em></span><textarea name="data_needs" rows="3" maxlength="10000" placeholder="What information, where it lives now, roughly how much there is, and whether any of it is sensitive."></textarea></label>
+            </div>
+            <label><span>Privacy, security, or approval needs <em>Optional</em></span><textarea name="privacy_security_approvals" rows="3" maxlength="10000" placeholder="For example: who may see or change information, records that need an audit trail, industry rules, or approvals before release."></textarea></label>
           </section>
 
           <section class="form-step" data-step data-step-name="First release" hidden>
@@ -416,6 +428,7 @@
               <div><h3>How will we know the project is complete?</h3><p>Clear completion measures help both teams agree when the first release is ready.</p></div>
             </div>
             <label><span>What must be working before the project can be considered complete?</span><textarea name="acceptance_criteria" rows="5" maxlength="10000" required placeholder="Describe the results you need to see or tasks people must be able to complete."></textarea></label>
+            <label><span>How would you know the solution was successful after six months?</span><textarea name="success_measure" rows="4" maxlength="10000" required placeholder="Think about an observable improvement: time saved, fewer mistakes, faster service, increased capacity, clearer reporting, or another measurable result."></textarea></label>
             <label><span>Important rules, constraints, or concerns <em>Optional</em></span><textarea name="constraints" rows="3" maxlength="10000" placeholder="Privacy, approvals, locations, accessibility, industry rules, devices, or business policies."></textarea></label>
             <label><span>Anything else we should know? <em>Optional</em></span><textarea name="additional_notes" rows="3" maxlength="10000"></textarea></label>
             <label><span>Supporting file references <em>Optional</em></span><input type="file" name="attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.txt" multiple /><small>Files are not saved with your draft and must be reselected after a refresh or browser restart. We include file names and sizes with your outline, not file contents. Please do not select passwords or highly sensitive information.</small></label>

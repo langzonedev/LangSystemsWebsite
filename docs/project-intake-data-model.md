@@ -143,7 +143,7 @@ retention and deletion periods, and review provider privacy/security terms befor
     "updatedAt": "2026-08-03T01:02:03.000Z",
     "status": "submitted",
     "schemaVersion": "3.0.0",
-    "templateVersion": "1.0.0",
+    "templateVersion": "1.1.0",
     "source": { "page": "/", "campaign": null }
   },
   "attachments": [],
