@@ -83,6 +83,13 @@ Markdown and JSON bundles that are ready for review and later manual use in an a
 The customer acknowledgement remains separate and attachment-free. Bundle generation is local to
 the existing Worker and does not call a model or add a paid service.
 
+Deployment evidence, 4 August 2026: pull request 3 was squash-merged to `main` as commit
+`4d676913f2c6f40b4a6adaf35f178afdbdf04e6c`; GitHub Pages completed deployment successfully; and
+Cloudflare Worker version `7f29de27-79e2-4e4e-96e0-54548b16781c` was deployed. Controlled production
+submission `LS-2PANBVYE_LEZ8AQS` returned HTTP 201, was stored in D1 as `awaiting_review`, retained
+manual review status `not_started`, and recorded both customer and internal delivery states as
+`sent`. Final Outlook rendering and attachment-opening remain a mailbox-owner verification.
+
 - Monitor Worker health, D1 usage, provider failures, delivery status, and mailbox coverage.
 - Add scheduled retention cleanup, encrypted exports/backups, an authenticated internal review
   surface, and the deletion register before storing material enquiry volume.
