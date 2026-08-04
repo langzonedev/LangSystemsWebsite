@@ -45,7 +45,8 @@ All original answers are under `customerAnswers`:
   `frequency`, `frustrations`, and `strengthsToPreserve`.
 - `desiredOutcome`: `problemStatement`, `outcome`, `intendedUsers`, `approximateUserCount`,
   `deviceRequirements`, `locationRequirements`, `offlineRequirements`,
-  `existingSystemConnections`, `existingDataSources`, and `privacySecurityConsiderations`.
+  `existingSystemConnections`, `existingDataSources`, `dataStoragePreference`, and
+  `privacySecurityConsiderations`.
 - `scope`: `essentialFirstRelease`, `usefulLater`, `futureIdeas`, `explicitExclusions`, and
   `completionCriteria`.
 - `commercial`: `deliveryModelPreference`, `ownershipPreference`, `broaderMarketUsefulness`,
@@ -143,7 +144,7 @@ retention and deletion periods, and review provider privacy/security terms befor
     "updatedAt": "2026-08-03T01:02:03.000Z",
     "status": "submitted",
     "schemaVersion": "3.0.0",
-    "templateVersion": "1.1.0",
+    "templateVersion": "1.2.0",
     "source": { "page": "/", "campaign": null }
   },
   "attachments": [],

@@ -15,6 +15,7 @@ const raw = {
   problem: "Jobs are difficult to track.",
   desired_outcome: "One clear view of each job.",
   users: "Office coordinators and field staff.",
+  data_storage_preference: "A mix of local and cloud",
   first_release: "Create, assign, update, and close jobs.",
   acceptance_criteria: "Authorised staff can close a job and see its history.",
   delivery_model: "Recommendation required",
@@ -32,6 +33,7 @@ module.exports = (async () => {
   assert.strictEqual(fallback.metadata.customerApproved, false);
   assert.strictEqual(fallback.sections.problemStatement[0].status, "confirmed");
   assert.strictEqual(fallback.sections.integrationRequirements[0].status, "unknown");
+  assert(fallback.sections.dataRequirements.some((item) => item.statement === "A mix of local and cloud" && item.status === "confirmed"));
   assert(fallback.sections.openQuestions.some((item) => item.blocks.estimation && item.blocks.scopeAgreement && item.blocks.development));
   assert(!JSON.stringify(fallback).includes(raw.email));
   assert(!JSON.stringify(fallback).includes(raw.phone));

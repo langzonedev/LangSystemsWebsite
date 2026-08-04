@@ -111,10 +111,10 @@
       "About how many people will use the first release, and should everyone be able to do the same things? Please describe any people who may only view, update, approve or manage information.",
       "User numbers and different levels of access are needed to plan permissions and operational complexity.",
       ["customerAnswers.desiredOutcome.intendedUsers", "customerAnswers.desiredOutcome.approximateUserCount", "customerAnswers.currentProcess.currentUsers"]);
-    if (!hasList(desired.deviceRequirements) || uncertain(desired.offlineRequirements)) add(candidates, "devices-and-offline", "requiredBeforeDevelopment",
-      "Which devices will people use for the first release, and must any part work where the internet connection is unavailable or unreliable?",
-      "Device and offline needs can significantly affect design, testing and information synchronisation.",
-      ["customerAnswers.desiredOutcome.deviceRequirements", "customerAnswers.desiredOutcome.offlineRequirements", "customerAnswers.desiredOutcome.locationRequirements"]);
+    if (!hasList(desired.deviceRequirements) || uncertain(desired.offlineRequirements) || uncertain(desired.dataStoragePreference)) add(candidates, "devices-and-offline", "requiredBeforeDevelopment",
+      "Which devices will people use, must any part work without reliable internet, and would you prefer business information kept on your own devices or network, securely online, or should we recommend?",
+      "Device, offline and storage-location needs can significantly affect design, testing, information synchronisation, backup, security and cost.",
+      ["customerAnswers.desiredOutcome.deviceRequirements", "customerAnswers.desiredOutcome.offlineRequirements", "customerAnswers.desiredOutcome.locationRequirements", "customerAnswers.desiredOutcome.dataStoragePreference"]);
     if (uncertain(desired.privacySecurityConsiderations) && uncertain(additional.constraints)) add(candidates, "privacy-and-security", "requiredBeforeDevelopment",
       "Will the first release handle personal, confidential or regulated information, or need particular approvals, access records or security checks? Please describe what applies in plain language.",
       "Privacy, security and approval obligations must be understood before detailed design or development.",

@@ -40,6 +40,7 @@ const answered = generator.generate(submission((value) => {
   desired.approximateUserCount = "12";
   desired.deviceRequirements = ["Office computers", "Work phones"];
   desired.offlineRequirements = "Internet is always available; offline use is not required.";
+  desired.dataStoragePreference = "Securely online so authorised people can access it from anywhere (cloud)";
   desired.privacySecurityConsiderations = "Customer contact details are visible only to office staff.";
   current.currentUsers = "Office coordinators and supervisors";
   value.customerAnswers.scope.explicitExclusions = "Customer invoicing";

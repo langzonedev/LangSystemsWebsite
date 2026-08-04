@@ -87,7 +87,7 @@ function deriveSections(interpretation) {
     privacyConsiderations: copy(source.securityAndPrivacyConsiderations),
     performanceConsiderations: unknown("Expected usage volumes, concurrency, response-time targets, availability, and capacity limits have not been confirmed."),
     backupAndRecoveryConsiderations: unknown("Backup scope, recovery point, recovery time, restore testing, and business-continuity requirements have not been confirmed."),
-    deploymentConsiderations: recommendation("Select hosting, environments, release controls, monitoring, and rollback arrangements after constraints are confirmed; no technology stack is selected by this specification."),
+    deploymentConsiderations: combine(source.dataRequirements, recommendation("Select hosting, environments, release controls, monitoring, and rollback arrangements after constraints are confirmed; no technology stack is selected by this specification.")),
     supportConsiderations: unknown("Support hours, service targets, maintenance ownership, escalation, training, and handover requirements have not been confirmed."),
     acceptanceCriteria: combine(source.proposedAcceptanceCriteria, recommendation("During manual review, rewrite agreed criteria as observable pass/fail checks without changing the customer's intended outcome.")),
     assumptions: copy(source.assumptions),

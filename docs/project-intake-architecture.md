@@ -259,6 +259,7 @@ The following names are the submitted-field contract. All fields are plain text 
 | The outcome | `users` | Yes | Long text |
 | The outcome | `existing_systems` | No | Long text |
 | The outcome | `data_needs` | No | Long text |
+| The outcome | `data_storage_preference` | No | Single choice |
 | First release | `first_release` | Yes | Long text |
 | First release | `optional_requirements` | No | Long text |
 | First release | `future_ideas` | No | Long text |

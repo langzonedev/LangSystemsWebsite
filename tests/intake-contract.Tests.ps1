@@ -156,7 +156,7 @@ $allFields = @(
   "contact_name", "email", "phone", "business_name", "business_description", "problem",
   "current_process", "current_methods", "process_frequency", "problem_impact", "current_process_strengths",
   "desired_outcome", "users", "user_count", "devices", "usage_locations", "offline_access", "existing_systems",
-  "data_needs", "privacy_security_approvals", "first_release", "optional_requirements", "future_ideas",
+  "data_needs", "data_storage_preference", "privacy_security_approvals", "first_release", "optional_requirements", "future_ideas",
   "excluded_functionality", "budget", "timing", "timing_context", "delivery_model",
   "day_to_day_owner", "ongoing_support", "acceptance_criteria", "success_measure", "constraints",
   "additional_notes", "privacy_consent"
@@ -164,7 +164,7 @@ $allFields = @(
 
 $optionalFields = @(
   "phone", "current_methods", "process_frequency", "current_process_strengths", "user_count", "devices",
-  "usage_locations", "offline_access", "existing_systems", "data_needs", "privacy_security_approvals",
+  "usage_locations", "offline_access", "existing_systems", "data_needs", "data_storage_preference", "privacy_security_approvals",
   "optional_requirements", "future_ideas", "excluded_functionality", "timing_context", "constraints", "additional_notes"
 )
 
@@ -175,6 +175,10 @@ foreach ($field in $allFields) {
     Assert-True ($index -match ('name="' + [regex]::Escape($field) + '"[^>]*\brequired\b')) "Required field '$field' is no longer required."
   }
 }
+
+Assert-True ($index -match [regex]::Escape('On our own devices or business network (local)')) "The local-storage option is missing."
+Assert-True ($index -match [regex]::Escape('Securely online so authorised people can access it from anywhere (cloud)')) "The cloud-storage option is missing."
+Assert-True ($index -match [regex]::Escape('A mix of local and cloud')) "The mixed-storage option is missing."
 
 Assert-True ($aiHandoff -match 'humanReviewRequired:\s*true' -and $aiHandoff -match 'reviewStatus:\s*"unreviewed"') "The AI handoff must remain explicitly gated by human review."
 Assert-True ($aiHandoff -match 'requestedArtifacts' -and $aiHandoff -match 'UML' -and $aiHandoff -match 'Codex') "The handoff must request architecture, UML, and Codex-ready artifacts."

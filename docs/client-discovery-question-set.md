@@ -77,6 +77,7 @@ Helper text should remain visible, concise, and connected to its question for as
 | `existing_systems` | Which existing software or equipment may it need to work with? | Long text; conditional after Yes or Not sure | No | “Examples include accounting software, payment systems, a website, email, spreadsheets, scanners, printers, or machinery.” |
 | `existing_information_import` | Does existing information need to be brought into the new system? | Single choice | No | Yes; No; Not sure. |
 | `data_needs` | What existing information may need to be imported, stored, or used? | Long text; conditional after Yes or Not sure | No | “Examples include customer records, stock lists, orders, documents, forms, or reports. Please describe it only; do not upload sensitive records here.” |
+| `data_storage_preference` | Where would you prefer your business information to be kept? | Single choice | No | Not sure — please recommend; On our own devices or business network (local); Securely online so authorised people can access it from anywhere (cloud); A mix of local and cloud; It needs to stay in an existing system. Helper: “This is only a preference. We will confirm the safest practical approach with you.” |
 | `privacy_security_approvals` | Are there privacy, security, access, or approval requirements we should know about? | Long text | No | “For example: only managers can approve changes, different staff see different information, or industry rules apply. Do not include passwords or sensitive personal records.” |
 
 ### Step 4 — First release and common capabilities
