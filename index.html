@@ -223,16 +223,23 @@
           <p class="eyebrow">Software portfolio</p>
           <h2 id="portfolio-title">Products shaped around real work, ready to explore.</h2>
         </div>
-        <div class="portfolio-grid">
+        <div class="portfolio-toolbar">
+          <p>Scroll or swipe to explore the showcase.</p>
+          <div class="portfolio-controls" aria-label="Showcase navigation">
+            <button type="button" data-portfolio-direction="-1" aria-controls="portfolio-rail" aria-label="Show previous product">&larr;</button>
+            <button type="button" data-portfolio-direction="1" aria-controls="portfolio-rail" aria-label="Show next product">&rarr;</button>
+          </div>
+        </div>
+        <div id="portfolio-rail" class="portfolio-grid" tabindex="0" aria-label="Lang Systems product showcase">
           <a
-            class="product-card featured-product flagship-product product-link-card"
+            class="product-card featured-product product-link-card"
             href="https://stampos.com.au/"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Visit the StamPOS website"
           >
             <div class="product-copy">
-              <span class="status">Flagship product</span>
+              <span class="status">Product showcase</span>
               <div class="product-title-row">
                 <h3>Stam<span>POS</span></h3>
                 <small>Point of Sale</small>
