@@ -1379,6 +1379,338 @@ h3 {
   margin-left: auto;
 }
 
+.supplyfolio-product,
+.supplyfolio-product:hover,
+.supplyfolio-product:focus-visible {
+  color: #132b2e;
+}
+
+.supplyfolio-product {
+  background:
+    radial-gradient(circle at 87% 7%, rgba(182, 218, 120, 0.28), transparent 27%),
+    linear-gradient(145deg, #fdfefd, #edf5f1 76%);
+  border-color: rgba(8, 127, 120, 0.24);
+}
+
+.supplyfolio-product::before {
+  background-image:
+    linear-gradient(rgba(8, 127, 120, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 127, 120, 0.045) 1px, transparent 1px);
+}
+
+.supplyfolio-product .status,
+.supplyfolio-product .product-title-row h3 span {
+  color: #087f78;
+}
+
+.supplyfolio-product .product-title-row small,
+.supplyfolio-product .product-copy p {
+  color: #607175;
+}
+
+.supplyfolio-product .product-cta {
+  color: #ffffff;
+  background: #0b2e33;
+  border-color: #0b2e33;
+}
+
+.supplyfolio-window {
+  padding: 14px;
+  color: #132b2e;
+  background: #fdfefd;
+  border: 1px solid #d8e1dd;
+  border-radius: 17px;
+  box-shadow: 0 20px 48px rgba(11, 46, 51, 0.16);
+  transform: rotate(0.5deg);
+}
+
+.supplyfolio-window-head,
+.supplyfolio-readiness,
+.supplyfolio-record {
+  display: flex;
+  align-items: center;
+}
+
+.supplyfolio-window-head {
+  justify-content: space-between;
+  padding-bottom: 10px;
+  color: #607175;
+  font-size: 0.64rem;
+  border-bottom: 1px solid #e6ece9;
+}
+
+.supplyfolio-window-head span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.supplyfolio-window-head i {
+  width: 8px;
+  height: 8px;
+  background: #087f78;
+  border-radius: 50%;
+  box-shadow: 13px 0 0 #b6da78;
+}
+
+.supplyfolio-window-head b {
+  margin-left: 10px;
+  color: #0b2e33;
+}
+
+.supplyfolio-window-head em {
+  color: #157248;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.supplyfolio-readiness {
+  justify-content: space-between;
+  padding: 11px 0 9px;
+}
+
+.supplyfolio-readiness > span {
+  display: grid;
+  gap: 2px;
+}
+
+.supplyfolio-readiness small {
+  color: #607175;
+  font-size: 0.6rem;
+}
+
+.supplyfolio-readiness strong {
+  color: #0b2e33;
+  font-size: 0.82rem;
+}
+
+.supplyfolio-readiness > b {
+  display: grid;
+  width: 45px;
+  height: 45px;
+  place-items: center;
+  color: #0b2e33;
+  font-size: 0.72rem;
+  background: radial-gradient(circle, #ffffff 55%, transparent 57%), conic-gradient(#087f78 71%, #dce5e1 0);
+  border-radius: 50%;
+}
+
+.supplyfolio-record {
+  gap: 9px;
+  min-height: 37px;
+  border-top: 1px solid #e6ece9;
+}
+
+.supplyfolio-record > i {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  place-items: center;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 900;
+  border-radius: 50%;
+}
+
+.supplyfolio-record > span {
+  display: grid;
+  gap: 1px;
+}
+
+.supplyfolio-record b {
+  color: #132b2e;
+  font-size: 0.65rem;
+}
+
+.supplyfolio-record small,
+.supplyfolio-record em {
+  font-size: 0.58rem;
+}
+
+.supplyfolio-record small {
+  color: #607175;
+}
+
+.supplyfolio-record em {
+  margin-left: auto;
+  padding: 4px 7px;
+  font-style: normal;
+  font-weight: 900;
+  border-radius: 99px;
+}
+
+.supplyfolio-record.is-ready > i,
+.supplyfolio-record.is-ready em {
+  color: #157248;
+  background: #daf1e3;
+}
+
+.supplyfolio-record.is-review > i,
+.supplyfolio-record.is-review em {
+  color: #94600d;
+  background: #fff0cc;
+}
+
+.supplyfolio-record.is-missing > i,
+.supplyfolio-record.is-missing em {
+  color: #a13b37;
+  background: #f9dddd;
+}
+
+.funeralflow-product,
+.funeralflow-product:hover,
+.funeralflow-product:focus-visible {
+  color: #321b39;
+}
+
+.funeralflow-product {
+  background:
+    radial-gradient(circle at 89% 8%, rgba(212, 147, 113, 0.27), transparent 26%),
+    linear-gradient(145deg, #fdfaf5, #f2e9e4 78%);
+  border-color: rgba(50, 27, 57, 0.2);
+}
+
+.funeralflow-product::before {
+  background-image:
+    linear-gradient(rgba(50, 27, 57, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(50, 27, 57, 0.045) 1px, transparent 1px);
+}
+
+.funeralflow-product .status,
+.funeralflow-product .product-title-row h3 span {
+  color: #a85f43;
+}
+
+.funeralflow-product .product-title-row small,
+.funeralflow-product .product-copy p {
+  color: #766c72;
+}
+
+.funeralflow-product .product-cta {
+  color: #ffffff;
+  background: #321b39;
+  border-color: #321b39;
+}
+
+.funeralflow-window {
+  padding: 14px;
+  color: #321b39;
+  background: #f8f4ed;
+  border: 1px solid #dfd6d4;
+  border-radius: 18px;
+  box-shadow: 0 20px 48px rgba(50, 27, 57, 0.18);
+}
+
+.funeralflow-window-head,
+.funeralflow-service,
+.funeralflow-progress,
+.funeralflow-task {
+  display: flex;
+  align-items: center;
+}
+
+.funeralflow-window-head {
+  justify-content: space-between;
+  padding-bottom: 11px;
+  font-size: 0.64rem;
+  border-bottom: 1px solid #e4dbd8;
+}
+
+.funeralflow-window-head > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.funeralflow-window-head i {
+  width: 10px;
+  height: 14px;
+  background: linear-gradient(150deg, #78958b 48%, #d49371 50%);
+  border-radius: 9px 9px 3px 3px;
+  transform: rotate(12deg);
+}
+
+.funeralflow-window-head em {
+  color: #78958b;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.funeralflow-service {
+  justify-content: space-between;
+  padding: 12px 0 10px;
+}
+
+.funeralflow-service > span,
+.funeralflow-task > span {
+  display: grid;
+  gap: 2px;
+}
+
+.funeralflow-service small,
+.funeralflow-task small {
+  color: #847980;
+  font-size: 0.58rem;
+}
+
+.funeralflow-service strong {
+  font-size: 0.78rem;
+}
+
+.funeralflow-service > b {
+  padding: 5px 8px;
+  color: #496f65;
+  font-size: 0.6rem;
+  background: #dfebe7;
+  border-radius: 99px;
+}
+
+.funeralflow-progress {
+  gap: 8px;
+  padding: 8px 9px;
+  color: #655b62;
+  font-size: 0.62rem;
+  background: #eee7e3;
+  border-radius: 9px;
+}
+
+.funeralflow-progress i {
+  width: 45%;
+  height: 5px;
+  background: linear-gradient(90deg, #78958b 75%, #d7cfcb 75%);
+  border-radius: 99px;
+}
+
+.funeralflow-task {
+  gap: 9px;
+  min-height: 40px;
+  border-bottom: 1px solid #e7dfdc;
+}
+
+.funeralflow-task > i {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  place-items: center;
+  color: #a85f43;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 900;
+  background: #f3ddd2;
+  border-radius: 7px;
+}
+
+.funeralflow-task.is-done > i {
+  color: #496f65;
+  background: #dfebe7;
+}
+
+.funeralflow-task b {
+  font-size: 0.64rem;
+}
+
 .timestem-product {
   display: flex;
   min-height: 430px;
