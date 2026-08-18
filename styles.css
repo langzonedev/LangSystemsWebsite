@@ -799,7 +799,101 @@ h3 {
 }
 
 .portfolio-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  gap: 16px;
+  padding: 4px 4px 18px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-padding-inline: 4px;
+  scroll-snap-type: x mandatory;
+  scrollbar-color: rgba(108, 25, 255, 0.38) rgba(99, 93, 120, 0.1);
+  scrollbar-width: thin;
+}
+
+.portfolio {
+  padding-top: clamp(64px, 8vw, 88px);
+  padding-bottom: clamp(64px, 8vw, 88px);
+}
+
+.portfolio .section-heading {
+  margin-bottom: 26px;
+}
+
+.portfolio-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.portfolio-grid::-webkit-scrollbar-track {
+  background: rgba(99, 93, 120, 0.1);
+  border-radius: 99px;
+}
+
+.portfolio-grid::-webkit-scrollbar-thumb {
+  background: rgba(108, 25, 255, 0.38);
+  border-radius: 99px;
+}
+
+.portfolio-grid:focus-visible {
+  outline: 3px solid rgba(108, 25, 255, 0.5);
+  outline-offset: 6px;
+}
+
+.portfolio-grid > .product-card {
+  flex: 0 0 clamp(340px, 48vw, 560px);
+  min-height: 430px;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.portfolio-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.portfolio-toolbar p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.portfolio-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.portfolio-controls button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 900;
+  background: rgba(248, 249, 253, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.portfolio-controls button:hover:not(:disabled),
+.portfolio-controls button:focus-visible {
+  background: #ffffff;
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.portfolio-controls button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(108, 25, 255, 0.22);
+}
+
+.portfolio-controls button:disabled {
+  cursor: default;
+  opacity: 0.34;
 }
 
 .product-card {
@@ -815,15 +909,6 @@ h3 {
     radial-gradient(circle at 82% 8%, rgba(14, 165, 183, 0.38), transparent 32%),
     linear-gradient(135deg, #081327 0%, #0d2f58 46%, #123c4a 100%);
   border-color: transparent;
-}
-
-.flagship-product,
-.timestem-product {
-  grid-column: 1 / -1;
-}
-
-.flagship-product {
-  min-height: 390px;
 }
 
 .featured-product h3,
@@ -1052,7 +1137,7 @@ h3 {
 }
 
 .portfolio-product {
-  min-height: 500px;
+  min-height: 430px;
 }
 
 .portfolio-product h3 {
@@ -1295,11 +1380,8 @@ h3 {
 }
 
 .timestem-product {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.75fr);
-  gap: clamp(28px, 5vw, 68px);
-  align-items: center;
-  min-height: 410px;
+  display: flex;
+  min-height: 430px;
   background:
     radial-gradient(circle at 88% 10%, rgba(180, 95, 134, 0.25), transparent 23%),
     radial-gradient(circle at 72% 86%, rgba(53, 102, 90, 0.24), transparent 26%),
@@ -1308,9 +1390,7 @@ h3 {
 }
 
 .timestem-product .product-preview {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  margin: 0;
+  margin: 24px 0;
 }
 
 .timestem-product .product-cta {
@@ -2163,7 +2243,7 @@ h3 {
   }
 
   .portfolio-grid {
-    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .timestem-product {
@@ -2274,6 +2354,20 @@ h3 {
 
   .portfolio-product {
     min-height: 470px;
+  }
+
+  .portfolio-grid > .product-card {
+    flex-basis: min(360px, calc(100vw - 56px));
+    min-height: 470px;
+  }
+
+  .portfolio-toolbar {
+    align-items: flex-end;
+  }
+
+  .portfolio-toolbar p {
+    max-width: 180px;
+    font-size: 0.8rem;
   }
 
   .ripper-tabs i {
