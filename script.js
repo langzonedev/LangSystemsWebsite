@@ -1,5 +1,6 @@
 const body = document.body;
 const navToggle = document.querySelector(".nav-toggle");
+const siteNav = document.querySelector(".site-nav");
 const navLinks = document.querySelectorAll(".site-nav a");
 const year = document.querySelector("[data-year]");
 const portfolioRail = document.querySelector(".portfolio-grid");
@@ -9,6 +10,12 @@ if (year) {
   year.textContent = new Date().getFullYear();
 }
 
+const closeNavigation = ({ returnFocus = false } = {}) => {
+  body.classList.remove("nav-open");
+  navToggle?.setAttribute("aria-expanded", "false");
+  if (returnFocus) navToggle?.focus();
+};
+
 if (navToggle) {
   navToggle.addEventListener("click", () => {
     const isOpen = body.classList.toggle("nav-open");
@@ -17,10 +24,18 @@ if (navToggle) {
 }
 
 navLinks.forEach((link) => {
-  link.addEventListener("click", () => {
-    body.classList.remove("nav-open");
-    navToggle?.setAttribute("aria-expanded", "false");
-  });
+  link.addEventListener("click", () => closeNavigation());
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && body.classList.contains("nav-open")) {
+    closeNavigation({ returnFocus: true });
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (!body.classList.contains("nav-open") || siteNav?.contains(event.target) || navToggle?.contains(event.target)) return;
+  closeNavigation();
 });
 
 if (portfolioRail && portfolioButtons.length) {
