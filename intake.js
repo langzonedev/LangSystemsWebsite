@@ -594,6 +594,7 @@
 
     dialog.showModal();
     updateStep();
+    window.requestAnimationFrame(() => intakeHeaderTitle?.focus({ preventScroll: true }));
   }
 
   function requestClose({ syncHistory = true, confirmDirty = true } = {}) {
