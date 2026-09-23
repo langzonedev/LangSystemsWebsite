@@ -53,6 +53,26 @@ body.nav-open {
   overflow: hidden;
 }
 
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+  padding: 10px 14px;
+  color: #ffffff;
+  font-weight: 800;
+  text-decoration: none;
+  background: var(--ink);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  transform: translateY(-160%);
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 a {
   color: inherit;
 }
@@ -2442,9 +2462,11 @@ h3 {
     opacity: 0;
     pointer-events: none;
     transform: translateY(-12px);
+    visibility: hidden;
     transition:
       opacity 160ms ease,
-      transform 160ms ease;
+      transform 160ms ease,
+      visibility 0s linear 160ms;
   }
 
   .site-nav a {
@@ -2459,6 +2481,8 @@ h3 {
     opacity: 1;
     pointer-events: auto;
     transform: translateY(0);
+    visibility: visible;
+    transition-delay: 0s;
   }
 
   .nav-open .nav-toggle span:nth-child(2) {
