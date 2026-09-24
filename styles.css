@@ -1799,6 +1799,64 @@ h3 {
   font-size: 0.62rem;
 }
 
+.support-page {
+  padding-top: 130px;
+}
+
+.support-page h1 {
+  max-width: 780px;
+  font-size: clamp(2.15rem, 5vw, 3.75rem);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  margin: 16px 0 24px;
+}
+
+.support-back {
+  display: inline-block;
+  margin-bottom: 30px;
+  color: var(--muted);
+}
+
+.support-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  margin-top: 36px;
+  align-items: stretch;
+}
+
+.stripe-card {
+  padding: clamp(24px, 4vw, 36px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.stripe-card h2 {
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  line-height: 1.2;
+  margin: 8px 0 24px;
+}
+
+.stripe-benefits {
+  display: grid;
+  gap: 14px;
+  padding-left: 22px;
+  margin: 28px 0;
+}
+
+.stripe-card .button { width: 100%; }
+.support-payment-note { font-size: 0.9rem; color: var(--muted); }
+.support-page .support-note p:first-child { margin-top: 0; }
+.support-page .support-note p:last-child { margin-bottom: 0; }
+.support-page .support-note a { overflow-wrap: anywhere; }
+.site-nav a[aria-current="page"] { color: var(--violet); }
+
+@media (max-width: 760px) {
+  .support-options { grid-template-columns: 1fr; }
+}
+
 .support {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.78fr);
