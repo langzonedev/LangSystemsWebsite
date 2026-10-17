@@ -2,6 +2,8 @@
 
 Static company website for Lang Systems.
 
+Reusable brand assets include the [Lang Systems email signature template](templates/email-signature/README.md).
+
 Lang Systems is positioned as a technology-focused software company that takes ideas
 through to production-ready applications, including custom software, system
 integration, workflow automation, and future product development.
@@ -114,6 +116,7 @@ Run the dependency-free intake contract checks from the repository root:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tests/intake-contract.Tests.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/email-signature.Tests.ps1
 pnpm test:worker
 pnpm typecheck:worker
 pnpm worker:deploy:dry
